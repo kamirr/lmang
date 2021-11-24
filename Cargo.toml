@@ -1,0 +1,16 @@
+[package]
+name = "lmang"
+version = "0.1.0"
+edition = "2021"
+authors = ["Kamil Koczurek <koczurekk@gmail.com>"]
+license = "MIT"
+
+[[bin]]
+name = "lmang-repl"
+path = "src/repl.rs"
+
+[lib]
+name = "lmang_lib"
+path = "src/lib.rs"
+
+[dependencies]
