@@ -20,6 +20,11 @@ impl BindingDef {
         let (s, _) = utils::extract_whitespace(s);
 
         let s = utils::tag("=", s)?;
+
+        if s.starts_with("=") {
+            return Err("unexpected =".into());
+        }
+
         let (s, _) = utils::extract_whitespace(s);
 
         let (s, val) = Expr::new(s)?;

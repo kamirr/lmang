@@ -99,16 +99,20 @@ mod tests {
         assert_eq!(
             If::new(
                 "
-                ❓ a
+                ❓ a > 0
                     9
                 🧑‍🦲"
             ),
             Ok((
                 "",
                 If {
-                    cond: Expr::BindingUsage(BindingUsage {
-                        name: "a".to_string()
-                    }),
+                    cond: Expr::Operation {
+                        lhs: Box::new(Expr::BindingUsage(BindingUsage {
+                            name: "a".to_string()
+                        })),
+                        rhs: Box::new(Expr::Number(Number(0))),
+                        op: Op::Greater
+                    },
                     body: Block {
                         stmts: vec![Stmt::Expr(Expr::Number(Number(9)))]
                     },
@@ -124,7 +128,7 @@ mod tests {
         assert_eq!(
             If::new(
                 "
-                ❓ a
+                ❓ a > 0
                     9
                 🧑‍🦲 😡
                     0
@@ -133,9 +137,13 @@ mod tests {
             Ok((
                 "",
                 If {
-                    cond: Expr::BindingUsage(BindingUsage {
-                        name: "a".to_string()
-                    }),
+                    cond: Expr::Operation {
+                        lhs: Box::new(Expr::BindingUsage(BindingUsage {
+                            name: "a".to_string()
+                        })),
+                        rhs: Box::new(Expr::Number(Number(0))),
+                        op: Op::Greater
+                    },
                     body: Block {
                         stmts: vec![Stmt::Expr(Expr::Number(Number(9)))]
                     },
@@ -153,18 +161,22 @@ mod tests {
         assert_eq!(
             If::new(
                 "
-                ❓ a
+                ❓ a > 0
                     10
-                🧑‍🦲 😠 a - 1
+                🧑‍🦲 😠 a > 1
                     20
                 🧑‍🦲"
             ),
             Ok((
                 "",
                 If {
-                    cond: Expr::BindingUsage(BindingUsage {
-                        name: "a".to_string()
-                    }),
+                    cond: Expr::Operation {
+                        lhs: Box::new(Expr::BindingUsage(BindingUsage {
+                            name: "a".to_string()
+                        })),
+                        rhs: Box::new(Expr::Number(Number(0))),
+                        op: Op::Greater
+                    },
                     body: Block {
                         stmts: vec![Stmt::Expr(Expr::Number(Number(10)))]
                     },
@@ -174,7 +186,7 @@ mod tests {
                                 name: "a".to_string()
                             })),
                             rhs: Box::new(Expr::Number(Number(1))),
-                            op: Op::Sub,
+                            op: Op::Greater
                         },
                         Block {
                             stmts: vec![Stmt::Expr(Expr::Number(Number(20)))]
@@ -191,9 +203,9 @@ mod tests {
         assert_eq!(
             If::new(
                 "
-                ❓ a
+                ❓ a > 0
                     10
-                🧑‍🦲 😠 a - 1
+                🧑‍🦲 😠 a > 1
                     20
                 🧑‍🦲 😡
                     30
@@ -202,9 +214,13 @@ mod tests {
             Ok((
                 "",
                 If {
-                    cond: Expr::BindingUsage(BindingUsage {
-                        name: "a".to_string()
-                    }),
+                    cond: Expr::Operation {
+                        lhs: Box::new(Expr::BindingUsage(BindingUsage {
+                            name: "a".to_string()
+                        })),
+                        rhs: Box::new(Expr::Number(Number(0))),
+                        op: Op::Greater
+                    },
                     body: Block {
                         stmts: vec![Stmt::Expr(Expr::Number(Number(10)))]
                     },
@@ -214,7 +230,7 @@ mod tests {
                                 name: "a".to_string()
                             })),
                             rhs: Box::new(Expr::Number(Number(1))),
-                            op: Op::Sub,
+                            op: Op::Greater
                         },
                         Block {
                             stmts: vec![Stmt::Expr(Expr::Number(Number(20)))]
@@ -232,7 +248,7 @@ mod tests {
     fn eval_if() {
         let (_, if_e) = If::new(
             "
-            ❓ a
+            ❓ a > 0
                 let b = 2 💪
                 let c = 3 💪
 
@@ -257,7 +273,7 @@ mod tests {
     fn eval_if_else() {
         let (_, if_e) = If::new(
             "
-            ❓ a
+            ❓ a > 0
                 let x = 2 💪
 
                 x + a
@@ -285,13 +301,13 @@ mod tests {
     fn eval_if_elif_x3_else() {
         let (_, if_e) = If::new(
             "
-            ❓ a
+            ❓ a > 0
                 a
-            🧑‍🦲 😠 a + 1
+            🧑‍🦲 😠 a > 0-1
                 0
-            🧑‍🦲 😠 a + 2
+            🧑‍🦲 😠 a > 0-2
                 0-1
-            🧑‍🦲 😠 a + 3
+            🧑‍🦲 😠 a > 0-3
                 0-2
             🧑‍🦲 😡
                 0-999

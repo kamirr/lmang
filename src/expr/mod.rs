@@ -29,6 +29,11 @@ pub enum Op {
     Sub,
     Mul,
     Div,
+    Greater,
+    GreaterEq,
+    Eq,
+    LessEq,
+    Less,
 }
 
 impl Op {
@@ -38,6 +43,11 @@ impl Op {
             .or_else(|_| utils::tag("-", s).map(|s| (s, Self::Sub)))
             .or_else(|_| utils::tag("*", s).map(|s| (s, Self::Mul)))
             .or_else(|_| utils::tag("/", s).map(|s| (s, Self::Div)))
+            .or_else(|_| utils::tag(">=", s).map(|s| (s, Self::GreaterEq)))
+            .or_else(|_| utils::tag(">", s).map(|s| (s, Self::Greater)))
+            .or_else(|_| utils::tag("<=", s).map(|s| (s, Self::LessEq)))
+            .or_else(|_| utils::tag("<", s).map(|s| (s, Self::Less)))
+            .or_else(|_| utils::tag("==", s).map(|s| (s, Self::Eq)))
     }
 }
 
@@ -138,6 +148,11 @@ impl Expr {
                     Op::Sub => lhs - rhs,
                     Op::Mul => lhs * rhs,
                     Op::Div => lhs / rhs,
+                    Op::Greater => lhs.try_gt(&rhs),
+                    Op::GreaterEq => lhs.try_ge(&rhs),
+                    Op::Eq => lhs.try_eq(&rhs),
+                    Op::LessEq => lhs.try_le(&rhs),
+                    Op::Less => lhs.try_lt(&rhs),
                 }
             }
             Self::BindingUsage(bu) => bu.eval(env),
@@ -207,6 +222,31 @@ mod tests {
                 },
             )),
         );
+    }
+
+    #[test]
+    fn parse_cmp() {
+        let cases = [
+            ("11 > 2", Op::Greater),
+            ("11 >= 2", Op::GreaterEq),
+            ("11 == 2", Op::Eq),
+            ("11 <= 2", Op::LessEq),
+            ("11 < 2", Op::Less),
+        ];
+
+        for case in cases {
+            assert_eq!(
+                Expr::new(case.0),
+                Ok((
+                    "",
+                    Expr::Operation {
+                        lhs: Box::new(Expr::Number(Number(11))),
+                        rhs: Box::new(Expr::Number(Number(2))),
+                        op: case.1
+                    }
+                ))
+            );
+        }
     }
 
     #[test]
@@ -298,5 +338,32 @@ mod tests {
                 }),
             )),
         );
+    }
+
+    #[test]
+    fn eval_cmp() {
+        let nums: Vec<_> = (0..10).collect();
+        for n1 in &nums {
+            for n2 in &nums {
+                let ops: [(&'static str, Box<dyn Fn(i32, i32) -> bool>); 5] = [
+                    (">", Box::new(|a, b| a > b)),
+                    (">=", Box::new(|a, b| a >= b)),
+                    ("==", Box::new(|a, b| a == b)),
+                    ("<=", Box::new(|a, b| a <= b)),
+                    ("<", Box::new(|a, b| a < b)),
+                ];
+                for op in ops.iter() {
+                    let expr_s = format!("{} {} {}", n1, op.0, n2);
+                    let (_, expr) = Expr::new(&expr_s).unwrap();
+
+                    let expected = Ok(Val::Bool(op.1(*n1, *n2)));
+
+                    let mut env = Env::new();
+                    let result = expr.eval(&mut env);
+
+                    assert_eq!(result, expected);
+                }
+            }
+        }
     }
 }

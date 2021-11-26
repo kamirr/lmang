@@ -79,7 +79,7 @@ mod tests {
     fn eval_break() {
         let input = "
             let 👩‍🚀 = 📦
-                ❓ 🅱️
+                ❓ 🅱️ > 0
                     💔 🅱️ 🧑‍🦲
                 🧑‍🦲 💪
 

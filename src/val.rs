@@ -1,3 +1,4 @@
+use std::cmp::{Ordering, PartialOrd};
 use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -16,17 +17,13 @@ impl Val {
         match self {
             Number(n) => match other {
                 Number(_) => Ok(Number(*n)),
-                Bool(_) => Ok(Bool(*n > 0)),
                 _ => err,
             },
             Bool(b) => match other {
-                Number(_) => Ok(Number(if *b { 1 } else { 0 })),
                 Bool(_) => Ok(Bool(*b)),
                 _ => err,
             },
             Unit => match other {
-                Number(_) => Ok(Number(1)),
-                Bool(_) => Ok(Bool(true)),
                 Unit => Ok(Val::Unit),
                 _ => err,
             },
@@ -53,6 +50,46 @@ impl Val {
         match self_number {
             Val::Bool(b) => Ok(b),
             _ => unreachable!(),
+        }
+    }
+
+    pub fn try_gt(&self, other: &Val) -> Result<Self, String> {
+        if let Some(_) = self.partial_cmp(other) {
+            Ok(Self::Bool(self > other))
+        } else {
+            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+        }
+    }
+
+    pub fn try_ge(&self, other: &Val) -> Result<Self, String> {
+        if let Some(_) = self.partial_cmp(other) {
+            Ok(Self::Bool(self >= other))
+        } else {
+            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+        }
+    }
+
+    pub fn try_eq(&self, other: &Val) -> Result<Self, String> {
+        if let Some(_) = self.partial_cmp(other) {
+            Ok(Self::Bool(!(self > other) && !(self < other)))
+        } else {
+            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+        }
+    }
+
+    pub fn try_lt(&self, other: &Val) -> Result<Self, String> {
+        if let Some(_) = self.partial_cmp(other) {
+            Ok(Self::Bool(self < other))
+        } else {
+            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+        }
+    }
+
+    pub fn try_le(&self, other: &Val) -> Result<Self, String> {
+        if let Some(_) = self.partial_cmp(other) {
+            Ok(Self::Bool(self <= other))
+        } else {
+            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
         }
     }
 }
@@ -154,5 +191,14 @@ impl Div for Val {
 
     fn div(self, other: Self) -> Self::Output {
         &self / &other
+    }
+}
+
+impl PartialOrd for Val {
+    fn partial_cmp(&self, other: &Val) -> Option<Ordering> {
+        match self {
+            Self::Number(n1) => other.as_number().map(|n2| n1.cmp(&n2)).ok(),
+            _ => None,
+        }
     }
 }
