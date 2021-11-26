@@ -20,7 +20,12 @@ impl Loop {
     }
 
     pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        todo!()
+        Ok(loop {
+            match self.body.eval(env)? {
+                Val::Break(inner_box) => break *inner_box,
+                _ => continue,
+            }
+        })
     }
 }
 
@@ -58,8 +63,7 @@ mod tests {
     #[test]
     fn parse_factorial_loop() {
         let loop_e = Loop::new(
-            "
-            loop
+            "loop
                 ❓ 0-a
                     break fact 🧑‍🦲
                 🧑‍🦲 💪
@@ -124,20 +128,19 @@ mod tests {
     #[test]
     fn parse_factorial_complete() {
         let loop_e = Block::explicit(
-            "
-📦
-    let fact = 1 💪
-    let a = 5 💪
+            "📦
+                let fact = 1 💪
+                let a = 5 💪
 
-    loop
-        ❓ 0-a
-            break fact 🧑‍🦲
-        🧑‍🦲 💪
+                loop
+                    ❓ 0-a
+                        break fact 🧑‍🦲
+                    🧑‍🦲 💪
 
-        let fact = fact * a 💪
-        let a = a - 1
-    🧑‍🦲
-🧑‍🦲",
+                    let fact = fact * a 💪
+                    let a = a - 1
+                🧑‍🦲
+            🧑‍🦲",
         );
 
         let expected = Block {
@@ -204,5 +207,45 @@ mod tests {
         };
 
         assert_eq!(loop_e, Ok(("", expected)));
+    }
+
+    #[test]
+    fn eval_loop_simple() {
+        let (_, loop_e) = Loop::new("loop break 2 🧑‍🦲 🧑‍🦲").unwrap();
+        let expected = Val::Number(2);
+
+        let mut env = Env::new();
+        let res = loop_e.eval(&mut env);
+
+        assert_eq!(res, Ok(expected));
+    }
+
+    #[test]
+    fn eval_loop_factorial() {
+        let (_, loop_e) = Block::explicit(
+            "📦
+                let fact = 1 💪
+
+                loop
+                    ❓ 1-a
+                        break fact 🧑‍🦲
+                    🧑‍🦲 💪
+
+                    let fact = fact * a 💪
+                    let a = a - 1
+                🧑‍🦲
+            🧑‍🦲",
+        )
+        .unwrap();
+
+        let mut env = Env::new();
+
+        let cases = [(0, 1), (1, 1), (2, 2), (3, 6), (4, 24), (5, 120)];
+        for case in cases {
+            env.store_binding("a".to_string(), Val::Number(case.0));
+            let result = loop_e.eval(&mut env);
+
+            assert_eq!(result, Ok(Val::Number(case.1)));
+        }
     }
 }
