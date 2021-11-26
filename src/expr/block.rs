@@ -1,6 +1,6 @@
 use crate::env::Env;
 use crate::stmt::Stmt;
-use crate::utils;
+use crate::utils::{self, kwords};
 use crate::val::Val;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -11,14 +11,14 @@ pub struct Block {
 impl Block {
     pub fn explicit(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("📦", s)?;
+        let s = utils::tag(kwords::BLOCK_OPEN, s)?;
 
         Self::strong_implicit(s)
     }
 
     pub fn implicit(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
-        let s = match utils::tag("📦", s) {
+        let s = match utils::tag(kwords::BLOCK_OPEN, s) {
             Ok(sub) => sub,
             Err(_) => s,
         };
@@ -38,7 +38,7 @@ impl Block {
             let (new_s, _) = utils::extract_whitespace(new_s);
             s = new_s;
 
-            s = match utils::tag("💪", s) {
+            s = match utils::tag(kwords::STMT_SEP, s) {
                 Ok(new_s) => new_s,
                 Err(_) => break,
             };
@@ -48,7 +48,7 @@ impl Block {
         }
         let (s, _) = utils::extract_whitespace(s);
 
-        let s = utils::tag("🧑‍🦲", s)?;
+        let s = utils::tag(kwords::BLOCK_CLOSE, s)?;
 
         Ok((s, Block { stmts }))
     }

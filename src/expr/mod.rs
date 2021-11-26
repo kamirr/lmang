@@ -7,7 +7,7 @@ pub mod if_expr;
 pub mod loop_expr;
 
 use crate::env::Env;
-use crate::utils;
+use crate::utils::{self, kwords};
 use crate::val::Val;
 use binding_usage::BindingUsage;
 use block::Block;
@@ -42,16 +42,16 @@ pub enum Op {
 
 impl Op {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
-        utils::tag("+", s)
+        utils::tag(kwords::ADD, s)
             .map(|s| (s, Self::Add))
-            .or_else(|_| utils::tag("-", s).map(|s| (s, Self::Sub)))
-            .or_else(|_| utils::tag("*", s).map(|s| (s, Self::Mul)))
-            .or_else(|_| utils::tag("/", s).map(|s| (s, Self::Div)))
-            .or_else(|_| utils::tag(">=", s).map(|s| (s, Self::GreaterEq)))
-            .or_else(|_| utils::tag(">", s).map(|s| (s, Self::Greater)))
-            .or_else(|_| utils::tag("<=", s).map(|s| (s, Self::LessEq)))
-            .or_else(|_| utils::tag("<", s).map(|s| (s, Self::Less)))
-            .or_else(|_| utils::tag("==", s).map(|s| (s, Self::Eq)))
+            .or_else(|_| utils::tag(kwords::SUB, s).map(|s| (s, Self::Sub)))
+            .or_else(|_| utils::tag(kwords::MUL, s).map(|s| (s, Self::Mul)))
+            .or_else(|_| utils::tag(kwords::DIV, s).map(|s| (s, Self::Div)))
+            .or_else(|_| utils::tag(kwords::GE, s).map(|s| (s, Self::GreaterEq)))
+            .or_else(|_| utils::tag(kwords::GT, s).map(|s| (s, Self::Greater)))
+            .or_else(|_| utils::tag(kwords::LE, s).map(|s| (s, Self::LessEq)))
+            .or_else(|_| utils::tag(kwords::LT, s).map(|s| (s, Self::Less)))
+            .or_else(|_| utils::tag(kwords::EQ, s).map(|s| (s, Self::Eq)))
     }
 }
 

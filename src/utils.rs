@@ -1,3 +1,69 @@
+pub mod kwords {
+    pub const BLOCK_OPEN: &'static str = "📦";
+    pub const BLOCK_CLOSE: &'static str = "🧑‍🦲";
+    pub const STMT_SEP: &'static str = "💪";
+
+    pub const IF: &'static str = "❓";
+    pub const ELIF: &'static str = "😠";
+    pub const ELSE: &'static str = "😡";
+
+    pub const BREAK: &'static str = "💔";
+    pub const LOOP: &'static str = "🔁";
+
+    pub const LET: &'static str = "👶";
+    pub const SET: &'static str = "set";
+    pub const UPDATE_SEP: &'static str = "=";
+
+    pub const FUNC: &'static str = "🧰";
+    pub const FUNC_SEP: &'static str = "➡️";
+    pub const CALL: &'static str = "📞";
+
+    pub const ADD: &'static str = "+";
+    pub const SUB: &'static str = "-";
+    pub const MUL: &'static str = "*";
+    pub const DIV: &'static str = "/";
+
+    pub const GT: &'static str = ">";
+    pub const GE: &'static str = ">=";
+    pub const EQ: &'static str = "==";
+    pub const LE: &'static str = "<=";
+    pub const LT: &'static str = "<";
+    pub const NE: &'static str = "!=";
+
+    pub const ALL: [&'static str; 24] = [
+        BLOCK_OPEN,
+        BLOCK_CLOSE,
+        STMT_SEP,
+
+        IF,
+        ELIF,
+        ELSE,
+
+        BREAK,
+        LOOP,
+
+        LET,
+        SET,
+        UPDATE_SEP,
+
+        FUNC,
+        FUNC_SEP,
+        CALL,
+
+        ADD,
+        SUB,
+        MUL,
+        DIV,
+
+        GT,
+        GE,
+        EQ,
+        LE,
+        LT,
+        NE,
+    ];
+}
+
 pub(crate) fn take_while(accept: impl Fn(char) -> bool, s: &str) -> (&str, &str) {
     let extracted_end = s
         .char_indices()
@@ -42,39 +108,12 @@ pub(crate) fn extract_whitespace1(s: &str) -> Result<(&str, &str), String> {
 }
 
 pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
-    let reserved = [
-        "📦",
-        "🧑‍🦲",
-        "💪",
-        "❓",
-        "😠",
-        "😡",
-        "💔",
-        "🔁",
-        "👶",
-        "🧰",
-        "📞",
-        "➡️",
-        "set",
-        "=",
-        "+",
-        "-",
-        "*",
-        "/",
-        ">",
-        ">=",
-        "==",
-        "<=",
-        "<",
-        "!=",
-    ];
-
     let not_ident_err = Err("expected identifier".to_string());
     if s.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(true) {
         return not_ident_err;
     }
-    for r in reserved {
-        if s.starts_with(r) {
+    for reserved in kwords::ALL {
+        if s.starts_with(reserved) {
             return not_ident_err;
         }
     }
@@ -92,8 +131,8 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
         }
 
         let mut stop_ident_read = false;
-        for r in reserved {
-            if s[bytes..].starts_with(r) {
+        for reserved in kwords::ALL {
+            if s[bytes..].starts_with(reserved) {
                 stop_ident_read = true;
             }
         }

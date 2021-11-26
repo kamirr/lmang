@@ -1,6 +1,6 @@
 use crate::env::Env;
 use crate::expr::block::Block;
-use crate::utils;
+use crate::utils::{self, kwords};
 use crate::val::Val;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -15,7 +15,7 @@ pub struct Func {
 impl Func {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("🧰", s)?;
+        let s = utils::tag(kwords::FUNC, s)?;
 
         let mut s = s;
         let mut args = Vec::new();
@@ -31,7 +31,7 @@ impl Func {
         }
 
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("➡️", s)?;
+        let s = utils::tag(kwords::FUNC_SEP, s)?;
 
         let (s, body) = Block::implicit(s)?;
 
@@ -128,5 +128,35 @@ mod tests {
         let result = func_e.eval(&mut env);
 
         assert_eq!(result, Ok(Val::Func(expected)));
+    }
+
+    #[test]
+    fn func_var_shadowing() {
+        let (_, func_def) = Stmt::new(
+            "👶 f = 🧰 a ➡️
+                👶 b = 2  💪
+                set a = 1 💪
+                set x = 1 💪
+                set c = 1 💪
+                set b = 4 💪
+                
+                a
+            🧑‍🦲").unwrap();
+        let (_, func_call) = Stmt::new("📞 f x").unwrap();
+
+        let mut env = Env::new();
+        func_def.eval(&mut env).unwrap();
+
+        env.store_binding("c".to_string(), Val::Number(0));
+        env.store_binding("x".to_string(), Val::Number(8));
+        let res = func_call.eval(&mut env);
+
+        assert_eq!(res, Ok(Val::Number(1)));
+        assert_eq!(env.get_binding("c"), Ok(Val::Number(1)));
+        assert_eq!(env.get_binding("x"), Ok(Val::Number(1)));
+        assert_eq!(env.get_binding("a"), Err("binding with name `a` does not exist".to_string()));
+        assert_eq!(env.get_binding("b"), Err("binding with name `b` does not exist".to_string()));
+
+
     }
 }

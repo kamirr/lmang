@@ -1,6 +1,6 @@
 use crate::env::Env;
 use crate::expr::Expr;
-use crate::utils;
+use crate::utils::{self, kwords};
 use crate::val::Val;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -14,22 +14,24 @@ impl BindingUpdate {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
 
-        let (s, set) = if let Ok(s) = utils::tag("👶", s) {
+        let (s, set) = if let Ok(s) = utils::tag(kwords::LET, s) {
             (s, false)
-        } else if let Ok(s) = utils::tag("set", s) {
+        } else if let Ok(s) = utils::tag(kwords::SET, s) {
             (s, true)
         } else {
-            return Err("expected `👶` or `set`".to_string());
+            return Err(format!("expected `{}` or `{}`", kwords::LET, kwords::SET));
         };
 
         let (s, _) = utils::extract_whitespace(s);
         let (s, name) = utils::extract_ident(s)?;
 
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("=", s)?;
+        let s = utils::tag(kwords::UPDATE_SEP, s)?;
 
-        if s.starts_with("=") {
-            return Err("unexpected =".into());
+        // as of now two update separators concatenated without whitespace
+        // should instead be parsed as equality check.
+        if s.starts_with(kwords::UPDATE_SEP) {
+            return Err(format!("unexpected {}", kwords::UPDATE_SEP));
         }
 
         let (s, _) = utils::extract_whitespace(s);

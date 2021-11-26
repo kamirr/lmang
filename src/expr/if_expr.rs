@@ -1,6 +1,6 @@
 use crate::env::Env;
 use crate::expr::{block::Block, Expr};
-use crate::utils;
+use crate::utils::{self, kwords};
 use crate::val::Val;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -14,7 +14,7 @@ pub struct If {
 impl If {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("❓", s)?;
+        let s = utils::tag(kwords::IF, s)?;
 
         let (s, _) = utils::extract_whitespace(s);
         let (s, cond) = Expr::new(s)?;
@@ -28,7 +28,7 @@ impl If {
             let new_s = s;
 
             let (new_s, _) = utils::extract_whitespace(new_s);
-            let new_s = match utils::tag("😠", new_s) {
+            let new_s = match utils::tag(kwords::ELIF, new_s) {
                 Ok(new_s) => new_s,
                 Err(_) => break,
             };
@@ -47,7 +47,7 @@ impl If {
             let old_s = s;
 
             let (s, _) = utils::extract_whitespace(s);
-            let s = match utils::tag("😡", s) {
+            let s = match utils::tag(kwords::ELSE, s) {
                 Ok(s) => s,
                 Err(_) => return Ok((old_s, None)),
             };

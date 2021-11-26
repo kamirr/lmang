@@ -1,6 +1,6 @@
 use crate::env::Env;
 use crate::expr::Expr;
-use crate::utils;
+use crate::utils::{self, kwords};
 use crate::val::Val;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -12,7 +12,7 @@ pub struct Call {
 impl Call {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("📞", s)?;
+        let s = utils::tag(kwords::CALL, s)?;
 
         let (s, func) = Expr::new(s)?;
 

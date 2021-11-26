@@ -1,6 +1,6 @@
 use crate::env::Env;
 use crate::expr::block::Block;
-use crate::utils;
+use crate::utils::{self, kwords};
 use crate::val::Val;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -11,7 +11,7 @@ pub struct Break {
 impl Break {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("💔", s)?;
+        let s = utils::tag(kwords::BREAK, s)?;
 
         let (s, body) = Block::implicit(s)?;
 
