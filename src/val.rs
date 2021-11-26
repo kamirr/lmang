@@ -1,4 +1,4 @@
-use std::ops::{Add, Sub, Mul, Div};
+use std::ops::{Add, Div, Mul, Sub};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Val {
@@ -17,7 +17,7 @@ impl Val {
             Number(n) => match other {
                 Number(_) => Ok(Number(*n)),
                 Bool(_) => Ok(Bool(*n > 0)),
-                _ => err
+                _ => err,
             },
             Bool(b) => match other {
                 Number(_) => Ok(Number(if *b { 1 } else { 0 })),
@@ -30,7 +30,7 @@ impl Val {
                 Unit => Ok(Val::Unit),
                 _ => err,
             },
-            Break(val_box) => err,
+            Break(_) => err,
         }
     }
 
@@ -61,7 +61,10 @@ impl<'a, 'b> Add<&'b Val> for &'a Val {
     type Output = Result<Val, String>;
 
     fn add(self, other: &'b Val) -> Self::Output {
-        let err = Err(format!("can't add bindings of types `{}` and `{}`", "?", "?"));
+        let err = Err(format!(
+            "can't add bindings of types `{}` and `{}`",
+            "?", "?"
+        ));
 
         use Val::*;
         match self {
@@ -83,7 +86,10 @@ impl<'a, 'b> Sub<&'b Val> for &'a Val {
     type Output = Result<Val, String>;
 
     fn sub(self, other: &'b Val) -> Self::Output {
-        let err = Err(format!("can't sub bindings of types `{}` and `{}`", "?", "?"));
+        let err = Err(format!(
+            "can't sub bindings of types `{}` and `{}`",
+            "?", "?"
+        ));
 
         use Val::*;
         match self {
@@ -105,7 +111,10 @@ impl<'a, 'b> Mul<&'b Val> for &'a Val {
     type Output = Result<Val, String>;
 
     fn mul(self, other: &'b Val) -> Self::Output {
-        let err = Err(format!("can't mul bindings of types `{}` and `{}`", "?", "?"));
+        let err = Err(format!(
+            "can't mul bindings of types `{}` and `{}`",
+            "?", "?"
+        ));
 
         use Val::*;
         match self {
@@ -127,7 +136,10 @@ impl<'a, 'b> Div<&'b Val> for &'a Val {
     type Output = Result<Val, String>;
 
     fn div(self, other: &'b Val) -> Self::Output {
-        let err = Err(format!("can't div bindings of types `{}` and `{}`", "?", "?"));
+        let err = Err(format!(
+            "can't div bindings of types `{}` and `{}`",
+            "?", "?"
+        ));
 
         use Val::*;
         match self {

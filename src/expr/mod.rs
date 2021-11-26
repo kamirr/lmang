@@ -1,15 +1,17 @@
-pub mod block;
 pub mod binding_usage;
+pub mod block;
 pub mod break_expr;
 pub mod if_expr;
+pub mod loop_expr;
 
+use crate::env::Env;
 use crate::utils;
 use crate::val::Val;
-use crate::env::Env;
 use binding_usage::BindingUsage;
 use block::Block;
 use break_expr::Break;
 use if_expr::If;
+use loop_expr::Loop;
 
 #[derive(Debug, PartialEq)]
 pub struct Number(pub i32);
@@ -41,17 +43,21 @@ impl Op {
 
 #[derive(Debug, PartialEq)]
 pub enum Expr {
-    Operation { lhs: Box<Expr>, rhs: Box<Expr>, op: Op },
+    Operation {
+        lhs: Box<Expr>,
+        rhs: Box<Expr>,
+        op: Op,
+    },
     Number(Number),
     BindingUsage(BindingUsage),
     Block(Block),
     If(Box<If>),
-    Break(Box<Break>)
+    Break(Box<Break>),
+    Loop(Box<Loop>),
 }
 
 impl Expr {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
-        let s_orig = s;
         let (s, _) = utils::extract_whitespace(s);
 
         Self::new_operation(s)
@@ -63,6 +69,7 @@ impl Expr {
             .or_else(|_| Block::explicit(s).map(|(s, block)| (s, Self::Block(block))))
             .or_else(|_| If::new(s).map(|(s, if_e)| (s, Self::If(Box::new(if_e)))))
             .or_else(|_| Break::new(s).map(|(s, break_e)| (s, Self::Break(Box::new(break_e)))))
+            .or_else(|_| Loop::new(s).map(|(s, loop_e)| (s, Self::Loop(Box::new(loop_e)))))
     }
 
     fn new_operation(s: &str) -> Result<(&str, Self), String> {
@@ -81,7 +88,11 @@ impl Expr {
                 }
             }
 
-            let c = s.chars().skip(op_c_idx).next().ok_or("unexpected eof".to_string())?;
+            let c = s
+                .chars()
+                .skip(op_c_idx)
+                .next()
+                .ok_or("unexpected eof".to_string())?;
 
             op_b_idx += c.len_utf8();
             op_c_idx += 1;
@@ -91,7 +102,7 @@ impl Expr {
         let (sub, _) = utils::extract_whitespace(sub);
 
         if sub.len() > 0 {
-            return Err("malformed operation".to_string())
+            return Err("malformed operation".to_string());
         }
 
         let s = &s[op_b_idx..];
@@ -101,7 +112,14 @@ impl Expr {
 
         let (s, rhs) = Expr::new(s)?;
 
-        Ok((s, Self::Operation { lhs: Box::new(lhs), rhs: Box::new(rhs), op }))
+        Ok((
+            s,
+            Self::Operation {
+                lhs: Box::new(lhs),
+                rhs: Box::new(rhs),
+                op,
+            },
+        ))
     }
 
     fn new_number(s: &str) -> Result<(&str, Self), String> {
@@ -121,11 +139,12 @@ impl Expr {
                     Op::Mul => lhs * rhs,
                     Op::Div => lhs / rhs,
                 }
-            },
+            }
             Self::BindingUsage(bu) => bu.eval(env),
             Self::Block(block) => block.eval(env),
             Self::If(if_e) => if_e.eval(env),
             Self::Break(break_e) => break_e.eval(env),
+            Self::Loop(loop_e) => loop_e.eval(env),
         }
     }
 }

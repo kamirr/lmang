@@ -8,9 +8,11 @@ pub struct Env {
 
 impl Env {
     pub fn new() -> Self {
-        Env { ..Default::default() }
+        Env {
+            ..Default::default()
+        }
     }
-    
+
     pub fn store_binding(&mut self, name: String, val: Val) {
         self.bindings.insert(name, val);
     }

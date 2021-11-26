@@ -1,17 +1,14 @@
-use crate::expr::{
-    block::Block,
-    Expr,
-};
-use crate::utils;
 use crate::env::Env;
+use crate::expr::{block::Block, Expr};
+use crate::utils;
 use crate::val::Val;
 
 #[derive(Debug, PartialEq)]
 pub struct If {
-    cond: Expr,
-    body: Block,
-    elifs: Vec<(Expr, Block)>,
-    body_else: Option<Block>,
+    pub cond: Expr,
+    pub body: Block,
+    pub elifs: Vec<(Expr, Block)>,
+    pub body_else: Option<Block>,
 }
 
 impl If {
@@ -61,12 +58,15 @@ impl If {
             Ok((s, Some(body_else)))
         }()?;
 
-        Ok((s, Self {
-            cond,
-            body,
-            elifs,
-            body_else,
-        }))
+        Ok((
+            s,
+            Self {
+                cond,
+                body,
+                elifs,
+                body_else,
+            },
+        ))
     }
 
     pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
@@ -92,24 +92,25 @@ mod tests {
     use super::*;
     use crate::expr::{binding_usage::BindingUsage, Number, Op};
     use crate::stmt::Stmt;
-    use crate::binding_def::BindingDef;
     use crate::val::Val;
 
     #[test]
     fn parse_if() {
         assert_eq!(
-            If::new("
+            If::new(
+                "
                 ❓ a
                     9
-                🧑‍🦲"),
+                🧑‍🦲"
+            ),
             Ok((
                 "",
                 If {
-                    cond: Expr::BindingUsage(BindingUsage{name: "a".to_string()}),
+                    cond: Expr::BindingUsage(BindingUsage {
+                        name: "a".to_string()
+                    }),
                     body: Block {
-                        stmts: vec![
-                            Stmt::Expr(Expr::Number(Number(9)))
-                        ]
+                        stmts: vec![Stmt::Expr(Expr::Number(Number(9)))]
                     },
                     elifs: Vec::new(),
                     body_else: None,
@@ -121,26 +122,26 @@ mod tests {
     #[test]
     fn parse_if_else() {
         assert_eq!(
-            If::new("
+            If::new(
+                "
                 ❓ a
                     9
                 🧑‍🦲 😡
                     0
-                🧑‍🦲"),
+                🧑‍🦲"
+            ),
             Ok((
                 "",
                 If {
-                    cond: Expr::BindingUsage(BindingUsage{name: "a".to_string()}),
+                    cond: Expr::BindingUsage(BindingUsage {
+                        name: "a".to_string()
+                    }),
                     body: Block {
-                        stmts: vec![
-                            Stmt::Expr(Expr::Number(Number(9)))
-                        ]
+                        stmts: vec![Stmt::Expr(Expr::Number(Number(9)))]
                     },
                     elifs: Vec::new(),
                     body_else: Some(Block {
-                        stmts: vec![
-                            Stmt::Expr(Expr::Number(Number(0)))
-                        ]
+                        stmts: vec![Stmt::Expr(Expr::Number(Number(0)))]
                     })
                 },
             )),
@@ -150,35 +151,35 @@ mod tests {
     #[test]
     fn parse_if_elif() {
         assert_eq!(
-            If::new("
+            If::new(
+                "
                 ❓ a
                     10
                 🧑‍🦲 😠 a - 1
                     20
-                🧑‍🦲"),
+                🧑‍🦲"
+            ),
             Ok((
                 "",
                 If {
-                    cond: Expr::BindingUsage(BindingUsage{name: "a".to_string()}),
+                    cond: Expr::BindingUsage(BindingUsage {
+                        name: "a".to_string()
+                    }),
                     body: Block {
-                        stmts: vec![
-                            Stmt::Expr(Expr::Number(Number(10)))
-                        ]
+                        stmts: vec![Stmt::Expr(Expr::Number(Number(10)))]
                     },
-                    elifs: vec![
-                        (
-                            Expr::Operation {
-                                lhs: Box::new(Expr::BindingUsage(BindingUsage{name: "a".to_string()})),
-                                rhs: Box::new(Expr::Number(Number(1))),
-                                op: Op::Sub,
-                            },
-                            Block {
-                                stmts: vec![
-                                    Stmt::Expr(Expr::Number(Number(20)))
-                                ]
-                            }
-                        )
-                    ],
+                    elifs: vec![(
+                        Expr::Operation {
+                            lhs: Box::new(Expr::BindingUsage(BindingUsage {
+                                name: "a".to_string()
+                            })),
+                            rhs: Box::new(Expr::Number(Number(1))),
+                            op: Op::Sub,
+                        },
+                        Block {
+                            stmts: vec![Stmt::Expr(Expr::Number(Number(20)))]
+                        }
+                    )],
                     body_else: None,
                 },
             )),
@@ -188,41 +189,39 @@ mod tests {
     #[test]
     fn parse_if_elif_else() {
         assert_eq!(
-            If::new("
+            If::new(
+                "
                 ❓ a
                     10
                 🧑‍🦲 😠 a - 1
                     20
                 🧑‍🦲 😡
                     30
-                🧑‍🦲"),
+                🧑‍🦲"
+            ),
             Ok((
                 "",
                 If {
-                    cond: Expr::BindingUsage(BindingUsage{name: "a".to_string()}),
+                    cond: Expr::BindingUsage(BindingUsage {
+                        name: "a".to_string()
+                    }),
                     body: Block {
-                        stmts: vec![
-                            Stmt::Expr(Expr::Number(Number(10)))
-                        ]
+                        stmts: vec![Stmt::Expr(Expr::Number(Number(10)))]
                     },
-                    elifs: vec![
-                        (
-                            Expr::Operation {
-                                lhs: Box::new(Expr::BindingUsage(BindingUsage{name: "a".to_string()})),
-                                rhs: Box::new(Expr::Number(Number(1))),
-                                op: Op::Sub,
-                            },
-                            Block {
-                                stmts: vec![
-                                    Stmt::Expr(Expr::Number(Number(20)))
-                                ]
-                            }
-                        )
-                    ],
-                    body_else: Some(Block{
-                        stmts: vec![
-                            Stmt::Expr(Expr::Number(Number(30)))
-                        ]
+                    elifs: vec![(
+                        Expr::Operation {
+                            lhs: Box::new(Expr::BindingUsage(BindingUsage {
+                                name: "a".to_string()
+                            })),
+                            rhs: Box::new(Expr::Number(Number(1))),
+                            op: Op::Sub,
+                        },
+                        Block {
+                            stmts: vec![Stmt::Expr(Expr::Number(Number(20)))]
+                        }
+                    )],
+                    body_else: Some(Block {
+                        stmts: vec![Stmt::Expr(Expr::Number(Number(30)))]
                     }),
                 },
             )),
@@ -231,14 +230,17 @@ mod tests {
 
     #[test]
     fn eval_if() {
-        let (_, if_e) = If::new("
+        let (_, if_e) = If::new(
+            "
             ❓ a
                 let b = 2 💪
                 let c = 3 💪
 
                 b + c
             🧑‍🦲
-        ").unwrap();
+        ",
+        )
+        .unwrap();
 
         let mut env = Env::new();
 
@@ -253,7 +255,8 @@ mod tests {
 
     #[test]
     fn eval_if_else() {
-        let (_, if_e) = If::new("
+        let (_, if_e) = If::new(
+            "
             ❓ a
                 let x = 2 💪
 
@@ -263,7 +266,9 @@ mod tests {
 
                 a
             🧑‍🦲
-        ").unwrap();
+        ",
+        )
+        .unwrap();
 
         let mut env = Env::new();
 
@@ -278,7 +283,8 @@ mod tests {
 
     #[test]
     fn eval_if_elif_x3_else() {
-        let (_, if_e) = If::new("
+        let (_, if_e) = If::new(
+            "
             ❓ a
                 a
             🧑‍🦲 😠 a + 1
@@ -290,11 +296,21 @@ mod tests {
             🧑‍🦲 😡
                 0-999
             🧑‍🦲
-        ").unwrap();
+        ",
+        )
+        .unwrap();
 
         let mut env = Env::new();
 
-        let results = [(100, 100), (3, 3), (0, 0), (-1, -1), (-2, -2), (-3, -999), (-20, -999)];
+        let results = [
+            (100, 100),
+            (3, 3),
+            (0, 0),
+            (-1, -1),
+            (-2, -2),
+            (-3, -999),
+            (-20, -999),
+        ];
 
         for (if_in, if_out) in results {
             env.store_binding("a".to_string(), Val::Number(if_in));

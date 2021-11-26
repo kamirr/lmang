@@ -1,7 +1,7 @@
 use crate::binding_def::BindingDef;
+use crate::env::Env;
 use crate::expr::Expr;
 use crate::val::Val;
-use crate::env::Env;
 
 #[derive(Debug, PartialEq)]
 pub enum Stmt {

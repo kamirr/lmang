@@ -1,7 +1,7 @@
 use crate::env::Env;
-use crate::val::Val;
 use crate::stmt::Stmt;
 use crate::utils;
+use crate::val::Val;
 
 #[derive(Debug, PartialEq)]
 pub struct Block {
@@ -22,7 +22,7 @@ impl Block {
             Ok(sub) => sub,
             Err(_) => s,
         };
-        
+
         Self::strong_implicit(s)
     }
 
@@ -59,7 +59,7 @@ impl Block {
         if len == 0 {
             Ok(Val::Unit)
         } else {
-            for stmt in &self.stmts[0..len-1] {
+            for stmt in &self.stmts[0..len - 1] {
                 let intermediate = stmt.eval(env)?;
                 if let Val::Break(_) = &intermediate {
                     return Ok(intermediate);
@@ -79,9 +79,18 @@ mod tests {
 
     #[test]
     fn parse_empty_block() {
-        assert_eq!(Block::implicit("🧑‍🦲"), Ok(("", Block { stmts: Vec::new() })));
-        assert_eq!(Block::implicit("📦 🧑‍🦲"), Ok(("", Block { stmts: Vec::new() })));
-        assert_eq!(Block::explicit("📦🧑‍🦲"), Ok(("", Block { stmts: Vec::new() })));
+        assert_eq!(
+            Block::implicit("🧑‍🦲"),
+            Ok(("", Block { stmts: Vec::new() }))
+        );
+        assert_eq!(
+            Block::implicit("📦 🧑‍🦲"),
+            Ok(("", Block { stmts: Vec::new() }))
+        );
+        assert_eq!(
+            Block::explicit("📦🧑‍🦲"),
+            Ok(("", Block { stmts: Vec::new() }))
+        );
     }
 
     #[test]
@@ -94,7 +103,14 @@ mod tests {
     #[test]
     fn parse_block_with_one_stmt() {
         let blocks = [Block::explicit("📦5🧑‍🦲"), Block::implicit("2*2🧑‍🦲")];
-        let res_exprs = [Expr::Number(Number(5)), Expr::Operation{lhs: Box::new(Expr::Number(Number(2))), rhs: Box::new(Expr::Number(Number(2))), op: Op::Mul}];
+        let res_exprs = [
+            Expr::Number(Number(5)),
+            Expr::Operation {
+                lhs: Box::new(Expr::Number(Number(2))),
+                rhs: Box::new(Expr::Number(Number(2))),
+                op: Op::Mul,
+            },
+        ];
 
         for (block, res_expr) in blocks.into_iter().zip(res_exprs.into_iter()) {
             assert_eq!(
@@ -111,12 +127,14 @@ mod tests {
 
     #[test]
     fn parse_block_many_stmts() {
-        let block = Block::explicit("📦
+        let block = Block::explicit(
+            "📦
             let a = 10💪
             let b = a 💪
             
             b
-        🧑‍🦲");
+        🧑‍🦲",
+        );
 
         let expected = Block {
             stmts: vec![
@@ -161,12 +179,15 @@ mod tests {
 
     #[test]
     fn eval_block_many_stmts() {
-        let (_, block) = Block::implicit("
+        let (_, block) = Block::implicit(
+            "
             let a = 2 * 2💪
             let b = a * 2💪
 
             b + a
-        🧑‍🦲").unwrap();
+        🧑‍🦲",
+        )
+        .unwrap();
 
         let mut env = Env::new();
         let value = block.eval(&mut env);

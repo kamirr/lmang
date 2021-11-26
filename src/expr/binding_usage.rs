@@ -1,5 +1,5 @@
-use crate::utils;
 use crate::env::Env;
+use crate::utils;
 use crate::val::Val;
 
 #[derive(Debug, PartialEq)]

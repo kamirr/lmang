@@ -1,14 +1,11 @@
-use crate::expr::{
-    block::Block,
-    Expr,
-};
 use crate::env::Env;
-use crate::val::Val;
+use crate::expr::block::Block;
 use crate::utils;
+use crate::val::Val;
 
 #[derive(Debug, PartialEq)]
 pub struct Break {
-    body: Block,
+    pub body: Block,
 }
 
 impl Break {
@@ -29,18 +26,17 @@ impl Break {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{Number, BindingUsage, Op};
+    use crate::expr::{BindingUsage, Expr, Number, Op};
     use crate::stmt::Stmt;
 
     #[test]
     fn parse_empty_break() {
-        let cases = [
-            "break 🧑‍🦲",
-            "break 📦 🧑‍🦲",
-        ];
+        let cases = ["break 🧑‍🦲", "break 📦 🧑‍🦲"];
 
         for case in cases {
-            let expected = Break{body: Block{stmts: Vec::new() }, };
+            let expected = Break {
+                body: Block { stmts: Vec::new() },
+            };
             assert_eq!(Break::new(case), Ok(("", expected)));
         }
     }
@@ -50,21 +46,25 @@ mod tests {
         let cases = [
             (
                 "break 🚀 🧑‍🦲",
-                Break{body: Block { stmts: vec![Stmt::Expr(Expr::BindingUsage(
-                    BindingUsage { name: "🚀".to_string() }
-                ))] }, },
+                Break {
+                    body: Block {
+                        stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                            name: "🚀".to_string(),
+                        }))],
+                    },
+                },
             ),
             (
                 "break 📦 a / 2 🧑‍🦲",
-                Break{
+                Break {
                     body: Block {
-                        stmts: vec![
-                            Stmt::Expr(Expr::Operation {
-                                lhs: Box::new(Expr::BindingUsage(BindingUsage{ name: "a".to_string() })),
-                                rhs: Box::new(Expr::Number(Number(2))),
-                                op: Op::Div,
-                            })
-                        ]
+                        stmts: vec![Stmt::Expr(Expr::Operation {
+                            lhs: Box::new(Expr::BindingUsage(BindingUsage {
+                                name: "a".to_string(),
+                            })),
+                            rhs: Box::new(Expr::Number(Number(2))),
+                            op: Op::Div,
+                        })],
                     },
                 },
             ),
@@ -85,7 +85,7 @@ mod tests {
 
                 0 - 🅱️
             🧑‍🦲";
-        
+
         let mut env = Env::new();
         let (_, stmt) = Stmt::new(input).unwrap();
 
