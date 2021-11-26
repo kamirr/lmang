@@ -1,7 +1,7 @@
 pub mod kwords {
     pub const BLOCK_OPEN: &'static str = "📦";
     pub const BLOCK_CLOSE: &'static str = "🧑‍🦲";
-    pub const STMT_SEP: &'static str = "💪";
+    pub const EXPR_SEP: &'static str = "💪";
 
     pub const IF: &'static str = "❓";
     pub const ELIF: &'static str = "😠";
@@ -33,7 +33,7 @@ pub mod kwords {
     pub const ALL: [&'static str; 24] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
-        STMT_SEP,
+        EXPR_SEP,
         IF,
         ELIF,
         ELSE,

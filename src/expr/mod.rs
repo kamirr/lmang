@@ -1,3 +1,4 @@
+pub mod binding_update;
 pub mod binding_usage;
 pub mod block;
 pub mod break_expr;
@@ -9,6 +10,7 @@ pub mod loop_expr;
 use crate::env::{Env, Eval};
 use crate::utils::{self, kwords};
 use crate::val::Val;
+use binding_update::BindingUpdate;
 use binding_usage::BindingUsage;
 use block::Block;
 use break_expr::Break;
@@ -63,6 +65,7 @@ pub enum Expr {
         op: Op,
     },
     Number(Number),
+    BindingUpdate(Box<BindingUpdate>),
     BindingUsage(BindingUsage),
     Block(Block),
     If(Box<If>),
@@ -76,7 +79,9 @@ impl Expr {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
 
-        Self::new_operation(s)
+        BindingUpdate::new(s)
+            .map(|(s, update)| (s, Self::BindingUpdate(Box::new(update))))
+            .or_else(|_| Self::new_operation(s))
             .or_else(|_| Block::explicit(s).map(|(s, block)| (s, Self::Block(block))))
             .or_else(|_| If::new(s).map(|(s, if_e)| (s, Self::If(Box::new(if_e)))))
             .or_else(|_| Break::new(s).map(|(s, break_e)| (s, Self::Break(Box::new(break_e)))))
@@ -86,7 +91,7 @@ impl Expr {
             .or_else(|_| Self::new_number(s))
             .or_else(|_| {
                 BindingUsage::new(s)
-                    .map(|(s, binding_usage)| (s, Self::BindingUsage(binding_usage)))
+                    .map(|(s, usage)| (s, Self::BindingUsage(usage)))
             })
     }
 
@@ -159,6 +164,7 @@ impl Eval for Expr {
                     Op::Less => lhs.try_lt(&rhs),
                 }
             }
+            Self::BindingUpdate(bu) => env.eval(bu.as_ref()),
             Self::BindingUsage(bu) => env.eval(bu),
             Self::Block(block) => env.eval(block),
             Self::If(if_e) => env.eval(if_e.as_ref()),
@@ -173,7 +179,6 @@ impl Eval for Expr {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::stmt::Stmt;
 
     #[test]
     fn parse_number() {
@@ -336,7 +341,7 @@ mod tests {
             Ok((
                 "",
                 Expr::Block(Block {
-                    stmts: vec![Stmt::Expr(Expr::Number(Number(200)))],
+                    exprs: vec![Expr::Number(Number(200))],
                 }),
             )),
         );

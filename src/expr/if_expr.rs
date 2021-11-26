@@ -93,7 +93,6 @@ impl Eval for If {
 mod tests {
     use super::*;
     use crate::expr::{binding_usage::BindingUsage, Number, Op};
-    use crate::stmt::Stmt;
     use crate::val::Val;
 
     #[test]
@@ -116,7 +115,7 @@ mod tests {
                         op: Op::Greater
                     },
                     body: Block {
-                        stmts: vec![Stmt::Expr(Expr::Number(Number(9)))]
+                        exprs: vec![Expr::Number(Number(9))]
                     },
                     elifs: Vec::new(),
                     body_else: None,
@@ -147,11 +146,11 @@ mod tests {
                         op: Op::Greater
                     },
                     body: Block {
-                        stmts: vec![Stmt::Expr(Expr::Number(Number(9)))]
+                        exprs: vec![Expr::Number(Number(9))]
                     },
                     elifs: Vec::new(),
                     body_else: Some(Block {
-                        stmts: vec![Stmt::Expr(Expr::Number(Number(0)))]
+                        exprs: vec![Expr::Number(Number(0))]
                     })
                 },
             )),
@@ -180,7 +179,7 @@ mod tests {
                         op: Op::Greater
                     },
                     body: Block {
-                        stmts: vec![Stmt::Expr(Expr::Number(Number(10)))]
+                        exprs: vec![Expr::Number(Number(10))]
                     },
                     elifs: vec![(
                         Expr::Operation {
@@ -191,7 +190,7 @@ mod tests {
                             op: Op::Greater
                         },
                         Block {
-                            stmts: vec![Stmt::Expr(Expr::Number(Number(20)))]
+                            exprs: vec![Expr::Number(Number(20))]
                         }
                     )],
                     body_else: None,
@@ -224,7 +223,7 @@ mod tests {
                         op: Op::Greater
                     },
                     body: Block {
-                        stmts: vec![Stmt::Expr(Expr::Number(Number(10)))]
+                        exprs: vec![Expr::Number(Number(10))]
                     },
                     elifs: vec![(
                         Expr::Operation {
@@ -235,11 +234,11 @@ mod tests {
                             op: Op::Greater
                         },
                         Block {
-                            stmts: vec![Stmt::Expr(Expr::Number(Number(20)))]
+                            exprs: vec![Expr::Number(Number(20))]
                         }
                     )],
                     body_else: Some(Block {
-                        stmts: vec![Stmt::Expr(Expr::Number(Number(30)))]
+                        exprs: vec![Expr::Number(Number(30))]
                     }),
                 },
             )),

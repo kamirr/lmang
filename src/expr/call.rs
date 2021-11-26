@@ -52,7 +52,6 @@ impl Eval for Call {
 mod tests {
     use super::*;
     use crate::expr::{binding_usage::BindingUsage, Expr, Number};
-    use crate::stmt::Stmt;
 
     #[test]
     fn parse_call() {
@@ -101,7 +100,7 @@ mod tests {
 
     #[test]
     fn eval_call_fib() {
-        let (_, stmt_e) = Stmt::new(
+        let (_, expr_e) = Expr::new(
             "📦
                 👶 🖩 = 🧰 #️⃣ ➡️
                     ❓ #️⃣ < 2
@@ -132,7 +131,7 @@ mod tests {
         let mut env = Env::test();
         for (arg, fib) in cases.iter() {
             env.store_binding("💾".to_string(), Val::Number(*arg));
-            let result = env.eval(&stmt_e);
+            let result = env.eval(&expr_e);
             assert_eq!(result, Ok(Val::Number(*fib)));
         }
     }

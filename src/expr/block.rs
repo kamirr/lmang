@@ -1,11 +1,11 @@
 use crate::env::{Env, Eval};
-use crate::stmt::Stmt;
+use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Block {
-    pub stmts: Vec<Stmt>,
+    pub exprs: Vec<Expr>,
 }
 
 impl Block {
@@ -30,15 +30,15 @@ impl Block {
         let (s, _) = utils::extract_whitespace(s);
 
         let mut s = s;
-        let mut stmts = Vec::new();
+        let mut exprs = Vec::new();
 
-        while let Ok((new_s, stmt)) = Stmt::new(s) {
-            stmts.push(stmt);
+        while let Ok((new_s, expr)) = Expr::new(s) {
+            exprs.push(expr);
 
             let (new_s, _) = utils::extract_whitespace(new_s);
             s = new_s;
 
-            s = match utils::tag(kwords::STMT_SEP, s) {
+            s = match utils::tag(kwords::EXPR_SEP, s) {
                 Ok(new_s) => new_s,
                 Err(_) => break,
             };
@@ -50,47 +50,46 @@ impl Block {
 
         let s = utils::tag(kwords::BLOCK_CLOSE, s)?;
 
-        Ok((s, Block { stmts }))
+        Ok((s, Block { exprs }))
     }
 }
 impl Eval for Block {
     fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        let len = self.stmts.len();
+        let len = self.exprs.len();
 
         if len == 0 {
             Ok(Val::Unit)
         } else {
-            for stmt in &self.stmts[0..len - 1] {
-                let intermediate = env.eval(stmt)?;
+            for expr in &self.exprs[0..len - 1] {
+                let intermediate = env.eval(expr)?;
                 if let Val::Break(_) = &intermediate {
                     return Ok(intermediate);
                 }
             }
 
-            env.eval(&self.stmts[len - 1])
+            env.eval(&self.exprs[len - 1])
         }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::super::{BindingUsage, Expr, Number, Op};
     use super::*;
-    use crate::binding_update::BindingUpdate;
+    use crate::expr::{binding_update::BindingUpdate, binding_usage::BindingUsage, Expr, Number, Op};
 
     #[test]
     fn parse_empty_block() {
         assert_eq!(
             Block::implicit("🧑‍🦲"),
-            Ok(("", Block { stmts: Vec::new() }))
+            Ok(("", Block { exprs: Vec::new() }))
         );
         assert_eq!(
             Block::implicit("📦 🧑‍🦲"),
-            Ok(("", Block { stmts: Vec::new() }))
+            Ok(("", Block { exprs: Vec::new() }))
         );
         assert_eq!(
             Block::explicit("📦🧑‍🦲"),
-            Ok(("", Block { stmts: Vec::new() }))
+            Ok(("", Block { exprs: Vec::new() }))
         );
     }
 
@@ -108,7 +107,7 @@ mod tests {
             Ok((
                 "",
                 Block {
-                    stmts: vec![Stmt::Expr(Expr::Block(Block { stmts: Vec::new() }))]
+                    exprs: vec![Expr::Block(Block { exprs: Vec::new() })]
                 }
             ))
         );
@@ -117,16 +116,16 @@ mod tests {
             Ok((
                 "",
                 Block {
-                    stmts: vec![Stmt::Expr(Expr::Block(Block {
-                        stmts: vec![Stmt::Expr(Expr::Block(Block { stmts: Vec::new() }))],
-                    }))]
+                    exprs: vec![Expr::Block(Block {
+                        exprs: vec![Expr::Block(Block { exprs: Vec::new() })],
+                    })]
                 }
             ))
         );
     }
 
     #[test]
-    fn parse_block_with_one_stmt() {
+    fn parse_block_with_one_expr() {
         let blocks = [Block::explicit("📦5🧑‍🦲"), Block::implicit("2*2🧑‍🦲")];
         let res_exprs = [
             Expr::Number(Number(5)),
@@ -143,7 +142,7 @@ mod tests {
                 Ok((
                     "",
                     Block {
-                        stmts: vec![Stmt::Expr(res_expr)],
+                        exprs: vec![res_expr],
                     },
                 )),
             );
@@ -151,7 +150,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_block_many_stmts() {
+    fn parse_block_many_exprs() {
         let block = Block::explicit(
             "📦
             👶 a = 10💪
@@ -162,22 +161,22 @@ mod tests {
         );
 
         let expected = Block {
-            stmts: vec![
-                Stmt::BindingUpdate(BindingUpdate {
+            exprs: vec![
+                Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Number(Number(10)),
                     set: false,
-                }),
-                Stmt::BindingUpdate(BindingUpdate {
+                })),
+                Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "b".to_string(),
                     val: Expr::BindingUsage(BindingUsage {
                         name: "a".to_string(),
                     }),
                     set: false,
-                }),
-                Stmt::Expr(Expr::BindingUsage(BindingUsage {
-                    name: "b".to_string(),
                 })),
+                Expr::BindingUsage(BindingUsage {
+                    name: "b".to_string(),
+                }),
             ],
         };
 
@@ -189,21 +188,21 @@ mod tests {
         let block = Block::explicit("📦📦📦a🧑‍🦲 + 📦b🧑‍🦲🧑‍🦲🧑‍🦲");
 
         let expected = Block {
-            stmts: vec![Stmt::Expr(Expr::Block(Block {
-                stmts: vec![Stmt::Expr(Expr::Operation {
+            exprs: vec![Expr::Block(Block {
+                exprs: vec![Expr::Operation {
                     lhs: Box::new(Expr::Block(Block {
-                        stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                        exprs: vec![Expr::BindingUsage(BindingUsage {
                             name: "a".into(),
-                        }))],
+                        })],
                     })),
                     rhs: Box::new(Expr::Block(Block {
-                        stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                        exprs: vec![Expr::BindingUsage(BindingUsage {
                             name: "b".into(),
-                        }))],
+                        })],
                     })),
                     op: Op::Add,
-                })],
-            }))],
+                }],
+            })],
         };
 
         assert_eq!(block, Ok(("", expected)));
@@ -211,21 +210,21 @@ mod tests {
 
     #[test]
     fn parse_block_sum() {
-        let block = Stmt::new("📦a🧑‍🦲 + 📦b🧑‍🦲");
+        let block = Expr::new("📦a🧑‍🦲 + 📦b🧑‍🦲");
 
-        let expected = Stmt::Expr(Expr::Operation {
+        let expected = Expr::Operation {
             lhs: Box::new(Expr::Block(Block {
-                stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                exprs: vec![Expr::BindingUsage(BindingUsage {
                     name: "a".into(),
-                }))],
+                })],
             })),
             rhs: Box::new(Expr::Block(Block {
-                stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                exprs: vec![Expr::BindingUsage(BindingUsage {
                     name: "b".into(),
-                }))],
+                })],
             })),
             op: Op::Add,
-        });
+        };
 
         assert_eq!(block, Ok(("", expected)));
     }
@@ -241,7 +240,7 @@ mod tests {
     }
 
     #[test]
-    fn eval_block_one_stmt() {
+    fn eval_block_one_expr() {
         let (_, block) = Block::implicit("📦44🧑‍🦲").unwrap();
 
         let mut env = Env::test();
@@ -251,7 +250,7 @@ mod tests {
     }
 
     #[test]
-    fn eval_block_many_stmts() {
+    fn eval_block_many_exprs() {
         let (_, block) = Block::implicit(
             "
             👶 a = 2 * 2💪

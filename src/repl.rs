@@ -1,6 +1,6 @@
 use std::io::BufRead;
 
-use lmang_lib::{env::Env, stmt::Stmt};
+use lmang_lib::{env::Env, expr::Expr};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();
@@ -14,18 +14,18 @@ fn main() -> Result<(), String> {
         if line.trim().len() != 0 {
             if input.len() > 0 {
                 input.push_str(&line);
-                match Stmt::new(&input[..]) {
-                    Ok((_, stmt)) => {
-                        let res = env.eval(&stmt)?;
+                match Expr::new(&input[..]) {
+                    Ok((_, expr)) => {
+                        let res = env.eval(&expr)?;
                         println!("{:?}", res);
                         input.clear();
                     }
                     Err(_) => continue,
                 }
             } else {
-                match Stmt::new(&line[..]) {
-                    Ok((_, stmt)) => {
-                        let res = env.eval(&stmt);
+                match Expr::new(&line[..]) {
+                    Ok((_, expr)) => {
+                        let res = env.eval(&expr);
                         println!("{:?}", res);
                     }
                     Err(_) => {
@@ -34,14 +34,14 @@ fn main() -> Result<(), String> {
                 }
             }
         } else {
-            let stmt = match Stmt::new(&input[..]) {
-                Ok((_, stmt)) => stmt,
+            let expr = match Expr::new(&input[..]) {
+                Ok((_, expr)) => expr,
                 Err(e) => {
                     println!("{}", e);
                     continue;
                 }
             };
-            let res = env.eval(&stmt)?;
+            let res = env.eval(&expr)?;
             println!("{:?}", res);
 
             input.clear();

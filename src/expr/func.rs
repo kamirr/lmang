@@ -48,9 +48,7 @@ impl Eval for Func {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::binding_update::BindingUpdate;
-    use crate::expr::{binding_usage::BindingUsage, Expr, Op};
-    use crate::stmt::Stmt;
+    use crate::expr::{binding_usage::BindingUsage, binding_update::BindingUpdate, Expr, Op};
 
     #[test]
     fn func_parse_id() {
@@ -58,9 +56,9 @@ mod tests {
         let expected = Func {
             args: vec![Arg("a".to_string())],
             body: Block {
-                stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                exprs: vec![Expr::BindingUsage(BindingUsage {
                     name: "a".to_string(),
-                }))],
+                })],
             },
         };
 
@@ -73,7 +71,7 @@ mod tests {
         let expected = Func {
             args: vec![Arg("a".to_string()), Arg("b".to_string())],
             body: Block {
-                stmts: vec![Stmt::Expr(Expr::Operation {
+                exprs: vec![Expr::Operation {
                     lhs: Box::new(Expr::BindingUsage(BindingUsage {
                         name: "a".to_string(),
                     })),
@@ -81,7 +79,7 @@ mod tests {
                         name: "b".to_string(),
                     })),
                     op: Op::Add,
-                })],
+                }],
             },
         };
 
@@ -90,28 +88,28 @@ mod tests {
 
     #[test]
     fn func_parse_id_in_block() {
-        let stmt = Stmt::new("📦 👶 id = 🧰 a ➡️ a 🧑‍🦲 💪 id 🧑‍🦲");
-        let expected = Stmt::Expr(Expr::Block(Block {
-            stmts: vec![
-                Stmt::BindingUpdate(BindingUpdate {
+        let expr = Expr::new("📦 👶 id = 🧰 a ➡️ a 🧑‍🦲 💪 id 🧑‍🦲");
+        let expected = Expr::Block(Block {
+            exprs: vec![
+                Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "id".to_string(),
                     val: Expr::Func(Box::new(Func {
                         args: vec![Arg("a".to_string())],
                         body: Block {
-                            stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                            exprs: vec![Expr::BindingUsage(BindingUsage {
                                 name: "a".to_string(),
-                            }))],
+                            })],
                         },
                     })),
                     set: false,
-                }),
-                Stmt::Expr(Expr::BindingUsage(BindingUsage {
-                    name: "id".to_string(),
                 })),
+                Expr::BindingUsage(BindingUsage {
+                    name: "id".to_string(),
+                }),
             ],
-        }));
+        });
 
-        assert_eq!(stmt, Ok(("", expected)));
+        assert_eq!(expr, Ok(("", expected)));
     }
 
     #[test]
@@ -120,9 +118,9 @@ mod tests {
         let expected = Func {
             args: vec![Arg("a".to_string())],
             body: Block {
-                stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                exprs: vec![Expr::BindingUsage(BindingUsage {
                     name: "a".to_string(),
-                }))],
+                })],
             },
         };
 
@@ -134,7 +132,7 @@ mod tests {
 
     #[test]
     fn func_var_shadowing() {
-        let (_, func_def) = Stmt::new(
+        let (_, func_def) = Expr::new(
             "👶 f = 🧰 a ➡️
                 👶 b = 2  💪
                 set a = 1 💪
@@ -146,7 +144,7 @@ mod tests {
             🧑‍🦲",
         )
         .unwrap();
-        let (_, func_call) = Stmt::new("📞 f x").unwrap();
+        let (_, func_call) = Expr::new("📞 f x").unwrap();
 
         let mut env = Env::test();
         env.eval(&func_def).unwrap();

@@ -29,7 +29,6 @@ impl Eval for Break {
 mod tests {
     use super::*;
     use crate::expr::{BindingUsage, Expr, Number, Op};
-    use crate::stmt::Stmt;
 
     #[test]
     fn parse_empty_break() {
@@ -37,7 +36,7 @@ mod tests {
 
         for case in cases {
             let expected = Break {
-                body: Block { stmts: Vec::new() },
+                body: Block { exprs: Vec::new() },
             };
             assert_eq!(Break::new(case), Ok(("", expected)));
         }
@@ -50,9 +49,9 @@ mod tests {
                 "💔 🚀 🧑‍🦲",
                 Break {
                     body: Block {
-                        stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                        exprs: vec![Expr::BindingUsage(BindingUsage {
                             name: "🚀".to_string(),
-                        }))],
+                        })],
                     },
                 },
             ),
@@ -60,13 +59,13 @@ mod tests {
                 "💔 📦 a / 2 🧑‍🦲",
                 Break {
                     body: Block {
-                        stmts: vec![Stmt::Expr(Expr::Operation {
+                        exprs: vec![Expr::Operation {
                             lhs: Box::new(Expr::BindingUsage(BindingUsage {
                                 name: "a".to_string(),
                             })),
                             rhs: Box::new(Expr::Number(Number(2))),
                             op: Op::Div,
-                        })],
+                        }],
                     },
                 },
             ),
@@ -82,9 +81,9 @@ mod tests {
         let input = "💔 🧑‍🦲";
 
         let mut env = Env::test();
-        let (_, stmt) = Stmt::new(input).unwrap();
+        let (_, expr) = Expr::new(input).unwrap();
 
-        let result = env.eval(&stmt);
+        let result = env.eval(&expr);
         let expected = Ok(Val::Break(Box::new(Val::Unit)));
 
         assert_eq!(result, expected);
@@ -95,9 +94,9 @@ mod tests {
         let input = "👶 👩‍🚀 = 📦 💔 2 🧑‍🦲 🧑‍🦲";
 
         let mut env = Env::test();
-        let (_, stmt) = Stmt::new(input).unwrap();
+        let (_, expr) = Expr::new(input).unwrap();
 
-        let result = env.eval(&stmt);
+        let result = env.eval(&expr);
         let expected = Ok(Val::Break(Box::new(Val::Number(2))));
 
         assert_eq!(result, expected);
@@ -113,9 +112,9 @@ mod tests {
             🧑‍🦲";
 
         let mut env = Env::test();
-        let (_, stmt) = Stmt::new(input).unwrap();
+        let (_, expr) = Expr::new(input).unwrap();
 
-        let result = env.eval(&stmt);
+        let result = env.eval(&expr);
         assert_eq!(result, Ok(Val::Unit));
     }
 }

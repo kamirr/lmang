@@ -34,15 +34,13 @@ impl Eval for Loop {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::binding_update::BindingUpdate;
-    use crate::expr::{if_expr::If, BindingUsage, Break, Expr, Number, Op};
-    use crate::stmt::Stmt;
+    use crate::expr::{if_expr::If, BindingUsage, BindingUpdate, Break, Expr, Number, Op};
 
     #[test]
     fn parse_loop_empty() {
         let parse = Loop::new("🔁 🧑‍🦲");
         let expected = Loop {
-            body: Block { stmts: Vec::new() },
+            body: Block { exprs: Vec::new() },
         };
 
         assert_eq!(parse, Ok(("", expected)));
@@ -53,9 +51,9 @@ mod tests {
         let parse = Loop::new("🔁 💔 🧑‍🦲🧑‍🦲");
         let expected = Loop {
             body: Block {
-                stmts: vec![Stmt::Expr(Expr::Break(Box::new(Break {
-                    body: Block { stmts: Vec::new() },
-                })))],
+                exprs: vec![Expr::Break(Box::new(Break {
+                    body: Block { exprs: Vec::new() },
+                }))],
             },
         };
 
@@ -77,8 +75,8 @@ mod tests {
 
         let expected = Loop {
             body: Block {
-                stmts: vec![
-                    Stmt::Expr(Expr::If(Box::new(If {
+                exprs: vec![
+                    Expr::If(Box::new(If {
                         cond: Expr::Operation {
                             lhs: Box::new(Expr::Number(Number(0))),
                             rhs: Box::new(Expr::BindingUsage(BindingUsage {
@@ -87,18 +85,18 @@ mod tests {
                             op: Op::Sub,
                         },
                         body: Block {
-                            stmts: vec![Stmt::Expr(Expr::Break(Box::new(Break {
+                            exprs: vec![Expr::Break(Box::new(Break {
                                 body: Block {
-                                    stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                                    exprs: vec![Expr::BindingUsage(BindingUsage {
                                         name: "fact".to_string(),
-                                    }))],
+                                    })],
                                 },
-                            })))],
+                            }))],
                         },
                         elifs: Vec::new(),
                         body_else: None,
-                    }))),
-                    Stmt::BindingUpdate(BindingUpdate {
+                    })),
+                    Expr::BindingUpdate(Box::new(BindingUpdate {
                         name: "fact".to_string(),
                         val: Expr::Operation {
                             lhs: Box::new(Expr::BindingUsage(BindingUsage {
@@ -110,8 +108,8 @@ mod tests {
                             op: Op::Mul,
                         },
                         set: false,
-                    }),
-                    Stmt::BindingUpdate(BindingUpdate {
+                    })),
+                    Expr::BindingUpdate(Box::new(BindingUpdate {
                         name: "a".to_string(),
                         val: Expr::Operation {
                             lhs: Box::new(Expr::BindingUsage(BindingUsage {
@@ -121,7 +119,7 @@ mod tests {
                             op: Op::Sub,
                         },
                         set: false,
-                    }),
+                    })),
                 ],
             },
         };
@@ -148,21 +146,21 @@ mod tests {
         );
 
         let expected = Block {
-            stmts: vec![
-                Stmt::BindingUpdate(BindingUpdate {
+            exprs: vec![
+                Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "fact".to_string(),
                     val: Expr::Number(Number(1)),
                     set: false,
-                }),
-                Stmt::BindingUpdate(BindingUpdate {
+                })),
+                Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Number(Number(5)),
                     set: false,
-                }),
-                Stmt::Expr(Expr::Loop(Box::new(Loop {
+                })),
+                Expr::Loop(Box::new(Loop {
                     body: Block {
-                        stmts: vec![
-                            Stmt::Expr(Expr::If(Box::new(If {
+                        exprs: vec![
+                            Expr::If(Box::new(If {
                                 cond: Expr::Operation {
                                     lhs: Box::new(Expr::Number(Number(0))),
                                     rhs: Box::new(Expr::BindingUsage(BindingUsage {
@@ -171,20 +169,20 @@ mod tests {
                                     op: Op::Sub,
                                 },
                                 body: Block {
-                                    stmts: vec![Stmt::Expr(Expr::Break(Box::new(Break {
+                                    exprs: vec![Expr::Break(Box::new(Break {
                                         body: Block {
-                                            stmts: vec![Stmt::Expr(Expr::BindingUsage(
+                                            exprs: vec![Expr::BindingUsage(
                                                 BindingUsage {
                                                     name: "fact".to_string(),
                                                 },
-                                            ))],
+                                            )],
                                         },
-                                    })))],
+                                    }))],
                                 },
                                 elifs: Vec::new(),
                                 body_else: None,
-                            }))),
-                            Stmt::BindingUpdate(BindingUpdate {
+                            })),
+                            Expr::BindingUpdate(Box::new(BindingUpdate {
                                 name: "fact".to_string(),
                                 val: Expr::Operation {
                                     lhs: Box::new(Expr::BindingUsage(BindingUsage {
@@ -196,8 +194,8 @@ mod tests {
                                     op: Op::Mul,
                                 },
                                 set: true,
-                            }),
-                            Stmt::BindingUpdate(BindingUpdate {
+                            })),
+                            Expr::BindingUpdate(Box::new(BindingUpdate {
                                 name: "a".to_string(),
                                 val: Expr::Operation {
                                     lhs: Box::new(Expr::BindingUsage(BindingUsage {
@@ -207,10 +205,10 @@ mod tests {
                                     op: Op::Sub,
                                 },
                                 set: true,
-                            }),
+                            })),
                         ],
                     },
-                }))),
+                })),
             ],
         };
 
