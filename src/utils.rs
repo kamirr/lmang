@@ -47,13 +47,13 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
         "❓",
         "😠",
         "😡",
+        "💔",
+        "🔁",
         "+",
         "-",
         "*",
         "/",
         "let",
-        "break",
-        "loop",
     ];
 
     let not_ident_err = Err("expected identifier".to_string());

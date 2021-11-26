@@ -11,7 +11,7 @@ pub struct Break {
 impl Break {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("break", s)?;
+        let s = utils::tag("💔", s)?;
 
         let (s, body) = Block::implicit(s)?;
 
@@ -31,7 +31,7 @@ mod tests {
 
     #[test]
     fn parse_empty_break() {
-        let cases = ["break 🧑‍🦲", "break 📦 🧑‍🦲"];
+        let cases = ["💔 🧑‍🦲", "💔 📦 🧑‍🦲"];
 
         for case in cases {
             let expected = Break {
@@ -45,7 +45,7 @@ mod tests {
     fn parse_valued_break() {
         let cases = [
             (
-                "break 🚀 🧑‍🦲",
+                "💔 🚀 🧑‍🦲",
                 Break {
                     body: Block {
                         stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
@@ -55,7 +55,7 @@ mod tests {
                 },
             ),
             (
-                "break 📦 a / 2 🧑‍🦲",
+                "💔 📦 a / 2 🧑‍🦲",
                 Break {
                     body: Block {
                         stmts: vec![Stmt::Expr(Expr::Operation {
@@ -80,7 +80,7 @@ mod tests {
         let input = "
             let 👩‍🚀 = 📦
                 ❓ 🅱️
-                    break 🅱️ 🧑‍🦲
+                    💔 🅱️ 🧑‍🦲
                 🧑‍🦲 💪
 
                 0 - 🅱️

@@ -11,7 +11,7 @@ pub struct Loop {
 impl Loop {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
-        let s = utils::tag("loop", s)?;
+        let s = utils::tag("🔁", s)?;
 
         let (s, body) = Block::implicit(s)?;
         let loop_e = Loop { body };
@@ -38,7 +38,7 @@ mod tests {
 
     #[test]
     fn parse_loop_empty() {
-        let parse = Loop::new("loop 🧑‍🦲");
+        let parse = Loop::new("🔁 🧑‍🦲");
         let expected = Loop {
             body: Block { stmts: Vec::new() },
         };
@@ -48,7 +48,7 @@ mod tests {
 
     #[test]
     fn parse_loop_break() {
-        let parse = Loop::new("loop break 🧑‍🦲🧑‍🦲");
+        let parse = Loop::new("🔁 💔 🧑‍🦲🧑‍🦲");
         let expected = Loop {
             body: Block {
                 stmts: vec![Stmt::Expr(Expr::Break(Box::new(Break {
@@ -63,9 +63,9 @@ mod tests {
     #[test]
     fn parse_factorial_loop() {
         let loop_e = Loop::new(
-            "loop
+            "🔁
                 ❓ 0-a
-                    break fact 🧑‍🦲
+                    💔 fact 🧑‍🦲
                 🧑‍🦲 💪
 
                 let fact = fact * a 💪
@@ -132,9 +132,9 @@ mod tests {
                 let fact = 1 💪
                 let a = 5 💪
 
-                loop
+                🔁
                     ❓ 0-a
-                        break fact 🧑‍🦲
+                        💔 fact 🧑‍🦲
                     🧑‍🦲 💪
 
                     let fact = fact * a 💪
@@ -211,7 +211,7 @@ mod tests {
 
     #[test]
     fn eval_loop_simple() {
-        let (_, loop_e) = Loop::new("loop break 2 🧑‍🦲 🧑‍🦲").unwrap();
+        let (_, loop_e) = Loop::new("🔁 💔 2 🧑‍🦲 🧑‍🦲").unwrap();
         let expected = Val::Number(2);
 
         let mut env = Env::new();
@@ -226,9 +226,9 @@ mod tests {
             "📦
                 let fact = 1 💪
 
-                loop
+                🔁
                     ❓ 1-a
-                        break fact 🧑‍🦲
+                        💔 fact 🧑‍🦲
                     🧑‍🦲 💪
 
                     let fact = fact * a 💪
