@@ -3,7 +3,7 @@ use crate::env::Env;
 use crate::expr::Expr;
 use crate::val::Val;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Stmt {
     BindingUpdate(BindingUpdate),
     Expr(Expr),

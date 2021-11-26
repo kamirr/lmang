@@ -3,7 +3,7 @@ use crate::expr::Expr;
 use crate::utils;
 use crate::val::Val;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct BindingUpdate {
     pub name: String,
     pub val: Expr,

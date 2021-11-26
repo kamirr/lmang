@@ -3,7 +3,7 @@ use crate::expr::{block::Block, Expr};
 use crate::utils;
 use crate::val::Val;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct If {
     pub cond: Expr,
     pub body: Block,

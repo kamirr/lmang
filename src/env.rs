@@ -67,7 +67,10 @@ mod tests {
         env.store_binding("c".to_string(), Val::Number(9));
 
         assert_eq!(env.get_binding("a"), Ok(Val::Number(3)));
-        assert_eq!(env.get_binding("b"), Err("binding with name `b` does not exist".to_string()));
+        assert_eq!(
+            env.get_binding("b"),
+            Err("binding with name `b` does not exist".to_string())
+        );
         assert_eq!(env.get_binding("c"), Ok(Val::Number(9)));
 
         env.push();
@@ -84,7 +87,10 @@ mod tests {
         env.pop();
 
         assert_eq!(env.get_binding("a"), Ok(Val::Number(3)));
-        assert_eq!(env.get_binding("b"), Err("binding with name `b` does not exist".to_string()));
+        assert_eq!(
+            env.get_binding("b"),
+            Err("binding with name `b` does not exist".to_string())
+        );
         assert_eq!(env.get_binding("c"), Ok(Val::Number(7)));
     }
 }

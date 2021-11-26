@@ -1,3 +1,4 @@
+use crate::expr::func::Func;
 use std::cmp::{Ordering, PartialOrd};
 use std::ops::{Add, Div, Mul, Sub};
 
@@ -6,6 +7,7 @@ pub enum Val {
     Number(i32),
     Bool(bool),
     Break(Box<Val>),
+    Func(Func),
     Unit,
 }
 
@@ -27,7 +29,7 @@ impl Val {
                 Unit => Ok(Val::Unit),
                 _ => err,
             },
-            Break(_) => err,
+            _ => err,
         }
     }
 

@@ -52,6 +52,8 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
         "💔",
         "🔁",
         "👶",
+        "🧰",
+        "➡️",
         "set",
         "=",
         "+",
@@ -102,7 +104,11 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
         chars += 1;
     }
 
-    Ok((&s[bytes..], &s[0..bytes]))
+    if bytes == 0 {
+        Err("expected identifier".to_string())
+    } else {
+        Ok((&s[bytes..], &s[0..bytes]))
+    }
 }
 
 pub(crate) fn tag<'a, 'b>(starting_text: &'a str, s: &'b str) -> Result<&'b str, String> {
@@ -158,6 +164,12 @@ mod tests {
     #[test]
     fn extract_alphanumeric_ident() {
         assert_eq!(extract_ident("abc123 stop"), Ok((" stop", "abc123")));
+    }
+
+    #[test]
+    fn extract_reject_empty_ident() {
+        assert_eq!(extract_ident("  "), Err("expected identifier".to_string()));
+        assert_eq!(extract_ident(""), Err("expected identifier".to_string()));
     }
 
     #[test]

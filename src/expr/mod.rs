@@ -1,6 +1,7 @@
 pub mod binding_usage;
 pub mod block;
 pub mod break_expr;
+pub mod func;
 pub mod if_expr;
 pub mod loop_expr;
 
@@ -10,10 +11,11 @@ use crate::val::Val;
 use binding_usage::BindingUsage;
 use block::Block;
 use break_expr::Break;
+use func::Func;
 use if_expr::If;
 use loop_expr::Loop;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Number(pub i32);
 
 impl Number {
@@ -23,7 +25,7 @@ impl Number {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Op {
     Add,
     Sub,
@@ -51,7 +53,7 @@ impl Op {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Expr {
     Operation {
         lhs: Box<Expr>,
@@ -64,6 +66,7 @@ pub enum Expr {
     If(Box<If>),
     Break(Box<Break>),
     Loop(Box<Loop>),
+    Func(Box<Func>),
 }
 
 impl Expr {
@@ -80,6 +83,7 @@ impl Expr {
             .or_else(|_| If::new(s).map(|(s, if_e)| (s, Self::If(Box::new(if_e)))))
             .or_else(|_| Break::new(s).map(|(s, break_e)| (s, Self::Break(Box::new(break_e)))))
             .or_else(|_| Loop::new(s).map(|(s, loop_e)| (s, Self::Loop(Box::new(loop_e)))))
+            .or_else(|_| Func::new(s).map(|(s, func_e)| (s, Self::Func(Box::new(func_e)))))
     }
 
     fn new_operation(s: &str) -> Result<(&str, Self), String> {
@@ -160,6 +164,7 @@ impl Expr {
             Self::If(if_e) => if_e.eval(env),
             Self::Break(break_e) => break_e.eval(env),
             Self::Loop(loop_e) => loop_e.eval(env),
+            Self::Func(func_e) => func_e.eval(env),
         }
     }
 }
