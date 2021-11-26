@@ -75,7 +75,7 @@ impl Block {
 mod tests {
     use super::super::{BindingUsage, Expr, Number, Op};
     use super::*;
-    use crate::binding_def::BindingDef;
+    use crate::binding_update::BindingUpdate;
 
     #[test]
     fn parse_empty_block() {
@@ -138,15 +138,17 @@ mod tests {
 
         let expected = Block {
             stmts: vec![
-                Stmt::BindingDef(BindingDef {
+                Stmt::BindingUpdate(BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Number(Number(10)),
+                    set: false,
                 }),
-                Stmt::BindingDef(BindingDef {
+                Stmt::BindingUpdate(BindingUpdate {
                     name: "b".to_string(),
                     val: Expr::BindingUsage(BindingUsage {
                         name: "a".to_string(),
                     }),
+                    set: false,
                 }),
                 Stmt::Expr(Expr::BindingUsage(BindingUsage {
                     name: "b".to_string(),

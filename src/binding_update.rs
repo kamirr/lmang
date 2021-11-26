@@ -4,21 +4,28 @@ use crate::utils;
 use crate::val::Val;
 
 #[derive(Debug, PartialEq)]
-pub struct BindingDef {
+pub struct BindingUpdate {
     pub name: String,
     pub val: Expr,
+    pub set: bool,
 }
 
-impl BindingDef {
+impl BindingUpdate {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
 
-        let s = utils::tag("👶", s)?;
-        let (s, _) = utils::extract_whitespace(s);
+        let (s, set) = if let Ok(s) = utils::tag("👶", s) {
+            (s, false)
+        } else if let Ok(s) = utils::tag("set", s) {
+            (s, true)
+        } else {
+            return Err("expected `👶` or `set`".to_string());
+        };
 
+        let (s, _) = utils::extract_whitespace(s);
         let (s, name) = utils::extract_ident(s)?;
-        let (s, _) = utils::extract_whitespace(s);
 
+        let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag("=", s)?;
 
         if s.starts_with("=") {
@@ -26,7 +33,6 @@ impl BindingDef {
         }
 
         let (s, _) = utils::extract_whitespace(s);
-
         let (s, val) = Expr::new(s)?;
 
         Ok((
@@ -34,13 +40,18 @@ impl BindingDef {
             Self {
                 name: name.to_string(),
                 val,
+                set,
             },
         ))
     }
 
     pub(crate) fn eval(&self, env: &mut Env) -> Result<Val, String> {
         let value = self.val.eval(env)?;
-        env.store_binding(self.name.clone(), value);
+        if self.set {
+            env.set_binding(&self.name, value)?;
+        } else {
+            env.store_binding(self.name.clone(), value);
+        }
 
         Ok(Val::Unit)
     }
@@ -53,18 +64,34 @@ mod tests {
     use crate::val::Val;
 
     #[test]
-    fn parse_binding_def() {
+    fn parse_binding_set() {
         assert_eq!(
-            BindingDef::new("👶 a = 10 / 2"),
+            BindingUpdate::new("set a = 10"),
             Ok((
                 "",
-                BindingDef {
+                BindingUpdate {
+                    name: "a".to_string(),
+                    val: Expr::Number(Number(10)),
+                    set: true,
+                },
+            )),
+        );
+    }
+
+    #[test]
+    fn parse_binding_def() {
+        assert_eq!(
+            BindingUpdate::new("👶 a = 10 / 2"),
+            Ok((
+                "",
+                BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Operation {
                         lhs: Box::new(Expr::Number(Number(10))),
                         rhs: Box::new(Expr::Number(Number(2))),
                         op: Op::Div,
                     },
+                    set: false,
                 },
             )),
         );
@@ -73,12 +100,13 @@ mod tests {
     #[test]
     fn can_parse_binding_without_space() {
         assert_eq!(
-            BindingDef::new("👶aaa=1"),
+            BindingUpdate::new("👶aaa=1"),
             Ok((
                 "",
-                BindingDef {
+                BindingUpdate {
                     name: "aaa".to_string(),
                     val: Expr::Number(Number(1)),
+                    set: false,
                 }
             )),
         );
@@ -86,7 +114,7 @@ mod tests {
 
     #[test]
     fn eval_binding_def() {
-        let (_s, bd) = BindingDef::new("👶 🍆💦 = 420 / 69").unwrap();
+        let (_s, bd) = BindingUpdate::new("👶 🍆💦 = 420 / 69").unwrap();
         let mut env = Env::new();
 
         bd.eval(&mut env).unwrap();

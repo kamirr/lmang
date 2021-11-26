@@ -1,24 +1,24 @@
-use crate::binding_def::BindingDef;
+use crate::binding_update::BindingUpdate;
 use crate::env::Env;
 use crate::expr::Expr;
 use crate::val::Val;
 
 #[derive(Debug, PartialEq)]
 pub enum Stmt {
-    BindingDef(BindingDef),
+    BindingUpdate(BindingUpdate),
     Expr(Expr),
 }
 
 impl Stmt {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
-        BindingDef::new(s)
-            .map(|(s, binding_def)| (s, Self::BindingDef(binding_def)))
+        BindingUpdate::new(s)
+            .map(|(s, binding_def)| (s, Self::BindingUpdate(binding_def)))
             .or_else(|_| Expr::new(s).map(|(s, expr)| (s, Self::Expr(expr))))
     }
 
     pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
         match self {
-            Self::BindingDef(bd) => bd.eval(env),
+            Self::BindingUpdate(bd) => bd.eval(env),
             Self::Expr(e) => e.eval(env),
         }
     }
@@ -35,9 +35,10 @@ mod tests {
             Stmt::new("👶 a = 10"),
             Ok((
                 "",
-                Stmt::BindingDef(BindingDef {
+                Stmt::BindingUpdate(BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Number(Number(10)),
+                    set: false,
                 }),
             )),
         );
