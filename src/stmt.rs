@@ -32,7 +32,7 @@ mod tests {
     #[test]
     fn parse_binding_def() {
         assert_eq!(
-            Stmt::new("let a = 10"),
+            Stmt::new("👶 a = 10"),
             Ok((
                 "",
                 Stmt::BindingDef(BindingDef {

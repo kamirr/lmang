@@ -13,8 +13,8 @@ impl BindingDef {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
 
-        let s = utils::tag("let", s)?;
-        let (s, _) = utils::extract_whitespace1(s)?;
+        let s = utils::tag("👶", s)?;
+        let (s, _) = utils::extract_whitespace(s);
 
         let (s, name) = utils::extract_ident(s)?;
         let (s, _) = utils::extract_whitespace(s);
@@ -55,7 +55,7 @@ mod tests {
     #[test]
     fn parse_binding_def() {
         assert_eq!(
-            BindingDef::new("let a = 10 / 2"),
+            BindingDef::new("👶 a = 10 / 2"),
             Ok((
                 "",
                 BindingDef {
@@ -71,16 +71,22 @@ mod tests {
     }
 
     #[test]
-    fn cannot_parse_binding_def_without_space_after_let() {
+    fn can_parse_binding_without_space() {
         assert_eq!(
-            BindingDef::new("letaaa=1+2"),
-            Err("expected a space".to_string()),
+            BindingDef::new("👶aaa=1"),
+            Ok((
+                "",
+                BindingDef {
+                    name: "aaa".to_string(),
+                    val: Expr::Number(Number(1)),
+                }
+            )),
         );
     }
 
     #[test]
     fn eval_binding_def() {
-        let (_s, bd) = BindingDef::new("let 🍆💦 = 420 / 69").unwrap();
+        let (_s, bd) = BindingDef::new("👶 🍆💦 = 420 / 69").unwrap();
         let mut env = Env::new();
 
         bd.eval(&mut env).unwrap();

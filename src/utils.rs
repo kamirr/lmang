@@ -9,6 +9,7 @@ pub(crate) fn take_while(accept: impl Fn(char) -> bool, s: &str) -> (&str, &str)
     (remainder, extracted)
 }
 
+#[allow(unused)]
 pub(crate) fn take_while1(
     accept: impl Fn(char) -> bool,
     s: &str,
@@ -35,6 +36,7 @@ pub(crate) fn extract_whitespace(s: &str) -> (&str, &str) {
     take_while(|c| is_whitespace(c), s)
 }
 
+#[allow(unused)]
 pub(crate) fn extract_whitespace1(s: &str) -> Result<(&str, &str), String> {
     take_while1(|c| is_whitespace(c), s, "expected a space".to_string())
 }
@@ -49,6 +51,7 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
         "😡",
         "💔",
         "🔁",
+        "👶",
         "=",
         "+",
         "-",
@@ -60,7 +63,6 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
         "<=",
         "<",
         "!=",
-        "let",
     ];
 
     let not_ident_err = Err("expected identifier".to_string());
@@ -85,10 +87,14 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
             break;
         }
 
+        let mut stop_ident_read = false;
         for r in reserved {
             if s[bytes..].starts_with(r) {
-                break;
+                stop_ident_read = true;
             }
+        }
+        if stop_ident_read {
+            break;
         }
 
         bytes += c.len_utf8();
@@ -168,6 +174,6 @@ mod tests {
 
     #[test]
     fn tag_word() {
-        assert_eq!(tag("let", "let a"), Ok(" a"));
+        assert_eq!(tag("👶", "👶 a"), Ok(" a"));
     }
 }

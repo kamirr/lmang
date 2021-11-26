@@ -68,8 +68,8 @@ mod tests {
                     💔 fact 🧑‍🦲
                 🧑‍🦲 💪
 
-                let fact = fact * a 💪
-                let a = a - 1
+                👶 fact = fact * a 💪
+                👶 a = a - 1
             🧑‍🦲",
         );
 
@@ -129,16 +129,16 @@ mod tests {
     fn parse_factorial_complete() {
         let loop_e = Block::explicit(
             "📦
-                let fact = 1 💪
-                let a = 5 💪
+                👶 fact = 1 💪
+                👶 a = 5 💪
 
                 🔁
                     ❓ 0-a
                         💔 fact 🧑‍🦲
                     🧑‍🦲 💪
 
-                    let fact = fact * a 💪
-                    let a = a - 1
+                    👶 fact = fact * a 💪
+                    👶 a = a - 1
                 🧑‍🦲
             🧑‍🦲",
         );
@@ -224,15 +224,15 @@ mod tests {
     fn eval_loop_factorial() {
         let (_, loop_e) = Block::explicit(
             "📦
-                let fact = 1 💪
+                👶 fact = 1 💪
 
                 🔁
                     ❓ a < 1
                         💔 fact 🧑‍🦲
                     🧑‍🦲 💪
 
-                    let fact = fact * a 💪
-                    let a = a - 1
+                    👶 fact = fact * a 💪
+                    👶 a = a - 1
                 🧑‍🦲
             🧑‍🦲",
         )

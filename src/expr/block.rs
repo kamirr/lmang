@@ -129,8 +129,8 @@ mod tests {
     fn parse_block_many_stmts() {
         let block = Block::explicit(
             "📦
-            let a = 10💪
-            let b = a 💪
+            👶 a = 10💪
+            👶 b = a 💪
             
             b
         🧑‍🦲",
@@ -181,8 +181,8 @@ mod tests {
     fn eval_block_many_stmts() {
         let (_, block) = Block::implicit(
             "
-            let a = 2 * 2💪
-            let b = a * 2💪
+            👶 a = 2 * 2💪
+            👶 b = a * 2💪
 
             b + a
         🧑‍🦲",
