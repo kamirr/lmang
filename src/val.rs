@@ -4,6 +4,7 @@ use std::ops::{Add, Sub, Mul, Div};
 pub enum Val {
     Number(i32),
     Bool(bool),
+    Break(Box<Val>),
     Unit,
 }
 
@@ -16,18 +17,20 @@ impl Val {
             Number(n) => match other {
                 Number(_) => Ok(Number(*n)),
                 Bool(_) => Ok(Bool(*n > 0)),
-                Unit => err
+                _ => err
             },
             Bool(b) => match other {
                 Number(_) => Ok(Number(if *b { 1 } else { 0 })),
                 Bool(_) => Ok(Bool(*b)),
-                Unit => err,
-            }
+                _ => err,
+            },
             Unit => match other {
                 Number(_) => Ok(Number(1)),
                 Bool(_) => Ok(Bool(true)),
                 Unit => Ok(Val::Unit),
-            }
+                _ => err,
+            },
+            Break(val_box) => err,
         }
     }
 

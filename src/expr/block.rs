@@ -10,12 +10,14 @@ pub struct Block {
 
 impl Block {
     pub fn explicit(s: &str) -> Result<(&str, Self), String> {
+        let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag("📦", s)?;
 
         Self::strong_implicit(s)
     }
 
     pub fn implicit(s: &str) -> Result<(&str, Self), String> {
+        let (s, _) = utils::extract_whitespace(s);
         let s = match utils::tag("📦", s) {
             Ok(sub) => sub,
             Err(_) => s,
@@ -57,8 +59,11 @@ impl Block {
         if len == 0 {
             Ok(Val::Unit)
         } else {
-            for stmt in &self.stmts[0..len] {
-                stmt.eval(env)?;
+            for stmt in &self.stmts[0..len-1] {
+                let intermediate = stmt.eval(env)?;
+                if let Val::Break(_) = &intermediate {
+                    return Ok(intermediate);
+                }
             }
 
             self.stmts[len - 1].eval(env)

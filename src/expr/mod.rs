@@ -1,5 +1,6 @@
 pub mod block;
 pub mod binding_usage;
+pub mod break_expr;
 pub mod if_expr;
 
 use crate::utils;
@@ -7,6 +8,7 @@ use crate::val::Val;
 use crate::env::Env;
 use binding_usage::BindingUsage;
 use block::Block;
+use break_expr::Break;
 use if_expr::If;
 
 #[derive(Debug, PartialEq)]
@@ -44,10 +46,14 @@ pub enum Expr {
     BindingUsage(BindingUsage),
     Block(Block),
     If(Box<If>),
+    Break(Box<Break>)
 }
 
 impl Expr {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
+        let s_orig = s;
+        let (s, _) = utils::extract_whitespace(s);
+
         Self::new_operation(s)
             .or_else(|_| Self::new_number(s))
             .or_else(|_| {
@@ -56,6 +62,7 @@ impl Expr {
             })
             .or_else(|_| Block::explicit(s).map(|(s, block)| (s, Self::Block(block))))
             .or_else(|_| If::new(s).map(|(s, if_e)| (s, Self::If(Box::new(if_e)))))
+            .or_else(|_| Break::new(s).map(|(s, break_e)| (s, Self::Break(Box::new(break_e)))))
     }
 
     fn new_operation(s: &str) -> Result<(&str, Self), String> {
@@ -118,6 +125,7 @@ impl Expr {
             Self::BindingUsage(bu) => bu.eval(env),
             Self::Block(block) => block.eval(env),
             Self::If(if_e) => if_e.eval(env),
+            Self::Break(break_e) => break_e.eval(env),
         }
     }
 }

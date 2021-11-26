@@ -40,7 +40,7 @@ pub(crate) fn extract_whitespace1(s: &str) -> Result<(&str, &str), String> {
 }
 
 pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
-    let reserved = ["📦", "🧑‍🦲", "💪", "❓", "😠", "😡", "+", "-", "*", "/"];
+    let reserved = ["📦", "🧑‍🦲", "💪", "❓", "😠", "😡", "+", "-", "*", "/", "let", "break"];
     
     let not_ident_err = Err("expected identifier".to_string());
     if s.chars()
