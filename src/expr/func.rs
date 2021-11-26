@@ -1,7 +1,14 @@
 use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
-use crate::val::Val;
+use crate::val::{DynFunc, Val};
+use std::fmt;
+
+pub trait Callee {
+    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, String>;
+    fn clone_box(&self) -> Box<dyn Callee>;
+    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Arg(pub String);
@@ -10,6 +17,33 @@ pub struct Arg(pub String);
 pub struct Func {
     pub args: Vec<Arg>,
     pub body: Block,
+}
+
+impl Callee for Func {
+    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, String> {
+        if args.len() != self.args.len() {
+            return Err("Invalid number of args".to_string());
+        }
+
+        env.push();
+        for (Arg(arg_name), arg_val) in self.args.iter().zip(args.iter()) {
+            env.store_binding(arg_name.clone(), arg_val.clone());
+        }
+        
+        let result = env.eval(&self.body)?;
+        env.pop();
+
+        Ok(result)
+    }
+
+    fn clone_box(&self) -> Box<dyn Callee> {
+        Box::new(self.clone())
+    }
+
+    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use std::fmt::Debug;
+        self.fmt(f)
+    }
 }
 
 impl Func {
@@ -41,7 +75,7 @@ impl Func {
 
 impl Eval for Func {
     fn eval(&self, _env: &mut Env) -> Result<Val, String> {
-        Ok(Val::Func(self.clone()))
+        Ok(Val::Func(DynFunc(Box::new(self.clone()))))
     }
 }
 
@@ -127,7 +161,7 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&func_e);
 
-        assert_eq!(result, Ok(Val::Func(expected)));
+        assert_eq!(result, Ok(Val::Func(DynFunc(Box::new(expected)))));
     }
 
     #[test]

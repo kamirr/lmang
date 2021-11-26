@@ -1,13 +1,35 @@
-use crate::expr::func::Func;
-use std::cmp::{Ordering, PartialOrd};
+use crate::expr::func::Callee;
+use std::cmp::{Ordering, PartialOrd, PartialEq};
 use std::ops::{Add, Div, Mul, Sub};
+use std::fmt;
 
-#[derive(Debug, PartialEq, Clone)]
+pub struct DynFunc(pub Box<dyn Callee>);
+
+impl Clone for DynFunc {
+    fn clone(&self) -> Self {
+        DynFunc(self.0.clone_box())
+    }
+}
+
+impl PartialEq for DynFunc {
+    fn eq(&self, other: &DynFunc) -> bool {
+        format!("{:?}", self) == format!("{:?}", other)
+    }
+}
+
+impl fmt::Debug for DynFunc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.dyn_debug(f)
+    }
+}
+
+
+#[derive(Debug, Clone, PartialEq)]
 pub enum Val {
     Number(i32),
     Bool(bool),
     Break(Box<Val>),
-    Func(Func),
+    Func(DynFunc),
     Unit,
 }
 
@@ -55,7 +77,7 @@ impl Val {
         }
     }
 
-    pub fn as_func(&self) -> Result<Func, String> {
+    pub fn as_func(&self) -> Result<DynFunc, String> {
         match self {
             Self::Func(f) => Ok(f.clone()),
             _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),

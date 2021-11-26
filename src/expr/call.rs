@@ -36,15 +36,7 @@ impl Eval for Call {
         let args: Result<Vec<Val>, _> = self.args.iter().map(|arg| env.eval(arg)).collect();
         let args = args?;
 
-        env.push();
-        for (arg_name, arg_val) in func.args.iter().zip(args.iter()) {
-            env.store_binding(arg_name.0.clone(), arg_val.clone());
-        }
-
-        let result = env.eval(&func.body);
-        env.pop();
-
-        result
+        func.0.call(args.as_slice(), env)
     }
 }
 
