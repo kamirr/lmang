@@ -101,6 +101,30 @@ mod tests {
     }
 
     #[test]
+    fn parse_block_nexted() {
+        assert_eq!(
+            Block::explicit("📦📦🧑‍🦲🧑‍🦲"),
+            Ok((
+                "",
+                Block {
+                    stmts: vec![Stmt::Expr(Expr::Block(Block { stmts: Vec::new() }))]
+                }
+            ))
+        );
+        assert_eq!(
+            Block::explicit("📦📦📦🧑‍🦲🧑‍🦲🧑‍🦲"),
+            Ok((
+                "",
+                Block {
+                    stmts: vec![Stmt::Expr(Expr::Block(Block {
+                        stmts: vec![Stmt::Expr(Expr::Block(Block { stmts: Vec::new() }))],
+                    }))]
+                }
+            ))
+        );
+    }
+
+    #[test]
     fn parse_block_with_one_stmt() {
         let blocks = [Block::explicit("📦5🧑‍🦲"), Block::implicit("2*2🧑‍🦲")];
         let res_exprs = [
@@ -155,6 +179,52 @@ mod tests {
                 })),
             ],
         };
+
+        assert_eq!(block, Ok(("", expected)));
+    }
+
+    #[test]
+    fn parse_block_nested_sum() {
+        let block = Block::explicit("📦📦📦a🧑‍🦲 + 📦b🧑‍🦲🧑‍🦲🧑‍🦲");
+
+        let expected = Block {
+            stmts: vec![Stmt::Expr(Expr::Block(Block {
+                stmts: vec![Stmt::Expr(Expr::Operation {
+                    lhs: Box::new(Expr::Block(Block {
+                        stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                            name: "a".into(),
+                        }))],
+                    })),
+                    rhs: Box::new(Expr::Block(Block {
+                        stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                            name: "b".into(),
+                        }))],
+                    })),
+                    op: Op::Add,
+                })],
+            }))],
+        };
+
+        assert_eq!(block, Ok(("", expected)));
+    }
+
+    #[test]
+    fn parse_block_sum() {
+        let block = Stmt::new("📦a🧑‍🦲 + 📦b🧑‍🦲");
+
+        let expected = Stmt::Expr(Expr::Operation {
+            lhs: Box::new(Expr::Block(Block {
+                stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                    name: "a".into(),
+                }))],
+            })),
+            rhs: Box::new(Expr::Block(Block {
+                stmts: vec![Stmt::Expr(Expr::BindingUsage(BindingUsage {
+                    name: "b".into(),
+                }))],
+            })),
+            op: Op::Add,
+        });
 
         assert_eq!(block, Ok(("", expected)));
     }

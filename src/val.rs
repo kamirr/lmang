@@ -55,6 +55,13 @@ impl Val {
         }
     }
 
+    pub fn as_func(&self) -> Result<Func, String> {
+        match self {
+            Self::Func(f) => Ok(f.clone()),
+            _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
+        }
+    }
+
     pub fn try_gt(&self, other: &Val) -> Result<Self, String> {
         if let Some(_) = self.partial_cmp(other) {
             Ok(Self::Bool(self > other))

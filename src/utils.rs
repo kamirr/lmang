@@ -53,6 +53,7 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
         "🔁",
         "👶",
         "🧰",
+        "📞",
         "➡️",
         "set",
         "=",

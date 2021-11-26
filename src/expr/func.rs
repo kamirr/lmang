@@ -8,8 +8,8 @@ pub struct Arg(pub String);
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Func {
-    args: Vec<Arg>,
-    body: Block,
+    pub args: Vec<Arg>,
+    pub body: Block,
 }
 
 impl Func {
