@@ -1,4 +1,4 @@
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::utils;
 use crate::val::Val;
 
@@ -18,8 +18,10 @@ impl BindingUsage {
             },
         ))
     }
+}
 
-    pub(crate) fn eval(&self, env: &Env) -> Result<Val, String> {
+impl Eval for BindingUsage {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
         env.get_binding(&self.name)
     }
 }
@@ -43,13 +45,12 @@ mod tests {
 
     #[test]
     fn eval_non_existent_binding_usage() {
-        let empty_env = Env::default();
+        let mut empty_env = Env::default();
 
         assert_eq!(
-            BindingUsage {
+            empty_env.eval(&BindingUsage {
                 name: "i_dont_exist".to_string(),
-            }
-            .eval(&empty_env),
+            }),
             Err("binding with name `i_dont_exist` does not exist".to_string()),
         );
     }

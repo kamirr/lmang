@@ -1,4 +1,4 @@
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::expr::{block::Block, Expr};
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -68,19 +68,21 @@ impl If {
             },
         ))
     }
+}
 
-    pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        let cond_val = self.cond.eval(env)?;
+impl Eval for If {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+        let cond_val = env.eval(&self.cond)?;
         if cond_val.as_bool()? {
-            self.body.eval(env)
+            env.eval(&self.body)
         } else {
             for (elif_cond, elif_body) in &self.elifs {
-                if elif_cond.eval(env)?.as_bool()? {
-                    return elif_body.eval(env);
+                if env.eval(elif_cond)?.as_bool()? {
+                    return env.eval(elif_body);
                 }
             }
             match &self.body_else {
-                Some(be) => be.eval(env),
+                Some(be) => env.eval(be),
                 None => Ok(Val::Unit),
             }
         }
@@ -258,14 +260,14 @@ mod tests {
         )
         .unwrap();
 
-        let mut env = Env::new();
+        let mut env = Env::test();
 
         env.store_binding("a".to_string(), Val::Number(3));
-        let res = if_e.eval(&mut env);
+        let res = env.eval(&if_e);
         assert_eq!(res, Ok(Val::Number(5)));
 
         env.store_binding("a".to_string(), Val::Number(0));
-        let res = if_e.eval(&mut env);
+        let res = env.eval(&if_e);
         assert_eq!(res, Ok(Val::Unit));
     }
 
@@ -286,14 +288,14 @@ mod tests {
         )
         .unwrap();
 
-        let mut env = Env::new();
+        let mut env = Env::test();
 
         env.store_binding("a".to_string(), Val::Number(3));
-        let res = if_e.eval(&mut env);
+        let res = env.eval(&if_e);
         assert_eq!(res, Ok(Val::Number(5)));
 
         env.store_binding("a".to_string(), Val::Number(0));
-        let res = if_e.eval(&mut env);
+        let res = env.eval(&if_e);
         assert_eq!(res, Ok(Val::Number(1)));
     }
 
@@ -316,7 +318,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut env = Env::new();
+        let mut env = Env::test();
 
         let results = [
             (100, 100),
@@ -330,7 +332,7 @@ mod tests {
 
         for (if_in, if_out) in results {
             env.store_binding("a".to_string(), Val::Number(if_in));
-            let res = if_e.eval(&mut env);
+            let res = env.eval(&if_e);
             assert_eq!(res, Ok(Val::Number(if_out)));
         }
     }

@@ -6,7 +6,7 @@ pub mod func;
 pub mod if_expr;
 pub mod loop_expr;
 
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::utils::{self, kwords};
 use crate::val::Val;
 use binding_usage::BindingUsage;
@@ -137,13 +137,15 @@ impl Expr {
     fn new_number(s: &str) -> Result<(&str, Self), String> {
         Number::new(s).map(|(s, number)| (s, Self::Number(number)))
     }
+}
 
-    pub(crate) fn eval(&self, env: &mut Env) -> Result<Val, String> {
+impl Eval for Expr {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
         match self {
             Self::Number(Number(n)) => Ok(Val::Number(*n)),
             Self::Operation { lhs, rhs, op } => {
-                let lhs = lhs.eval(env)?;
-                let rhs = rhs.eval(env)?;
+                let lhs = env.eval(lhs.as_ref())?;
+                let rhs = env.eval(rhs.as_ref())?;
 
                 match op {
                     Op::Add => lhs + rhs,
@@ -157,13 +159,13 @@ impl Expr {
                     Op::Less => lhs.try_lt(&rhs),
                 }
             }
-            Self::BindingUsage(bu) => bu.eval(env),
-            Self::Block(block) => block.eval(env),
-            Self::If(if_e) => if_e.eval(env),
-            Self::Break(break_e) => break_e.eval(env),
-            Self::Loop(loop_e) => loop_e.eval(env),
-            Self::Func(func_e) => func_e.eval(env),
-            Self::Call(call_e) => call_e.eval(env),
+            Self::BindingUsage(bu) => env.eval(bu),
+            Self::Block(block) => env.eval(block),
+            Self::If(if_e) => env.eval(if_e.as_ref()),
+            Self::Break(break_e) => env.eval(break_e.as_ref()),
+            Self::Loop(loop_e) => env.eval(loop_e.as_ref()),
+            Self::Func(func_e) => env.eval(func_e.as_ref()),
+            Self::Call(call_e) => env.eval(call_e.as_ref()),
         }
     }
 }
@@ -260,60 +262,56 @@ mod tests {
 
     #[test]
     fn eval_add() {
-        let mut env = Env::new();
+        let mut env = Env::test();
 
         assert_eq!(
-            Expr::Operation {
+            env.eval(&Expr::Operation {
                 lhs: Box::new(Expr::Number(Number(10))),
                 rhs: Box::new(Expr::Number(Number(10))),
                 op: Op::Add,
-            }
-            .eval(&mut env),
+            }),
             Ok(Val::Number(20)),
         );
     }
 
     #[test]
     fn eval_sub() {
-        let mut env = Env::new();
+        let mut env = Env::test();
 
         assert_eq!(
-            Expr::Operation {
+            env.eval(&Expr::Operation {
                 lhs: Box::new(Expr::Number(Number(1))),
                 rhs: Box::new(Expr::Number(Number(5))),
                 op: Op::Sub,
-            }
-            .eval(&mut env),
+            }),
             Ok(Val::Number(-4)),
         );
     }
 
     #[test]
     fn eval_mul() {
-        let mut env = Env::new();
+        let mut env = Env::test();
 
         assert_eq!(
-            Expr::Operation {
+            env.eval(&Expr::Operation {
                 lhs: Box::new(Expr::Number(Number(5))),
                 rhs: Box::new(Expr::Number(Number(6))),
                 op: Op::Mul,
-            }
-            .eval(&mut env),
+            }),
             Ok(Val::Number(30)),
         );
     }
 
     #[test]
     fn eval_div() {
-        let mut env = Env::new();
+        let mut env = Env::test();
 
         assert_eq!(
-            Expr::Operation {
+            env.eval(&Expr::Operation {
                 lhs: Box::new(Expr::Number(Number(200))),
                 rhs: Box::new(Expr::Number(Number(20))),
                 op: Op::Div,
-            }
-            .eval(&mut env),
+            }),
             Ok(Val::Number(10)),
         );
     }
@@ -362,8 +360,8 @@ mod tests {
 
                     let expected = Ok(Val::Bool(op.1(*n1, *n2)));
 
-                    let mut env = Env::new();
-                    let result = expr.eval(&mut env);
+                    let mut env = Env::test();
+                    let result = env.eval(&expr);
 
                     assert_eq!(result, expected);
                 }

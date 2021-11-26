@@ -1,5 +1,5 @@
 use crate::binding_update::BindingUpdate;
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::expr::Expr;
 use crate::val::Val;
 
@@ -15,11 +15,13 @@ impl Stmt {
             .map(|(s, binding_def)| (s, Self::BindingUpdate(binding_def)))
             .or_else(|_| Expr::new(s).map(|(s, expr)| (s, Self::Expr(expr))))
     }
+}
 
-    pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
+impl Eval for Stmt {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
         match self {
-            Self::BindingUpdate(bd) => bd.eval(env),
-            Self::Expr(e) => e.eval(env),
+            Self::BindingUpdate(bd) => env.eval(bd),
+            Self::Expr(e) => env.eval(e),
         }
     }
 }

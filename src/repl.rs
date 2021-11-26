@@ -1,6 +1,9 @@
 use std::io::BufRead;
 
-use lmang_lib::{env::Env, stmt::Stmt};
+use lmang_lib::{
+    env::Env,
+    stmt::Stmt,
+};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();
@@ -16,7 +19,7 @@ fn main() -> Result<(), String> {
                 input.push_str(&line);
                 match Stmt::new(&input[..]) {
                     Ok((_, stmt)) => {
-                        let res = stmt.eval(&mut env)?;
+                        let res = env.eval(&stmt)?;
                         println!("{:?}", res);
                         input.clear();
                     }
@@ -25,7 +28,7 @@ fn main() -> Result<(), String> {
             } else {
                 match Stmt::new(&line[..]) {
                     Ok((_, stmt)) => {
-                        let res = stmt.eval(&mut env)?;
+                        let res = env.eval(&stmt);
                         println!("{:?}", res);
                     }
                     Err(_) => {
@@ -41,7 +44,7 @@ fn main() -> Result<(), String> {
                     continue;
                 }
             };
-            let res = stmt.eval(&mut env)?;
+            let res = env.eval(&stmt)?;
             println!("{:?}", res);
 
             input.clear();

@@ -1,4 +1,4 @@
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -46,9 +46,11 @@ impl BindingUpdate {
             },
         ))
     }
+}
 
-    pub(crate) fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        let value = self.val.eval(env)?;
+impl Eval for BindingUpdate {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+        let value = env.eval(&self.val)?;
         if self.set {
             env.set_binding(&self.name, value)?;
         } else {
@@ -117,9 +119,9 @@ mod tests {
     #[test]
     fn eval_binding_def() {
         let (_s, bd) = BindingUpdate::new("👶 🍆💦 = 420 / 69").unwrap();
-        let mut env = Env::new();
+        let mut env = Env::test();
 
-        bd.eval(&mut env).unwrap();
+        env.eval(&bd).unwrap();
 
         assert_eq!(env.get_binding("🍆💦"), Ok(Val::Number(6)));
     }

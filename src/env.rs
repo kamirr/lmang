@@ -1,15 +1,25 @@
 use crate::val::Val;
 use std::collections::HashMap;
+use std::time::{Duration, Instant};
 
 #[derive(Debug, PartialEq, Default)]
 pub struct Env {
     stack: Vec<HashMap<String, Val>>,
+    timeout: Option<Instant>,
 }
 
 impl Env {
     pub fn new() -> Self {
         Env {
             stack: vec![HashMap::new()],
+            timeout: None,
+        }
+    }
+
+    pub fn test() -> Self {
+        Env {
+            stack: vec![HashMap::new()],
+            timeout: Some(Instant::now() + Duration::from_secs_f32(0.1)),
         }
     }
 
@@ -45,6 +55,22 @@ impl Env {
 
         Err(format!("binding with name `{}` does not exist", name))
     }
+
+    pub fn set_timeout(&mut self, dur: Duration) {
+        self.timeout = Some(Instant::now() + dur);
+    }
+
+    pub fn eval(&mut self, expr: &impl Eval) -> Result<Val, String> {
+        if self.timeout.map(|t| Instant::now() > t).unwrap_or(false) {
+            Err("timeout".to_string())
+        } else {
+            expr.eval(self)
+        }
+    }
+}
+
+pub trait Eval {
+    fn eval(&self, env: &mut Env) -> Result<Val, String>;
 }
 
 #[cfg(test)]
@@ -55,14 +81,14 @@ mod tests {
     fn env_store_get() {
         let val = Val::Number(4);
 
-        let mut env = Env::new();
+        let mut env = Env::test();
         env.store_binding("a".to_string(), val.clone());
         assert_eq!(env.get_binding("a"), Ok(val));
     }
 
     #[test]
     fn env_child() {
-        let mut env = Env::new();
+        let mut env = Env::test();
         env.store_binding("a".to_string(), Val::Number(3));
         env.store_binding("c".to_string(), Val::Number(9));
 

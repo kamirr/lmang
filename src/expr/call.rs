@@ -1,4 +1,4 @@
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -28,10 +28,12 @@ impl Call {
 
         Ok((s, Call { func, args }))
     }
+}
 
-    pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        let func = self.func.eval(env)?.as_func()?;
-        let args: Result<Vec<Val>, _> = self.args.iter().map(|arg| arg.eval(env)).collect();
+impl Eval for Call {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+        let func = env.eval(&self.func)?.as_func()?;
+        let args: Result<Vec<Val>, _> = self.args.iter().map(|arg| env.eval(arg)).collect();
         let args = args?;
 
         env.push();
@@ -39,7 +41,7 @@ impl Call {
             env.store_binding(arg_name.0.clone(), arg_val.clone());
         }
 
-        let result = func.body.eval(env);
+        let result = env.eval(&func.body);
         env.pop();
 
         result
@@ -91,8 +93,8 @@ mod tests {
     #[test]
     fn eval_call() {
         let (_, call_e) = Call::new("📞 🧰 🔍 ➡️ 🔍 + 1 🧑‍🦲 4").unwrap();
-        let mut env = Env::new();
-        let result = call_e.eval(&mut env);
+        let mut env = Env::test();
+        let result = env.eval(&call_e);
 
         assert_eq!(result, Ok(Val::Number(5)));
     }
@@ -127,10 +129,10 @@ mod tests {
             (6, 13),
             (7, 21),
         ];
-        let mut env = Env::new();
+        let mut env = Env::test();
         for (arg, fib) in cases.iter() {
             env.store_binding("💾".to_string(), Val::Number(*arg));
-            let result = stmt_e.eval(&mut env);
+            let result = env.eval(&stmt_e);
             assert_eq!(result, Ok(Val::Number(*fib)));
         }
     }

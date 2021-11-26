@@ -1,4 +1,4 @@
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::stmt::Stmt;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -52,21 +52,22 @@ impl Block {
 
         Ok((s, Block { stmts }))
     }
-
-    pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
+}
+impl Eval for Block {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
         let len = self.stmts.len();
 
         if len == 0 {
             Ok(Val::Unit)
         } else {
             for stmt in &self.stmts[0..len - 1] {
-                let intermediate = stmt.eval(env)?;
+                let intermediate = env.eval(stmt)?;
                 if let Val::Break(_) = &intermediate {
                     return Ok(intermediate);
                 }
             }
 
-            self.stmts[len - 1].eval(env)
+            env.eval(&self.stmts[len - 1])
         }
     }
 }
@@ -233,8 +234,8 @@ mod tests {
     fn eval_block_empty() {
         let (_, block) = Block::implicit("🧑‍🦲").unwrap();
 
-        let mut env = Env::new();
-        let value = block.eval(&mut env);
+        let mut env = Env::test();
+        let value = env.eval(&block);
 
         assert_eq!(value, Ok(Val::Unit));
     }
@@ -243,8 +244,8 @@ mod tests {
     fn eval_block_one_stmt() {
         let (_, block) = Block::implicit("📦44🧑‍🦲").unwrap();
 
-        let mut env = Env::new();
-        let value = block.eval(&mut env);
+        let mut env = Env::test();
+        let value = env.eval(&block);
 
         assert_eq!(value, Ok(Val::Number(44)));
     }
@@ -261,8 +262,8 @@ mod tests {
         )
         .unwrap();
 
-        let mut env = Env::new();
-        let value = block.eval(&mut env);
+        let mut env = Env::test();
+        let value = env.eval(&block);
 
         assert_eq!(value, Ok(Val::Number(12)));
     }

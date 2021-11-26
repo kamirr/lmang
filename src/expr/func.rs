@@ -1,4 +1,4 @@
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -37,8 +37,10 @@ impl Func {
 
         Ok((s, Func { args, body }))
     }
+}
 
-    pub fn eval(&self, _env: &mut Env) -> Result<Val, String> {
+impl Eval for Func {
+    fn eval(&self, _env: &mut Env) -> Result<Val, String> {
         Ok(Val::Func(self.clone()))
     }
 }
@@ -124,8 +126,8 @@ mod tests {
             },
         };
 
-        let mut env = Env::new();
-        let result = func_e.eval(&mut env);
+        let mut env = Env::test();
+        let result = env.eval(&func_e);
 
         assert_eq!(result, Ok(Val::Func(expected)));
     }
@@ -141,22 +143,28 @@ mod tests {
                 set b = 4 💪
                 
                 a
-            🧑‍🦲").unwrap();
+            🧑‍🦲",
+        )
+        .unwrap();
         let (_, func_call) = Stmt::new("📞 f x").unwrap();
 
-        let mut env = Env::new();
-        func_def.eval(&mut env).unwrap();
+        let mut env = Env::test();
+        env.eval(&func_def).unwrap();
 
         env.store_binding("c".to_string(), Val::Number(0));
         env.store_binding("x".to_string(), Val::Number(8));
-        let res = func_call.eval(&mut env);
+        let res = env.eval(&func_call);
 
         assert_eq!(res, Ok(Val::Number(1)));
         assert_eq!(env.get_binding("c"), Ok(Val::Number(1)));
         assert_eq!(env.get_binding("x"), Ok(Val::Number(1)));
-        assert_eq!(env.get_binding("a"), Err("binding with name `a` does not exist".to_string()));
-        assert_eq!(env.get_binding("b"), Err("binding with name `b` does not exist".to_string()));
-
-
+        assert_eq!(
+            env.get_binding("a"),
+            Err("binding with name `a` does not exist".to_string())
+        );
+        assert_eq!(
+            env.get_binding("b"),
+            Err("binding with name `b` does not exist".to_string())
+        );
     }
 }

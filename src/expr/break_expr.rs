@@ -1,4 +1,4 @@
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -17,9 +17,11 @@ impl Break {
 
         Ok((s, Break { body }))
     }
+}
 
-    pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        Ok(Val::Break(Box::new(self.body.eval(env)?)))
+impl Eval for Break {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+        Ok(Val::Break(Box::new(env.eval(&self.body)?)))
     }
 }
 
@@ -86,12 +88,12 @@ mod tests {
                 0 - 🅱️
             🧑‍🦲";
 
-        let mut env = Env::new();
+        let mut env = Env::test();
         let (_, stmt) = Stmt::new(input).unwrap();
 
         for k in -10..10 {
             env.store_binding("🅱️".to_string(), Val::Number(k));
-            let _ = stmt.eval(&mut env).unwrap();
+            let _ = env.eval(&stmt).unwrap();
 
             let expected = if k > 0 {
                 Val::Break(Box::new(Val::Number(k)))

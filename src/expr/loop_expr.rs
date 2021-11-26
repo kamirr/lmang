@@ -1,4 +1,4 @@
-use crate::env::Env;
+use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -18,10 +18,12 @@ impl Loop {
 
         Ok((s, loop_e))
     }
+}
 
-    pub fn eval(&self, env: &mut Env) -> Result<Val, String> {
+impl Eval for Loop {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
         Ok(loop {
-            match self.body.eval(env)? {
+            match env.eval(&self.body)? {
                 Val::Break(inner_box) => break *inner_box,
                 _ => continue,
             }
@@ -220,8 +222,8 @@ mod tests {
         let (_, loop_e) = Loop::new("🔁 💔 2 🧑‍🦲 🧑‍🦲").unwrap();
         let expected = Val::Number(2);
 
-        let mut env = Env::new();
-        let res = loop_e.eval(&mut env);
+        let mut env = Env::test();
+        let res = env.eval(&loop_e);
 
         assert_eq!(res, Ok(expected));
     }
@@ -246,14 +248,22 @@ mod tests {
         )
         .unwrap();
 
-        let mut env = Env::new();
+        let mut env = Env::test();
 
         let cases = [(0, 1), (1, 1), (2, 2), (3, 6), (4, 24), (5, 120)];
         for case in cases {
             env.store_binding("a".to_string(), Val::Number(case.0));
-            let result = loop_e.eval(&mut env);
+            let result = env.eval(&loop_e);
 
             assert_eq!(result, Ok(Val::Number(case.1)));
         }
+    }
+
+    #[test]
+    fn eval_loop_infinite() {
+        let (_, loop_e) = Loop::new("🔁🧑‍🦲").unwrap();
+        let mut env = Env::test();
+
+        assert_eq!(env.eval(&loop_e), Err("timeout".to_string()))
     }
 }
