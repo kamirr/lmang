@@ -1,9 +1,6 @@
 use std::io::BufRead;
 
-use lmang_lib::{
-    env::Env,
-    stmt::Stmt,
-};
+use lmang_lib::{env::Env, stmt::Stmt};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();

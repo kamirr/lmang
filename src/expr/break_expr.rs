@@ -79,29 +79,43 @@ mod tests {
 
     #[test]
     fn eval_break() {
-        let input = "
-        👶 👩‍🚀 = 📦
-                ❓ 🅱️ > 0
-                    💔 🅱️ 🧑‍🦲
-                🧑‍🦲 💪
+        let input = "💔 🧑‍🦲";
 
-                0 - 🅱️
+        let mut env = Env::test();
+        let (_, stmt) = Stmt::new(input).unwrap();
+
+        let result = env.eval(&stmt);
+        let expected = Ok(Val::Break(Box::new(Val::Unit)));
+
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn eval_break_in_let() {
+        let input = "👶 👩‍🚀 = 📦 💔 2 🧑‍🦲 🧑‍🦲";
+
+        let mut env = Env::test();
+        let (_, stmt) = Stmt::new(input).unwrap();
+
+        let result = env.eval(&stmt);
+        let expected = Ok(Val::Break(Box::new(Val::Number(2))));
+
+        assert_eq!(result, expected);
+        
+    }
+
+    #[test]
+    fn eval_break_in_loop() {
+        let input = "🔁
+                👶 _ = 📦
+                    💔 🧑‍🦲
+                🧑‍🦲
             🧑‍🦲";
 
         let mut env = Env::test();
         let (_, stmt) = Stmt::new(input).unwrap();
 
-        for k in -10..10 {
-            env.store_binding("🅱️".to_string(), Val::Number(k));
-            let _ = env.eval(&stmt).unwrap();
-
-            let expected = if k > 0 {
-                Val::Break(Box::new(Val::Number(k)))
-            } else {
-                Val::Number(-k)
-            };
-
-            assert_eq!(env.get_binding("👩‍🚀"), Ok(expected));
-        }
+        let result = env.eval(&stmt);
+        assert_eq!(result, Ok(Val::Unit));
     }
 }

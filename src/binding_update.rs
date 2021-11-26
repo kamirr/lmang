@@ -51,13 +51,18 @@ impl BindingUpdate {
 impl Eval for BindingUpdate {
     fn eval(&self, env: &mut Env) -> Result<Val, String> {
         let value = env.eval(&self.val)?;
-        if self.set {
-            env.set_binding(&self.name, value)?;
-        } else {
-            env.store_binding(self.name.clone(), value);
-        }
+        match value {
+            break_val @ Val::Break(_) => Ok(break_val),
+            _ => {
+                if self.set {
+                    env.set_binding(&self.name, value)?;
+                } else {
+                    env.store_binding(self.name.clone(), value);
+                }
 
-        Ok(Val::Unit)
+                Ok(Val::Unit)
+            }
+        }
     }
 }
 
