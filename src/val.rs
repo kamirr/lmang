@@ -1,7 +1,9 @@
+use std::cell::RefCell;
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::collections::VecDeque;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
+use std::rc::Rc;
 
 pub trait Callee {
     fn call(&self, args: &[Val], env: &mut crate::env::Env) -> Result<Val, String>;
@@ -41,6 +43,7 @@ pub enum Val {
     Deque(VecDeque<Val>),
     // special
     Func(DynFunc),
+    Ref(Rc<RefCell<Val>>),
 }
 
 impl fmt::Display for Val {
@@ -55,6 +58,7 @@ impl fmt::Display for Val {
                 write!(f, "{}", v)?;
             }),
             Self::Func(df) => write!(f, "{:?}", df),
+            Self::Ref(rc) => write!(f, "{:?}", rc),
         }
     }
 }
@@ -65,10 +69,11 @@ impl Val {
 
         use Val::*;
         match self {
+            Ref(rc) => rc.borrow().try_match_type(other),
             Deque(d) => match other {
                 Deque(_) => Ok(Deque(d.clone())),
                 _ => Err(err),
-            }
+            },
             Char(c) => match other {
                 Char(_) => Ok(Char(*c)),
                 Number(_) => Ok(Number(*c as i32)),
@@ -116,6 +121,13 @@ impl Val {
     pub fn as_func(&self) -> Result<DynFunc, String> {
         match self {
             Self::Func(f) => Ok(f.clone()),
+            _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
+        }
+    }
+
+    pub fn as_val_ref(&self) -> Result<Rc<RefCell<Val>>, String> {
+        match self {
+            Self::Ref(rc) => Ok(rc.clone()),
             _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
         }
     }

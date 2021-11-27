@@ -62,7 +62,7 @@ impl Literal {
 mod tests {
     use super::*;
     use crate::env::Env;
-    use crate::expr::{Expr, BindingUsage, BindingUpdate, Block, Call, Func};
+    use crate::expr::{BindingUpdate, BindingUsage, Block, Call, Expr, Func};
 
     #[test]
     fn parse_number() {
@@ -106,44 +106,53 @@ mod tests {
 
     #[test]
     fn parse_hello_world() {
-        let expr_e = Expr::new("📦
+        let expr_e = Expr::new(
+            "📦
             👶 hello = 🧰 ➡️
                 🧵Hello World🧵
             🧑‍🦲 💪
 
             📞 hello
-        🧑‍🦲");
-        let expected = Expr::Block(Block { exprs: vec![
-            Expr::BindingUpdate(Box::new(BindingUpdate {
-                name: "hello".to_string(),
-                val: Expr::Func(Box::new(Func {
-                    args: Vec::new(),
-                    body: Block { exprs: vec![
-                        Expr::Literal(Literal(Val::Deque(
-                            "Hello World".chars().map(|c| Val::Char(c)).collect(),
-                        ))),
-                    ]},
+        🧑‍🦲",
+        );
+        let expected = Expr::Block(Block {
+            exprs: vec![
+                Expr::BindingUpdate(Box::new(BindingUpdate {
+                    name: "hello".to_string(),
+                    val: Expr::Func(Box::new(Func {
+                        args: Vec::new(),
+                        body: Block {
+                            exprs: vec![Expr::Literal(Literal(Val::Deque(
+                                "Hello World".chars().map(|c| Val::Char(c)).collect(),
+                            )))],
+                        },
+                    })),
+                    set: false,
                 })),
-                set: false,
-            })),
-            Expr::Call(Box::new(Call {
-                func: Expr::BindingUsage(BindingUsage{ name: "hello".to_string() }),
-                args: Vec::new(),
-            })),
-        ]});
+                Expr::Call(Box::new(Call {
+                    func: Expr::BindingUsage(BindingUsage {
+                        name: "hello".to_string(),
+                    }),
+                    args: Vec::new(),
+                })),
+            ],
+        });
 
         assert_eq!(expr_e, Ok(("", expected)));
     }
 
     #[test]
     fn eval_hello_world() {
-        let (_, expr_e) = Expr::new("📦
+        let (_, expr_e) = Expr::new(
+            "📦
             👶 hello = 🧰 ➡️
                 🧵Hello World🧵
             🧑‍🦲 💪
 
             📞 hello
-        🧑‍🦲").unwrap();
+        🧑‍🦲",
+        )
+        .unwrap();
         let expected = "Hello World".chars().map(|c| Val::Char(c)).collect();
 
         let mut env = Env::test();

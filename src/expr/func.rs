@@ -1,7 +1,7 @@
 use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
-use crate::val::{DynFunc, Callee, Val};
+use crate::val::{Callee, DynFunc, Val};
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]

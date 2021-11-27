@@ -33,9 +33,7 @@ fn main() -> Result<(), String> {
 
                         Some(res)
                     }
-                    Err(_) => {
-                        None
-                    }
+                    Err(_) => None,
                 }
             } else {
                 match Expr::new(&line[..]) {
@@ -70,11 +68,10 @@ fn main() -> Result<(), String> {
                     Ok(v) => {
                         prompt = "✅";
                         println!("{}", v);
-                    },
+                    }
                     Err(e) => {
                         prompt = "❌";
                         println!("{}", e);
-
                     }
                 }
             }
