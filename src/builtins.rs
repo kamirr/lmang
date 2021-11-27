@@ -1,17 +1,43 @@
 use crate::expr::func::Callee;
-use crate::env::Env;
-use crate::val::Val;
+use crate::env::{Env, Eval};
+use crate::val::{DynFunc, Val};
 use std::fmt;
 
+type BuiltinImpl = fn(&[Val], &mut Env) -> Result<Val, String>;
+
+fn print(args: &[Val], _env: &mut Env) -> Result<Val, String> {
+    if args.len() > 0 {
+        for arg in &args[0..args.len() - 1] {
+            print!("{:?} ", arg);
+        }
+        println!("{:?}", args.last().unwrap());
+    } else {
+        println!("");
+    }
+
+    Ok(Val::Unit)
+}
+
 #[derive(Clone)]
-pub struct BuiltinFn {
+struct BuiltinFn {
     dbg_name: String,
-    func: fn(&[Val], &mut Env) -> Result<Val, String>,
+    func: BuiltinImpl,
 }
 
 impl BuiltinFn {
+    fn new(name: impl Into<String>, func: BuiltinImpl) -> Self {
+        BuiltinFn {
+            dbg_name: name.into(),
+            func,
+        }
+    }
+
+    fn into_val(self) -> Val {
+        Val::Func(DynFunc(Box::new(self)))
+    }
+
     #[cfg(test)]
-    fn nop() -> BuiltinFn {
+    fn nop() -> Self {
         BuiltinFn {
             dbg_name: "nop".to_string(),
             func: |_, _| Ok(Val::Unit),
@@ -19,7 +45,7 @@ impl BuiltinFn {
     }
 
     #[cfg(test)]
-    fn id() -> BuiltinFn {
+    fn id() -> Self {
         BuiltinFn {
             dbg_name: "nop".to_string(),
             func: |args, _| Ok(args[0].clone()),
@@ -48,10 +74,19 @@ impl Callee for BuiltinFn {
     }
 }
 
+pub struct Builtins;
+
+impl Eval for Builtins {
+    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+        env.store_binding("print".to_string(), BuiltinFn::new("print", print).into_val());
+
+        Ok(Val::Unit)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::env::Env;
     use crate::expr::Expr;
     use crate::val::DynFunc;
 
