@@ -1,50 +1,83 @@
 use std::io::BufRead;
+use std::io::Write;
 
-use lmang_lib::{env::Env, expr::Expr};
+use lmang_lib::{env::Env, val::Val, expr::Expr, builtins::Builtins};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();
+    env.eval(&Builtins)?;
 
+    let mut prompt = "✅";
     let mut input = String::new();
-    let stdin = std::io::stdin();
+
     loop {
         let mut line = String::new();
-        stdin.lock().read_line(&mut line).unwrap();
 
-        if line.trim().len() != 0 {
+        print!("{} ", prompt);
+        std::io::stdout().lock().flush().unwrap();
+        let bytes_read = std::io::stdin().lock().read_line(&mut line).unwrap();
+
+        if bytes_read == 0 { // EOF
+            break Ok(());
+        }
+
+        let maybe_res: Option<_> = if line.trim().len() != 0 {
             if input.len() > 0 {
-                input.push_str(&line);
                 match Expr::new(&input[..]) {
                     Ok((_, expr)) => {
-                        let res = env.eval(&expr)?;
-                        println!("{:?}", res);
+                        let res = env.eval(&expr);
                         input.clear();
+
+                        Some(res)
                     }
-                    Err(_) => continue,
+                    Err(_) => {
+                        input.push_str(&line);
+                        
+                        None
+                    },
                 }
             } else {
                 match Expr::new(&line[..]) {
                     Ok((_, expr)) => {
-                        let res = env.eval(&expr);
-                        println!("{:?}", res);
+                        Some(env.eval(&expr))
                     }
                     Err(_) => {
                         input.push_str(&line);
+
+                        None
                     }
                 }
             }
         } else {
-            let expr = match Expr::new(&input[..]) {
-                Ok((_, expr)) => expr,
+            match Expr::new(&input[..]) {
+                Ok((_, expr)) => {
+                    let res = env.eval(&expr);
+                    input.clear();
+
+                    Some(res)
+                },
                 Err(e) => {
                     println!("{}", e);
-                    continue;
+                    input.clear();
+                    prompt = "❌";
+                    
+                    None
                 }
-            };
-            let res = env.eval(&expr)?;
-            println!("{:?}", res);
+            }
+        };
 
-            input.clear();
+        if let Some(res) = maybe_res {
+            if let Ok(Val::Unit) = res { }
+            else {
+                if let Ok(_) = &res {
+                    prompt = "✅";
+                } else {
+                    prompt = "❌";
+                }
+                println!("{:?}", res);
+            }
+        } else {
+            prompt = "😵‍💫";
         }
     }
 }
