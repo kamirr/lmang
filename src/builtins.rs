@@ -8,9 +8,9 @@ type BuiltinImpl = fn(&[Val], &mut Env) -> Result<Val, String>;
 fn print(args: &[Val], _env: &mut Env) -> Result<Val, String> {
     if args.len() > 0 {
         for arg in &args[0..args.len() - 1] {
-            print!("{:?} ", arg);
+            print!("{} ", arg);
         }
-        println!("{:?}", args.last().unwrap());
+        println!("{}", args.last().unwrap());
     } else {
         println!("");
     }
@@ -47,7 +47,7 @@ impl BuiltinFn {
     #[cfg(test)]
     fn id() -> Self {
         BuiltinFn {
-            dbg_name: "nop".to_string(),
+            dbg_name: "id".to_string(),
             func: |args, _| Ok(args[0].clone()),
         }
     }
@@ -82,8 +82,8 @@ pub struct Builtins;
 impl Eval for Builtins {
     fn eval(&self, env: &mut Env) -> Result<Val, String> {
         env.store_binding(
-            "print".to_string(),
-            BuiltinFn::new("print", print).into_val(),
+            "🗣️".to_string(),
+            BuiltinFn::new("🗣️__print", print).into_val(),
         );
 
         Ok(Val::Unit)
