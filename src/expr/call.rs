@@ -43,7 +43,7 @@ impl Eval for Call {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{binding_usage::BindingUsage, Expr, Number};
+    use crate::expr::{binding_usage::BindingUsage, Expr};
 
     #[test]
     fn parse_call() {
@@ -56,7 +56,7 @@ mod tests {
                 Expr::BindingUsage(BindingUsage {
                     name: "a".to_string(),
                 }),
-                Expr::Number(Number(1)),
+                Expr::Literal(Val::Number(1)),
             ],
         };
 
@@ -74,7 +74,7 @@ mod tests {
                 Expr::BindingUsage(BindingUsage {
                     name: "a".to_string(),
                 }),
-                Expr::Number(Number(1)),
+                Expr::Literal(Val::Number(1)),
             ],
         };
 

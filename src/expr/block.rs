@@ -31,6 +31,7 @@ impl Block {
 
         let mut s = s;
         let mut exprs = Vec::new();
+        let mut trailing_sep = false;
 
         while let Ok((new_s, expr)) = Expr::new(s) {
             exprs.push(expr);
@@ -39,15 +40,25 @@ impl Block {
             s = new_s;
 
             s = match utils::tag(kwords::EXPR_SEP, s) {
-                Ok(new_s) => new_s,
-                Err(_) => break,
+                Ok(new_s) => {
+                    trailing_sep = true;
+                    new_s
+                },
+                Err(_) => {
+                    trailing_sep = false;
+                    break
+                },
             };
 
             let (new_s, _) = utils::extract_whitespace(s);
             s = new_s;
         }
-        let (s, _) = utils::extract_whitespace(s);
 
+        if trailing_sep {
+            exprs.push(Expr::Literal(Val::Unit));
+        }
+
+        let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::BLOCK_CLOSE, s)?;
 
         Ok((s, Block { exprs }))
@@ -75,7 +86,7 @@ impl Eval for Block {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{binding_update::BindingUpdate, binding_usage::BindingUsage, Expr, Number, Op};
+    use crate::expr::{binding_update::BindingUpdate, binding_usage::BindingUsage, Expr, Op};
 
     #[test]
     fn parse_empty_block() {
@@ -94,7 +105,18 @@ mod tests {
     }
 
     #[test]
-    fn parse_blick_missing_token() {
+    fn parse_block_tailing_sep() {
+        let block_e = Block::explicit("📦 2 💪 🧑‍🦲");
+        let expected = Block { exprs: vec![
+            Expr::Literal(Val::Number(2)),
+            Expr::Literal(Val::Unit),
+        ]};
+
+        assert_eq!(block_e, Ok(("", expected)));
+    }
+
+    #[test]
+    fn parse_block_missing_token() {
         assert_eq!(Block::implicit("📦"), Err("expected 🧑‍🦲".to_string()));
         assert_eq!(Block::explicit("📦"), Err("expected 🧑‍🦲".to_string()));
         assert_eq!(Block::explicit("🧑‍🦲"), Err("expected 📦".to_string()));
@@ -128,10 +150,10 @@ mod tests {
     fn parse_block_with_one_expr() {
         let blocks = [Block::explicit("📦5🧑‍🦲"), Block::implicit("2*2🧑‍🦲")];
         let res_exprs = [
-            Expr::Number(Number(5)),
+            Expr::Literal(Val::Number(5)),
             Expr::Operation {
-                lhs: Box::new(Expr::Number(Number(2))),
-                rhs: Box::new(Expr::Number(Number(2))),
+                lhs: Box::new(Expr::Literal(Val::Number(2))),
+                rhs: Box::new(Expr::Literal(Val::Number(2))),
                 op: Op::Mul,
             },
         ];
@@ -164,7 +186,7 @@ mod tests {
             exprs: vec![
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "a".to_string(),
-                    val: Expr::Number(Number(10)),
+                    val: Expr::Literal(Val::Number(10)),
                     set: false,
                 })),
                 Expr::BindingUpdate(Box::new(BindingUpdate {

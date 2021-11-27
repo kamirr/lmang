@@ -28,7 +28,7 @@ impl Eval for Break {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{BindingUsage, Expr, Number, Op};
+    use crate::expr::{BindingUsage, Expr, Op};
 
     #[test]
     fn parse_empty_break() {
@@ -63,7 +63,7 @@ mod tests {
                             lhs: Box::new(Expr::BindingUsage(BindingUsage {
                                 name: "a".to_string(),
                             })),
-                            rhs: Box::new(Expr::Number(Number(2))),
+                            rhs: Box::new(Expr::Literal(Val::Number(2))),
                             op: Op::Div,
                         }],
                     },
