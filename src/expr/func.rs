@@ -30,10 +30,10 @@ impl Callee for Func {
             env.store_binding(arg_name.clone(), arg_val.clone());
         }
 
-        let result = env.eval(&self.body)?;
+        let result = env.eval(&self.body);
         env.pop();
 
-        Ok(result)
+        result
     }
 
     fn clone_box(&self) -> Box<dyn Callee> {

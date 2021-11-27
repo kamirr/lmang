@@ -235,8 +235,8 @@ mod tests {
                         💔 fact 🧑‍🦲
                     🧑‍🦲 💪
 
-                    👶 fact = fact * a 💪
-                    👶 a = a - 1
+                    set fact = fact * a 💪
+                    set a = a - 1
                 🧑‍🦲💪
 
                 fact

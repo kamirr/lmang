@@ -71,14 +71,26 @@ impl Eval for Block {
         if len == 0 {
             Ok(Val::Unit)
         } else {
+            env.push();
+
             for expr in &self.exprs[0..len - 1] {
-                let intermediate = env.eval(expr)?;
+                let intermediate = match env.eval(expr) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        env.pop();
+                        return Err(e);
+                    }
+                };
                 if let Val::Break(_) = &intermediate {
+                    env.pop();
                     return Ok(intermediate);
                 }
             }
 
-            env.eval(&self.exprs[len - 1])
+            let result = env.eval(&self.exprs[len - 1]);
+            env.pop();
+
+            result
         }
     }
 }
