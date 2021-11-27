@@ -1,14 +1,8 @@
 use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
-use crate::val::{DynFunc, Val};
+use crate::val::{DynFunc, Callee, Val};
 use std::fmt;
-
-pub trait Callee {
-    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, String>;
-    fn clone_box(&self) -> Box<dyn Callee>;
-    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
-}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Arg(pub String);

@@ -1,8 +1,13 @@
-use crate::expr::func::Callee;
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::collections::VecDeque;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
+
+pub trait Callee {
+    fn call(&self, args: &[Val], env: &mut crate::env::Env) -> Result<Val, String>;
+    fn clone_box(&self) -> Box<dyn Callee>;
+    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
+}
 
 pub struct DynFunc(pub Box<dyn Callee>);
 

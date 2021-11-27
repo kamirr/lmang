@@ -1,6 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::expr::func::Callee;
-use crate::val::{DynFunc, Val};
+use crate::val::{Callee, DynFunc, Val};
 use std::fmt;
 
 type BuiltinImpl = fn(&[Val], &mut Env) -> Result<Val, String>;
