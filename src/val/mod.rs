@@ -1,35 +1,15 @@
+mod dynfunc;
+mod dynobject;
+
+pub use dynfunc::{Callee, DynFunc};
+pub use dynobject::{DynObject, Object};
+
 use std::cell::RefCell;
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::collections::VecDeque;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
 use std::rc::Rc;
-
-pub trait Callee {
-    fn call(&self, args: &[Val], env: &mut crate::env::Env) -> Result<Val, String>;
-    fn clone_box(&self) -> Box<dyn Callee>;
-    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
-}
-
-pub struct DynFunc(pub Box<dyn Callee>);
-
-impl Clone for DynFunc {
-    fn clone(&self) -> Self {
-        DynFunc(self.0.clone_box())
-    }
-}
-
-impl PartialEq for DynFunc {
-    fn eq(&self, other: &DynFunc) -> bool {
-        format!("{:?}", self) == format!("{:?}", other)
-    }
-}
-
-impl fmt::Debug for DynFunc {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.dyn_debug(f)
-    }
-}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Val {
@@ -43,6 +23,7 @@ pub enum Val {
     Deque(VecDeque<Val>),
     // special
     Func(DynFunc),
+    Object(DynObject),
     Ref(Rc<RefCell<Val>>),
 }
 
@@ -58,6 +39,7 @@ impl fmt::Display for Val {
                 write!(f, "{}", v)?;
             }),
             Self::Func(df) => write!(f, "{:?}", df),
+            Self::Object(obj) => write!(f, "{}", obj),
             Self::Ref(rc) => write!(f, "{:?}", rc),
         }
     }
@@ -70,6 +52,10 @@ impl Val {
         use Val::*;
         match self {
             Ref(rc) => rc.borrow().try_match_type(other),
+            Object(obj) => match other {
+                Object(_) => Ok(Object(obj.clone())),
+                _ => Err(err),
+            },
             Deque(d) => match other {
                 Deque(_) => Ok(Deque(d.clone())),
                 _ => Err(err),
@@ -128,6 +114,13 @@ impl Val {
     pub fn as_val_ref(&self) -> Result<Rc<RefCell<Val>>, String> {
         match self {
             Self::Ref(rc) => Ok(rc.clone()),
+            _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
+        }
+    }
+
+    pub fn as_object(&self) -> Result<DynObject, String> {
+        match self {
+            Self::Object(obj) => Ok(obj.clone()),
             _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
         }
     }

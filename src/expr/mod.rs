@@ -5,6 +5,7 @@ pub mod break_expr;
 pub mod call;
 pub mod func;
 pub mod if_expr;
+pub mod index;
 pub mod literal;
 pub mod loop_expr;
 
@@ -18,6 +19,7 @@ use break_expr::Break;
 use call::Call;
 use func::Func;
 use if_expr::If;
+use index::Index;
 use literal::Literal;
 use loop_expr::Loop;
 
@@ -61,6 +63,7 @@ pub enum Expr {
     BindingUsage(BindingUsage),
     Block(Block),
     If(Box<If>),
+    Index(Box<Index>),
     Break(Box<Break>),
     Loop(Box<Loop>),
     Func(Box<Func>),
@@ -75,11 +78,12 @@ impl Expr {
             .map(|(s, update)| (s, Self::BindingUpdate(Box::new(update))))
             .or_else(|_| Self::new_operation(s))
             .or_else(|_| Block::explicit(s).map(|(s, block)| (s, Self::Block(block))))
+            .or_else(|_| Call::new(s).map(|(s, call_e)| (s, Self::Call(Box::new(call_e)))))
             .or_else(|_| If::new(s).map(|(s, if_e)| (s, Self::If(Box::new(if_e)))))
+            .or_else(|_| Index::new(s).map(|(s, index_e)| (s, Self::Index(Box::new(index_e)))))
             .or_else(|_| Break::new(s).map(|(s, break_e)| (s, Self::Break(Box::new(break_e)))))
             .or_else(|_| Loop::new(s).map(|(s, loop_e)| (s, Self::Loop(Box::new(loop_e)))))
             .or_else(|_| Func::new(s).map(|(s, func_e)| (s, Self::Func(Box::new(func_e)))))
-            .or_else(|_| Call::new(s).map(|(s, call_e)| (s, Self::Call(Box::new(call_e)))))
             .or_else(|_| Literal::new(s).map(|(s, literal)| (s, Self::Literal(literal))))
             .or_else(|_| BindingUsage::new(s).map(|(s, usage)| (s, Self::BindingUsage(usage))))
     }
@@ -152,6 +156,7 @@ impl Eval for Expr {
             Self::BindingUsage(bu) => env.eval(bu),
             Self::Block(block) => env.eval(block),
             Self::If(if_e) => env.eval(if_e.as_ref()),
+            Self::Index(index_e) => env.eval(index_e.as_ref()),
             Self::Break(break_e) => env.eval(break_e.as_ref()),
             Self::Loop(loop_e) => env.eval(loop_e.as_ref()),
             Self::Func(func_e) => env.eval(func_e.as_ref()),
