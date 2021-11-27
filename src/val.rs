@@ -38,6 +38,22 @@ pub enum Val {
     Func(DynFunc),
 }
 
+impl fmt::Display for Val {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Number(n) => write!(f, "{}", n),
+            Self::Char(c) => write!(f, "{}", c),
+            Self::Bool(b) => write!(f, "{}", b),
+            Self::Unit => write!(f, "📦🧑‍🦲"),
+            Self::Break(val) => write!(f, "💔: {}", val.as_ref()),
+            Self::Deque(vals) => Ok(for v in vals {
+                write!(f, "{}", v)?;
+            }),
+            Self::Func(df) => write!(f, "{:?}", df),
+        }
+    }
+}
+
 impl Val {
     fn try_match_type(&self, other: &Self) -> Result<Self, String> {
         let err = format!("can't convert type `{}` to `{}`", "?", "?");

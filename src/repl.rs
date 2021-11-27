@@ -24,6 +24,8 @@ fn main() -> Result<(), String> {
 
         let maybe_res: Option<_> = if line.trim().len() != 0 {
             if input.len() > 0 {
+                input.push_str(&line);
+
                 match Expr::new(&input[..]) {
                     Ok((_, expr)) => {
                         let res = env.eval(&expr);
@@ -32,8 +34,6 @@ fn main() -> Result<(), String> {
                         Some(res)
                     }
                     Err(_) => {
-                        input.push_str(&line);
-
                         None
                     }
                 }
@@ -56,24 +56,27 @@ fn main() -> Result<(), String> {
                     Some(res)
                 }
                 Err(e) => {
-                    println!("{}", e);
                     input.clear();
-                    prompt = "❌";
-
-                    None
+                    Some(Err(e))
                 }
             }
         };
 
         if let Some(res) = maybe_res {
             if let Ok(Val::Unit) = res {
+                prompt = "✅";
             } else {
-                if let Ok(_) = &res {
-                    prompt = "✅";
-                } else {
-                    prompt = "❌";
+                match res {
+                    Ok(v) => {
+                        prompt = "✅";
+                        println!("{}", v);
+                    },
+                    Err(e) => {
+                        prompt = "❌";
+                        println!("{}", e);
+
+                    }
                 }
-                println!("{:?}", res);
             }
         } else {
             prompt = "😵‍💫";
