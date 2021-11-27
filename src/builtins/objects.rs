@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::val::{DynFunc, DynObject, Object, Val};
+use crate::val::{DynObject, Object, Val};
 use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
@@ -47,16 +47,12 @@ impl Object for Rng {
     fn member(&self, name: &str) -> Result<Val, String> {
         match name {
             "next" => {
-                let rng = FnState(self.rng.clone());
-                let rustfn = RustFn::stateful("next", Rng::next, rng);
-                let dynfn = DynFunc(Box::new(rustfn));
-                Ok(Val::Func(dynfn))
+                let func = RustFn::stateful("next", Rng::next, &self.rng).into_val();
+                Ok(func)
             },
             "seed" => {
-                let rng = FnState(self.rng.clone());
-                let rustfn = RustFn::stateful("seed", Rng::seed, rng);
-                let dynfn = DynFunc(Box::new(rustfn));
-                Ok(Val::Func(dynfn))
+                let func = RustFn::stateful("seed", Rng::seed, &self.rng).into_val();
+                Ok(func)
             }
             _ => Err(format!("no member {}", name)),
         }

@@ -26,14 +26,15 @@ pub struct RustFn {
 
 impl RustFn {
     pub fn new(name: impl Into<String>, func: BuiltinImpl) -> Self {
-        Self::stateful(name, func, Default::default())
+        let rc = Rc::new(RefCell::new(()));
+        Self::stateful(name, func, &rc)
     }
 
-    pub fn stateful(name: impl Into<String>, func: BuiltinImpl, state: FnState) -> Self {
+    pub fn stateful<T: 'static>(name: impl Into<String>, func: BuiltinImpl, state: &Rc<RefCell<T>>) -> Self {
         RustFn {
             dbg_name: name.into(),
             func,
-            state,
+            state: FnState(state.clone()),
         }
     }
 
@@ -53,7 +54,7 @@ impl RustFn {
 
     #[cfg(test)]
     fn cnt() -> Self {
-        fn func<'a, 'b>(_: &'a [Val], _: &'b mut Env, s: FnState) -> Result<Val, String> {
+        fn func(_: &[Val], _: &mut Env, s: FnState) -> Result<Val, String> {
             let mut borrow = s.0.borrow_mut();
             let n: &mut i32 = borrow.downcast_mut::<i32>().unwrap();
             let res = *n;
@@ -61,9 +62,9 @@ impl RustFn {
 
             Ok(Val::Number(res))
         }
-        let state = FnState(Rc::new(RefCell::new(0)));
+        let state = Rc::new(RefCell::new(0));
 
-        Self::stateful("cnt", func, state)
+        Self::stateful("cnt", func, &state)
     }
 }
 

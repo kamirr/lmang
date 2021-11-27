@@ -20,7 +20,7 @@ pub struct BuiltinFns;
 
 impl Eval for BuiltinFns {
     fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        env.store_binding("🗣️".to_string(), RustFn::new("🗣️__print", print).into_val());
+        env.store_binding("🗣️".to_string(), RustFn::new("print", print).into_val());
 
         Ok(Val::Unit)
     }
