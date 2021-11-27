@@ -16,6 +16,7 @@ impl Env {
         }
     }
 
+    #[cfg(test)]
     pub fn test() -> Self {
         Env {
             stack: vec![HashMap::new()],
