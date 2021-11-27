@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::expr::Expr;
+use crate::expr::{Expr, Literal};
 use crate::utils::{self, kwords};
 use crate::val::Val;
 
@@ -55,7 +55,7 @@ impl Block {
         }
 
         if trailing_sep {
-            exprs.push(Expr::Literal(Val::Unit));
+            exprs.push(Expr::Literal(Literal(Val::Unit)));
         }
 
         let (s, _) = utils::extract_whitespace(s);
@@ -86,7 +86,7 @@ impl Eval for Block {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{binding_update::BindingUpdate, binding_usage::BindingUsage, Expr, Op};
+    use crate::expr::{BindingUpdate, BindingUsage, Op};
 
     #[test]
     fn parse_empty_block() {
@@ -108,7 +108,10 @@ mod tests {
     fn parse_block_tailing_sep() {
         let block_e = Block::explicit("📦 2 💪 🧑‍🦲");
         let expected = Block {
-            exprs: vec![Expr::Literal(Val::Number(2)), Expr::Literal(Val::Unit)],
+            exprs: vec![
+                Expr::Literal(Literal(Val::Number(2))),
+                Expr::Literal(Literal(Val::Unit)),
+            ],
         };
 
         assert_eq!(block_e, Ok(("", expected)));
@@ -149,10 +152,10 @@ mod tests {
     fn parse_block_with_one_expr() {
         let blocks = [Block::explicit("📦5🧑‍🦲"), Block::implicit("2*2🧑‍🦲")];
         let res_exprs = [
-            Expr::Literal(Val::Number(5)),
+            Expr::Literal(Literal(Val::Number(5))),
             Expr::Operation {
-                lhs: Box::new(Expr::Literal(Val::Number(2))),
-                rhs: Box::new(Expr::Literal(Val::Number(2))),
+                lhs: Box::new(Expr::Literal(Literal(Val::Number(2)))),
+                rhs: Box::new(Expr::Literal(Literal(Val::Number(2)))),
                 op: Op::Mul,
             },
         ];
@@ -185,7 +188,7 @@ mod tests {
             exprs: vec![
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "a".to_string(),
-                    val: Expr::Literal(Val::Number(10)),
+                    val: Expr::Literal(Literal(Val::Number(10))),
                     set: false,
                 })),
                 Expr::BindingUpdate(Box::new(BindingUpdate {

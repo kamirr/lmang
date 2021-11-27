@@ -92,7 +92,7 @@ impl Eval for If {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{binding_usage::BindingUsage, Op};
+    use crate::expr::{BindingUsage, Literal, Op};
     use crate::val::Val;
 
     #[test]
@@ -111,11 +111,11 @@ mod tests {
                         lhs: Box::new(Expr::BindingUsage(BindingUsage {
                             name: "a".to_string()
                         })),
-                        rhs: Box::new(Expr::Literal(Val::Number(0))),
+                        rhs: Box::new(Expr::Literal(Literal(Val::Number(0)))),
                         op: Op::Greater
                     },
                     body: Block {
-                        exprs: vec![Expr::Literal(Val::Number(9))]
+                        exprs: vec![Expr::Literal(Literal(Val::Number(9)))]
                     },
                     elifs: Vec::new(),
                     body_else: None,
@@ -142,15 +142,15 @@ mod tests {
                         lhs: Box::new(Expr::BindingUsage(BindingUsage {
                             name: "a".to_string()
                         })),
-                        rhs: Box::new(Expr::Literal(Val::Number(0))),
+                        rhs: Box::new(Expr::Literal(Literal(Val::Number(0)))),
                         op: Op::Greater
                     },
                     body: Block {
-                        exprs: vec![Expr::Literal(Val::Number(9))]
+                        exprs: vec![Expr::Literal(Literal(Val::Number(9)))]
                     },
                     elifs: Vec::new(),
                     body_else: Some(Block {
-                        exprs: vec![Expr::Literal(Val::Number(0))]
+                        exprs: vec![Expr::Literal(Literal(Val::Number(0)))]
                     })
                 },
             )),
@@ -175,22 +175,22 @@ mod tests {
                         lhs: Box::new(Expr::BindingUsage(BindingUsage {
                             name: "a".to_string()
                         })),
-                        rhs: Box::new(Expr::Literal(Val::Number(0))),
+                        rhs: Box::new(Expr::Literal(Literal(Val::Number(0)))),
                         op: Op::Greater
                     },
                     body: Block {
-                        exprs: vec![Expr::Literal(Val::Number(10))]
+                        exprs: vec![Expr::Literal(Literal(Val::Number(10)))]
                     },
                     elifs: vec![(
                         Expr::Operation {
                             lhs: Box::new(Expr::BindingUsage(BindingUsage {
                                 name: "a".to_string()
                             })),
-                            rhs: Box::new(Expr::Literal(Val::Number(1))),
+                            rhs: Box::new(Expr::Literal(Literal(Val::Number(1)))),
                             op: Op::Greater
                         },
                         Block {
-                            exprs: vec![Expr::Literal(Val::Number(20))]
+                            exprs: vec![Expr::Literal(Literal(Val::Number(20)))]
                         }
                     )],
                     body_else: None,
@@ -219,26 +219,26 @@ mod tests {
                         lhs: Box::new(Expr::BindingUsage(BindingUsage {
                             name: "a".to_string()
                         })),
-                        rhs: Box::new(Expr::Literal(Val::Number(0))),
+                        rhs: Box::new(Expr::Literal(Literal(Val::Number(0)))),
                         op: Op::Greater
                     },
                     body: Block {
-                        exprs: vec![Expr::Literal(Val::Number(10))]
+                        exprs: vec![Expr::Literal(Literal(Val::Number(10)))]
                     },
                     elifs: vec![(
                         Expr::Operation {
                             lhs: Box::new(Expr::BindingUsage(BindingUsage {
                                 name: "a".to_string()
                             })),
-                            rhs: Box::new(Expr::Literal(Val::Number(1))),
+                            rhs: Box::new(Expr::Literal(Literal(Val::Number(1)))),
                             op: Op::Greater
                         },
                         Block {
-                            exprs: vec![Expr::Literal(Val::Number(20))]
+                            exprs: vec![Expr::Literal(Literal(Val::Number(20)))]
                         }
                     )],
                     body_else: Some(Block {
-                        exprs: vec![Expr::Literal(Val::Number(30))]
+                        exprs: vec![Expr::Literal(Literal(Val::Number(30)))]
                     }),
                 },
             )),

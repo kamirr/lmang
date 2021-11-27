@@ -69,7 +69,7 @@ impl Eval for BindingUpdate {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::Op;
+    use crate::expr::{Literal, Op};
     use crate::val::Val;
 
     #[test]
@@ -80,7 +80,7 @@ mod tests {
                 "",
                 BindingUpdate {
                     name: "a".to_string(),
-                    val: Expr::Literal(Val::Number(10)),
+                    val: Expr::Literal(Literal(Val::Number(10))),
                     set: true,
                 },
             )),
@@ -96,8 +96,8 @@ mod tests {
                 BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Operation {
-                        lhs: Box::new(Expr::Literal(Val::Number(10))),
-                        rhs: Box::new(Expr::Literal(Val::Number(2))),
+                        lhs: Box::new(Expr::Literal(Literal(Val::Number(10)))),
+                        rhs: Box::new(Expr::Literal(Literal(Val::Number(2)))),
                         op: Op::Div,
                     },
                     set: false,
@@ -114,7 +114,7 @@ mod tests {
                 "",
                 BindingUpdate {
                     name: "aaa".to_string(),
-                    val: Expr::Literal(Val::Number(1)),
+                    val: Expr::Literal(Literal(Val::Number(1))),
                     set: false,
                 }
             )),

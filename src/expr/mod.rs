@@ -5,6 +5,7 @@ pub mod break_expr;
 pub mod call;
 pub mod func;
 pub mod if_expr;
+pub mod literal;
 pub mod loop_expr;
 
 use crate::env::{Env, Eval};
@@ -17,17 +18,8 @@ use break_expr::Break;
 use call::Call;
 use func::Func;
 use if_expr::If;
+use literal::Literal;
 use loop_expr::Loop;
-
-#[derive(Debug, PartialEq, Clone)]
-pub struct Number(pub i32);
-
-impl Number {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
-        let (s, number) = utils::extract_digits(s)?;
-        Ok((s, Self(number.parse().unwrap())))
-    }
-}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Op {
@@ -64,7 +56,7 @@ pub enum Expr {
         rhs: Box<Expr>,
         op: Op,
     },
-    Literal(Val),
+    Literal(Literal),
     BindingUpdate(Box<BindingUpdate>),
     BindingUsage(BindingUsage),
     Block(Block),
@@ -88,11 +80,8 @@ impl Expr {
             .or_else(|_| Loop::new(s).map(|(s, loop_e)| (s, Self::Loop(Box::new(loop_e)))))
             .or_else(|_| Func::new(s).map(|(s, func_e)| (s, Self::Func(Box::new(func_e)))))
             .or_else(|_| Call::new(s).map(|(s, call_e)| (s, Self::Call(Box::new(call_e)))))
-            .or_else(|_| Self::new_number(s))
-            .or_else(|_| {
-                BindingUsage::new(s)
-                    .map(|(s, usage)| (s, Self::BindingUsage(usage)))
-            })
+            .or_else(|_| Literal::new(s).map(|(s, literal)| (s, Self::Literal(literal))))
+            .or_else(|_| BindingUsage::new(s).map(|(s, usage)| (s, Self::BindingUsage(usage))))
     }
 
     fn new_operation(s: &str) -> Result<(&str, Self), String> {
@@ -138,10 +127,6 @@ impl Expr {
             },
         ))
     }
-
-    fn new_number(s: &str) -> Result<(&str, Self), String> {
-        Number::new(s).map(|(s, number)| (s, Self::Literal(Val::Number(number.0))))
-    }
 }
 
 impl Eval for Expr {
@@ -171,7 +156,7 @@ impl Eval for Expr {
             Self::Loop(loop_e) => env.eval(loop_e.as_ref()),
             Self::Func(func_e) => env.eval(func_e.as_ref()),
             Self::Call(call_e) => env.eval(call_e.as_ref()),
-            Self::Literal(val) => Ok(val.clone()),
+            Self::Literal(val) => Ok(val.0.clone()),
         }
     }
 }
@@ -179,11 +164,6 @@ impl Eval for Expr {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn parse_number() {
-        assert_eq!(Number::new("123"), Ok(("", Number(123))));
-    }
 
     #[test]
     fn parse_add_op() {
@@ -212,8 +192,8 @@ mod tests {
             Ok((
                 "",
                 Expr::Operation {
-                    lhs: Box::new(Expr::Literal(Val::Number(1))),
-                    rhs: Box::new(Expr::Literal(Val::Number(2))),
+                    lhs: Box::new(Expr::Literal(Literal(Val::Number(1)))),
+                    rhs: Box::new(Expr::Literal(Literal(Val::Number(2)))),
                     op: Op::Add,
                 },
             )),
@@ -227,8 +207,8 @@ mod tests {
             Ok((
                 "",
                 Expr::Operation {
-                    lhs: Box::new(Expr::Literal(Val::Number(2))),
-                    rhs: Box::new(Expr::Literal(Val::Number(2))),
+                    lhs: Box::new(Expr::Literal(Literal(Val::Number(2)))),
+                    rhs: Box::new(Expr::Literal(Literal(Val::Number(2)))),
                     op: Op::Mul,
                 },
             )),
@@ -251,8 +231,8 @@ mod tests {
                 Ok((
                     "",
                     Expr::Operation {
-                        lhs: Box::new(Expr::Literal(Val::Number(11))),
-                        rhs: Box::new(Expr::Literal(Val::Number(2))),
+                        lhs: Box::new(Expr::Literal(Literal(Val::Number(11)))),
+                        rhs: Box::new(Expr::Literal(Literal(Val::Number(2)))),
                         op: case.1
                     }
                 ))
@@ -262,7 +242,10 @@ mod tests {
 
     #[test]
     fn parse_number_as_expr() {
-        assert_eq!(Expr::new("456"), Ok(("", Expr::Literal(Val::Number(456)))));
+        assert_eq!(
+            Expr::new("456"),
+            Ok(("", Expr::Literal(Literal(Val::Number(456)))))
+        );
     }
 
     #[test]
@@ -271,8 +254,8 @@ mod tests {
 
         assert_eq!(
             env.eval(&Expr::Operation {
-                lhs: Box::new(Expr::Literal(Val::Number(10))),
-                rhs: Box::new(Expr::Literal(Val::Number(10))),
+                lhs: Box::new(Expr::Literal(Literal(Val::Number(10)))),
+                rhs: Box::new(Expr::Literal(Literal(Val::Number(10)))),
                 op: Op::Add,
             }),
             Ok(Val::Number(20)),
@@ -285,8 +268,8 @@ mod tests {
 
         assert_eq!(
             env.eval(&Expr::Operation {
-                lhs: Box::new(Expr::Literal(Val::Number(1))),
-                rhs: Box::new(Expr::Literal(Val::Number(5))),
+                lhs: Box::new(Expr::Literal(Literal(Val::Number(1)))),
+                rhs: Box::new(Expr::Literal(Literal(Val::Number(5)))),
                 op: Op::Sub,
             }),
             Ok(Val::Number(-4)),
@@ -299,8 +282,8 @@ mod tests {
 
         assert_eq!(
             env.eval(&Expr::Operation {
-                lhs: Box::new(Expr::Literal(Val::Number(5))),
-                rhs: Box::new(Expr::Literal(Val::Number(6))),
+                lhs: Box::new(Expr::Literal(Literal(Val::Number(5)))),
+                rhs: Box::new(Expr::Literal(Literal(Val::Number(6)))),
                 op: Op::Mul,
             }),
             Ok(Val::Number(30)),
@@ -313,8 +296,8 @@ mod tests {
 
         assert_eq!(
             env.eval(&Expr::Operation {
-                lhs: Box::new(Expr::Literal(Val::Number(200))),
-                rhs: Box::new(Expr::Literal(Val::Number(20))),
+                lhs: Box::new(Expr::Literal(Literal(Val::Number(200)))),
+                rhs: Box::new(Expr::Literal(Literal(Val::Number(20)))),
                 op: Op::Div,
             }),
             Ok(Val::Number(10)),
@@ -341,7 +324,7 @@ mod tests {
             Ok((
                 "",
                 Expr::Block(Block {
-                    exprs: vec![Expr::Literal(Val::Number(200))],
+                    exprs: vec![Expr::Literal(Literal(Val::Number(200)))],
                 }),
             )),
         );

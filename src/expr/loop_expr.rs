@@ -34,7 +34,7 @@ impl Eval for Loop {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{if_expr::If, BindingUpdate, BindingUsage, Break, Expr, Op};
+    use crate::expr::{BindingUpdate, BindingUsage, Break, Expr, If, Literal, Op};
 
     #[test]
     fn parse_loop_empty() {
@@ -78,7 +78,7 @@ mod tests {
                 exprs: vec![
                     Expr::If(Box::new(If {
                         cond: Expr::Operation {
-                            lhs: Box::new(Expr::Literal(Val::Number(0))),
+                            lhs: Box::new(Expr::Literal(Literal(Val::Number(0)))),
                             rhs: Box::new(Expr::BindingUsage(BindingUsage {
                                 name: "a".to_string(),
                             })),
@@ -115,7 +115,7 @@ mod tests {
                             lhs: Box::new(Expr::BindingUsage(BindingUsage {
                                 name: "a".to_string(),
                             })),
-                            rhs: Box::new(Expr::Literal(Val::Number(1))),
+                            rhs: Box::new(Expr::Literal(Literal(Val::Number(1)))),
                             op: Op::Sub,
                         },
                         set: false,
@@ -149,12 +149,12 @@ mod tests {
             exprs: vec![
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "fact".to_string(),
-                    val: Expr::Literal(Val::Number(1)),
+                    val: Expr::Literal(Literal(Val::Number(1))),
                     set: false,
                 })),
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "a".to_string(),
-                    val: Expr::Literal(Val::Number(5)),
+                    val: Expr::Literal(Literal(Val::Number(5))),
                     set: false,
                 })),
                 Expr::Loop(Box::new(Loop {
@@ -162,7 +162,7 @@ mod tests {
                         exprs: vec![
                             Expr::If(Box::new(If {
                                 cond: Expr::Operation {
-                                    lhs: Box::new(Expr::Literal(Val::Number(0))),
+                                    lhs: Box::new(Expr::Literal(Literal(Val::Number(0)))),
                                     rhs: Box::new(Expr::BindingUsage(BindingUsage {
                                         name: "a".to_string(),
                                     })),
@@ -199,7 +199,7 @@ mod tests {
                                     lhs: Box::new(Expr::BindingUsage(BindingUsage {
                                         name: "a".to_string(),
                                     })),
-                                    rhs: Box::new(Expr::Literal(Val::Number(1))),
+                                    rhs: Box::new(Expr::Literal(Literal(Val::Number(1)))),
                                     op: Op::Sub,
                                 },
                                 set: true,

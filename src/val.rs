@@ -26,6 +26,7 @@ impl fmt::Debug for DynFunc {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Val {
     Number(i32),
+    Char(char),
     Bool(bool),
     Break(Box<Val>),
     Func(DynFunc),
@@ -34,23 +35,29 @@ pub enum Val {
 
 impl Val {
     fn try_match_type(&self, other: &Self) -> Result<Self, String> {
-        let err = Err(format!("can't convert type `{}` to `{}`", "?", "?"));
+        let err = format!("can't convert type `{}` to `{}`", "?", "?");
 
         use Val::*;
         match self {
+            Char(c) => match other {
+                Char(_) => Ok(Char(*c)),
+                Number(_) => Ok(Number(*c as i32)),
+                _ => Err(err),
+            },
             Number(n) => match other {
+                Char(_) => char::from_u32(*n as u32).map(|c| Char(c)).ok_or(err),
                 Number(_) => Ok(Number(*n)),
-                _ => err,
+                _ => Err(err),
             },
             Bool(b) => match other {
                 Bool(_) => Ok(Bool(*b)),
-                _ => err,
+                _ => Err(err),
             },
             Unit => match other {
                 Unit => Ok(Val::Unit),
-                _ => err,
+                _ => Err(err),
             },
-            _ => err,
+            _ => Err(err),
         }
     }
 
