@@ -29,7 +29,7 @@ impl Callee for Func {
         for (Arg(arg_name), arg_val) in self.args.iter().zip(args.iter()) {
             env.store_binding(arg_name.clone(), arg_val.clone());
         }
-        
+
         let result = env.eval(&self.body)?;
         env.pop();
 
@@ -82,7 +82,7 @@ impl Eval for Func {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{binding_usage::BindingUsage, binding_update::BindingUpdate, Expr, Op};
+    use crate::expr::{binding_update::BindingUpdate, binding_usage::BindingUsage, Expr, Op};
 
     #[test]
     fn func_parse_id() {

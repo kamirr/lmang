@@ -100,7 +100,6 @@ mod tests {
         let expected = Ok(Val::Break(Box::new(Val::Number(2))));
 
         assert_eq!(result, expected);
-        
     }
 
     #[test]

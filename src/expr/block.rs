@@ -43,11 +43,11 @@ impl Block {
                 Ok(new_s) => {
                     trailing_sep = true;
                     new_s
-                },
+                }
                 Err(_) => {
                     trailing_sep = false;
-                    break
-                },
+                    break;
+                }
             };
 
             let (new_s, _) = utils::extract_whitespace(s);
@@ -107,10 +107,9 @@ mod tests {
     #[test]
     fn parse_block_tailing_sep() {
         let block_e = Block::explicit("📦 2 💪 🧑‍🦲");
-        let expected = Block { exprs: vec![
-            Expr::Literal(Val::Number(2)),
-            Expr::Literal(Val::Unit),
-        ]};
+        let expected = Block {
+            exprs: vec![Expr::Literal(Val::Number(2)), Expr::Literal(Val::Unit)],
+        };
 
         assert_eq!(block_e, Ok(("", expected)));
     }
@@ -213,14 +212,10 @@ mod tests {
             exprs: vec![Expr::Block(Block {
                 exprs: vec![Expr::Operation {
                     lhs: Box::new(Expr::Block(Block {
-                        exprs: vec![Expr::BindingUsage(BindingUsage {
-                            name: "a".into(),
-                        })],
+                        exprs: vec![Expr::BindingUsage(BindingUsage { name: "a".into() })],
                     })),
                     rhs: Box::new(Expr::Block(Block {
-                        exprs: vec![Expr::BindingUsage(BindingUsage {
-                            name: "b".into(),
-                        })],
+                        exprs: vec![Expr::BindingUsage(BindingUsage { name: "b".into() })],
                     })),
                     op: Op::Add,
                 }],
@@ -236,14 +231,10 @@ mod tests {
 
         let expected = Expr::Operation {
             lhs: Box::new(Expr::Block(Block {
-                exprs: vec![Expr::BindingUsage(BindingUsage {
-                    name: "a".into(),
-                })],
+                exprs: vec![Expr::BindingUsage(BindingUsage { name: "a".into() })],
             })),
             rhs: Box::new(Expr::Block(Block {
-                exprs: vec![Expr::BindingUsage(BindingUsage {
-                    name: "b".into(),
-                })],
+                exprs: vec![Expr::BindingUsage(BindingUsage { name: "b".into() })],
             })),
             op: Op::Add,
         };

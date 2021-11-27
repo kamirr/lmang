@@ -1,7 +1,7 @@
 use crate::expr::func::Callee;
-use std::cmp::{Ordering, PartialOrd, PartialEq};
-use std::ops::{Add, Div, Mul, Sub};
+use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::fmt;
+use std::ops::{Add, Div, Mul, Sub};
 
 pub struct DynFunc(pub Box<dyn Callee>);
 
@@ -22,7 +22,6 @@ impl fmt::Debug for DynFunc {
         self.0.dyn_debug(f)
     }
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Val {

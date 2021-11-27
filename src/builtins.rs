@@ -1,5 +1,5 @@
-use crate::expr::func::Callee;
 use crate::env::{Env, Eval};
+use crate::expr::func::Callee;
 use crate::val::{DynFunc, Val};
 use std::fmt;
 
@@ -55,7 +55,10 @@ impl BuiltinFn {
 
 impl fmt::Debug for BuiltinFn {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("BuiltinFn").field("dbg_name", &self.dbg_name).field("func", &"[...]").finish()
+        f.debug_struct("BuiltinFn")
+            .field("dbg_name", &self.dbg_name)
+            .field("func", &"[...]")
+            .finish()
     }
 }
 
@@ -78,7 +81,10 @@ pub struct Builtins;
 
 impl Eval for Builtins {
     fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        env.store_binding("print".to_string(), BuiltinFn::new("print", print).into_val());
+        env.store_binding(
+            "print".to_string(),
+            BuiltinFn::new("print", print).into_val(),
+        );
 
         Ok(Val::Unit)
     }

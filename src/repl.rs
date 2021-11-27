@@ -1,7 +1,7 @@
 use std::io::BufRead;
 use std::io::Write;
 
-use lmang_lib::{env::Env, val::Val, expr::Expr, builtins::Builtins};
+use lmang_lib::{builtins::Builtins, env::Env, expr::Expr, val::Val};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();
@@ -17,7 +17,8 @@ fn main() -> Result<(), String> {
         std::io::stdout().lock().flush().unwrap();
         let bytes_read = std::io::stdin().lock().read_line(&mut line).unwrap();
 
-        if bytes_read == 0 { // EOF
+        if bytes_read == 0 {
+            // EOF
             break Ok(());
         }
 
@@ -32,15 +33,13 @@ fn main() -> Result<(), String> {
                     }
                     Err(_) => {
                         input.push_str(&line);
-                        
+
                         None
-                    },
+                    }
                 }
             } else {
                 match Expr::new(&line[..]) {
-                    Ok((_, expr)) => {
-                        Some(env.eval(&expr))
-                    }
+                    Ok((_, expr)) => Some(env.eval(&expr)),
                     Err(_) => {
                         input.push_str(&line);
 
@@ -55,20 +54,20 @@ fn main() -> Result<(), String> {
                     input.clear();
 
                     Some(res)
-                },
+                }
                 Err(e) => {
                     println!("{}", e);
                     input.clear();
                     prompt = "❌";
-                    
+
                     None
                 }
             }
         };
 
         if let Some(res) = maybe_res {
-            if let Ok(Val::Unit) = res { }
-            else {
+            if let Ok(Val::Unit) = res {
+            } else {
                 if let Ok(_) = &res {
                     prompt = "✅";
                 } else {

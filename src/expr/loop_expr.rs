@@ -34,7 +34,7 @@ impl Eval for Loop {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{if_expr::If, BindingUsage, BindingUpdate, Break, Expr, Op};
+    use crate::expr::{if_expr::If, BindingUpdate, BindingUsage, Break, Expr, Op};
 
     #[test]
     fn parse_loop_empty() {
@@ -171,11 +171,9 @@ mod tests {
                                 body: Block {
                                     exprs: vec![Expr::Break(Box::new(Break {
                                         body: Block {
-                                            exprs: vec![Expr::BindingUsage(
-                                                BindingUsage {
-                                                    name: "fact".to_string(),
-                                                },
-                                            )],
+                                            exprs: vec![Expr::BindingUsage(BindingUsage {
+                                                name: "fact".to_string(),
+                                            })],
                                         },
                                     }))],
                                 },
