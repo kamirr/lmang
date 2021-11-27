@@ -1,5 +1,6 @@
 use crate::expr::func::Callee;
 use std::cmp::{Ordering, PartialEq, PartialOrd};
+use std::collections::VecDeque;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
 
@@ -25,12 +26,16 @@ impl fmt::Debug for DynFunc {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Val {
+    // base types
     Number(i32),
     Char(char),
     Bool(bool),
-    Break(Box<Val>),
-    Func(DynFunc),
     Unit,
+    // collections
+    Break(Box<Val>),
+    Deque(VecDeque<Val>),
+    // special
+    Func(DynFunc),
 }
 
 impl Val {
@@ -39,6 +44,10 @@ impl Val {
 
         use Val::*;
         match self {
+            Deque(d) => match other {
+                Deque(_) => Ok(Deque(d.clone())),
+                _ => Err(err),
+            }
             Char(c) => match other {
                 Char(_) => Ok(Char(*c)),
                 Number(_) => Ok(Number(*c as i32)),

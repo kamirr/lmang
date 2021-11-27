@@ -19,6 +19,7 @@ pub mod kwords {
     pub const CALL: &'static str = "📞";
 
     pub const CHAR_LIT: &'static str = "🔡";
+    pub const STR_LIT: &'static str = "🧵";
 
     pub const ADD: &'static str = "+";
     pub const SUB: &'static str = "-";
@@ -32,7 +33,7 @@ pub mod kwords {
     pub const LT: &'static str = "<";
     pub const NE: &'static str = "!=";
 
-    pub const ALL: [&'static str; 25] = [
+    pub const ALL: [&'static str; 26] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
         EXPR_SEP,
@@ -48,6 +49,7 @@ pub mod kwords {
         FUNC_SEP,
         CALL,
         CHAR_LIT,
+        STR_LIT,
         ADD,
         SUB,
         MUL,
