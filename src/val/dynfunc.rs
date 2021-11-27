@@ -17,7 +17,12 @@ impl Clone for DynFunc {
 
 impl PartialEq for DynFunc {
     fn eq(&self, other: &DynFunc) -> bool {
-        format!("{:?}", self) == format!("{:?}", other)
+        use std::any::Any;
+        if self.type_id() != other.type_id() {
+            false
+        } else {
+            format!("{:?}", self) == format!("{:?}", other)
+        }
     }
 }
 

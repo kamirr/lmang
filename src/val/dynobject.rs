@@ -18,7 +18,12 @@ impl Clone for DynObject {
 
 impl PartialEq for DynObject {
     fn eq(&self, other: &DynObject) -> bool {
-        format!("{:?}", self) == format!("{:?}", other)
+        use std::any::Any;
+        if self.type_id() != other.type_id() {
+            false
+        } else {
+            format!("{:?}", self) == format!("{:?}", other)
+        }
     }
 }
 
