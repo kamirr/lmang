@@ -34,13 +34,13 @@ impl fmt::Display for Val {
             Self::Char(c) => write!(f, "{}", c),
             Self::Bool(b) => write!(f, "{}", b),
             Self::Unit => write!(f, "📦🧑‍🦲"),
-            Self::Break(val) => write!(f, "💔: {}", val.as_ref()),
+            Self::Break(val) => write!(f, "💔{}", val.as_ref()),
             Self::Deque(vals) => Ok(for v in vals {
                 write!(f, "{}", v)?;
             }),
             Self::Func(df) => write!(f, "{:?}", df),
             Self::Object(obj) => write!(f, "{}", obj),
-            Self::Ref(rc) => write!(f, "{:?}", rc),
+            Self::Ref(rc) => write!(f, "🔖{}", rc.borrow()),
         }
     }
 }
