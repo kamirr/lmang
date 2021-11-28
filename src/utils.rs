@@ -11,7 +11,7 @@ pub mod kwords {
     pub const LOOP: &'static str = "🔁";
 
     pub const LET: &'static str = "👶";
-    pub const SET: &'static str = "set";
+    pub const SET: &'static str = "♻️";
     pub const UPDATE_SEP: &'static str = "=";
 
     pub const FUNC: &'static str = "🧰";

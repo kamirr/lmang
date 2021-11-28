@@ -187,7 +187,7 @@ mod tests {
     fn fn_edit_ref() {
         use crate::expr::{binding_update::BindingUpdate, call::Call};
 
-        let (_, bu) = BindingUpdate::new("👶 become2 = 🧰 arg ➡️ set arg = 2 🧑‍🦲").unwrap();
+        let (_, bu) = BindingUpdate::new("👶 become2 = 🧰 arg ➡️ ♻️ arg = 2 🧑‍🦲").unwrap();
         let (_, call) = Call::new("📞 become2 x").unwrap();
 
         let mut env = Env::test();
@@ -197,7 +197,7 @@ mod tests {
         env.store_binding("x".to_string(), Val::Number(1));
         let _ = env.take_ref("x").unwrap();
 
-        // given a ref as its argument, fn should modify it using set in
+        // given a ref as its argument, fn should modify it using ♻️ in
         // a globally visible manner.
         env.eval(&call).unwrap();
 

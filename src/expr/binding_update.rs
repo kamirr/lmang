@@ -76,7 +76,7 @@ mod tests {
     #[test]
     fn parse_binding_set() {
         assert_eq!(
-            BindingUpdate::new("set a = 10"),
+            BindingUpdate::new("♻️ a = 10"),
             Ok((
                 "",
                 BindingUpdate {

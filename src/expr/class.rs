@@ -130,7 +130,7 @@ mod tests {
     fn check_class_member_shared() {
         let (_, class_e) = Class::new("🧑‍🏫 👶 x = 0 🧑‍🦲").unwrap();
         let (_, let_e) = Expr::new("👶 oref = obj🪆x").unwrap();
-        let (_, set_e) = Expr::new("set oref = 4").unwrap();
+        let (_, set_e) = Expr::new("♻️ oref = 4").unwrap();
         let (_, use_e) = Expr::new("obj🪆x").unwrap();
 
         let mut env = Env::test();
@@ -153,7 +153,7 @@ mod tests {
     fn check_class_member_separate() {
         let (_, class_e) = Class::new("🧑‍🏫 👶 x = 0 🧑‍🦲").unwrap();
         let (_, let_e) = Expr::new("👶 oref = obj1🪆x").unwrap();
-        let (_, set_e) = Expr::new("set oref = 4").unwrap();
+        let (_, set_e) = Expr::new("♻️ oref = 4").unwrap();
         let (_, use_e) = Expr::new("obj2🪆x").unwrap();
 
         let mut env = Env::test();

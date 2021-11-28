@@ -141,8 +141,8 @@ mod tests {
                         💔 fact 🧑‍🦲
                     🧑‍🦲 💪
 
-                    set fact = fact * a 💪
-                    set a = a - 1
+                    ♻️ fact = fact * a 💪
+                    ♻️ a = a - 1
                 🧑‍🦲
             🧑‍🦲",
         );
@@ -237,8 +237,8 @@ mod tests {
                         💔 fact 🧑‍🦲
                     🧑‍🦲 💪
 
-                    set fact = fact * a 💪
-                    set a = a - 1
+                    ♻️ fact = fact * a 💪
+                    ♻️ a = a - 1
                 🧑‍🦲💪
 
                 fact
