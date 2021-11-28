@@ -4,16 +4,18 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use std::time::{Duration, Instant};
 
+use ahash::RandomState;
+
 #[derive(Debug, PartialEq, Default)]
 pub struct Env {
-    stack: Vec<HashMap<String, Val>>,
+    stack: Vec<HashMap<String, Val, RandomState>>,
     timeout: Option<Instant>,
 }
 
 impl Env {
     pub fn new() -> Self {
         Env {
-            stack: vec![HashMap::new()],
+            stack: vec![HashMap::default()],
             timeout: None,
         }
     }
@@ -21,13 +23,13 @@ impl Env {
     #[cfg(test)]
     pub fn test() -> Self {
         Env {
-            stack: vec![HashMap::new()],
+            stack: vec![HashMap::default()],
             timeout: Some(Instant::now() + Duration::from_secs_f32(0.1)),
         }
     }
 
     pub fn push(&mut self) {
-        self.stack.push(HashMap::new());
+        self.stack.push(HashMap::default());
     }
 
     pub fn pop(&mut self) {
@@ -161,7 +163,7 @@ mod tests {
         }
 
         let expected = vec![{
-            let mut tmp = HashMap::new();
+            let mut tmp = HashMap::default();
             tmp.insert(
                 "a".to_string(),
                 Val::Ref(Rc::new(RefCell::new(Val::Number(4)))),

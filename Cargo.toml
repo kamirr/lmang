@@ -19,3 +19,4 @@ path = "src/lib.rs"
 
 [dependencies]
 rand = {version = "0.8", default-features = false, features = ["small_rng"]}
+ahash = "0.7"
