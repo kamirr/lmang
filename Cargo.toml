@@ -7,7 +7,11 @@ license = "MIT"
 
 [[bin]]
 name = "lmang-repl"
-path = "src/repl.rs"
+path = "src/bin/repl.rs"
+
+[[bin]]
+name = "lmang-exec"
+path = "src/bin/exec.rs"
 
 [lib]
 name = "lmang_lib"
