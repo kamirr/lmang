@@ -54,7 +54,9 @@ impl Literal {
         Number::new(s)
             .map(|(s, number)| (s, Self(Val::Number(number.0))))
             .or_else(|_| Char::new(s).map(|(s, char_lit)| (s, Self(Val::Char(char_lit.0)))))
-            .or_else(|_| StringLiteral::new(s).map(|(s, str_lit)| (s, Self(Val::Deque(str_lit.0)))))
+            .or_else(|_| {
+                StringLiteral::new(s).map(|(s, str_lit)| (s, Self(Val::Deque(Box::new(str_lit.0)))))
+            })
     }
 }
 
@@ -123,9 +125,9 @@ mod tests {
                     val: Expr::Func(Box::new(Func {
                         args: Vec::new(),
                         body: Block {
-                            exprs: vec![Expr::Literal(Literal(Val::Deque(
+                            exprs: vec![Expr::Literal(Literal(Val::Deque(Box::new(
                                 "Hello World".chars().map(|c| Val::Char(c)).collect(),
-                            )))],
+                            ))))],
                         },
                     })),
                     set: false,
@@ -159,6 +161,6 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&expr_e);
 
-        assert_eq!(result, Ok(Cow::Owned(Val::Deque(expected))));
+        assert_eq!(result, Ok(Cow::Owned(Val::Deque(Box::new(expected)))));
     }
 }

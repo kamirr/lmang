@@ -22,7 +22,7 @@ fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
     std::io::stdin().lock().read_line(&mut line).unwrap();
 
     let deque = line.chars().map(|c| Val::Char(c)).collect();
-    Ok(Val::Deque(deque))
+    Ok(Val::Deque(Box::new(deque)))
 }
 
 pub struct BuiltinFns;

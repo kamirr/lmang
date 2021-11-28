@@ -20,7 +20,7 @@ pub enum Val {
     Unit,
     // collections
     Break(Box<Val>),
-    Deque(VecDeque<Val>),
+    Deque(Box<VecDeque<Val>>),
     // special
     Func(DynFunc),
     Object(DynObject),
@@ -35,7 +35,7 @@ impl fmt::Display for Val {
             Self::Bool(b) => write!(f, "{}", b),
             Self::Unit => write!(f, "📦🧑‍🦲"),
             Self::Break(val) => write!(f, "💔{}", val.as_ref()),
-            Self::Deque(vals) => Ok(for v in vals {
+            Self::Deque(vals) => Ok(for v in vals.as_ref() {
                 write!(f, "{}", v)?;
             }),
             Self::Func(df) => write!(f, "{:?}", df),

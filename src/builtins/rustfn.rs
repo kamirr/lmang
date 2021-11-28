@@ -129,7 +129,7 @@ mod tests {
 
         let result_nop = env.eval(&nop_e);
         assert_eq!(result_nop, Ok(Cow::Owned(Val::Unit)));
-        
+
         let result_id = env.eval(&id_e);
         assert_eq!(result_id, Ok(Cow::Owned(Val::Number(42))));
     }

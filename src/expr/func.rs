@@ -156,7 +156,10 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&func_e);
 
-        assert_eq!(result, Ok(Cow::Owned(Val::Func(DynFunc(Box::new(expected))))));
+        assert_eq!(
+            result,
+            Ok(Cow::Owned(Val::Func(DynFunc(Box::new(expected)))))
+        );
     }
 
     #[test]
