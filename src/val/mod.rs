@@ -1,7 +1,7 @@
 mod dynfunc;
 mod dynobject;
 
-pub use dynfunc::{Callee, DynFunc};
+pub use dynfunc::{placeholder_func, Callee, DynFunc};
 pub use dynobject::{DynObject, Object};
 
 use std::cell::RefCell;
@@ -52,6 +52,10 @@ impl Val {
         use Val::*;
         match self {
             Ref(rc) => rc.borrow().try_match_type(other),
+            Func(f) => match other {
+                Func(_) => Ok(Func(f.clone())),
+                _ => Err(err),
+            },
             Object(obj) => match other {
                 Object(_) => Ok(Object(obj.clone())),
                 _ => Err(err),
@@ -105,7 +109,11 @@ impl Val {
     }
 
     pub fn as_func(&self) -> Result<DynFunc, String> {
-        match self {
+        use Val::*;
+
+        let self_func = self.try_match_type(&Func(placeholder_func()))?;
+
+        match self_func {
             Self::Func(f) => Ok(f.clone()),
             _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
         }

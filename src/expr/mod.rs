@@ -3,6 +3,7 @@ pub mod binding_usage;
 pub mod block;
 pub mod break_expr;
 pub mod call;
+pub mod class;
 pub mod func;
 pub mod if_expr;
 pub mod index;
@@ -18,6 +19,7 @@ use binding_usage::BindingUsage;
 use block::Block;
 use break_expr::Break;
 use call::Call;
+use class::Class;
 use func::Func;
 use if_expr::If;
 use index::Index;
@@ -66,6 +68,7 @@ pub enum Expr {
     BindingUpdate(Box<BindingUpdate>),
     BindingUsage(BindingUsage),
     Block(Block),
+    Class(Box<Class>),
     If(Box<If>),
     Index(Box<Index>),
     Break(Box<Break>),
@@ -84,6 +87,7 @@ impl Expr {
             .or_else(|_| Self::new_operation(s))
             .or_else(|_| Block::explicit(s).map(|(s, block)| (s, Self::Block(block))))
             .or_else(|_| Call::new(s).map(|(s, call_e)| (s, Self::Call(Box::new(call_e)))))
+            .or_else(|_| Class::new(s).map(|(s, class_e)| (s, Self::Class(Box::new(class_e)))))
             .or_else(|_| If::new(s).map(|(s, if_e)| (s, Self::If(Box::new(if_e)))))
             .or_else(|_| Index::new(s).map(|(s, index_e)| (s, Self::Index(Box::new(index_e)))))
             .or_else(|_| Break::new(s).map(|(s, break_e)| (s, Self::Break(Box::new(break_e)))))
@@ -161,6 +165,7 @@ impl Eval for Expr {
             Self::BindingUpdate(bu) => env.eval(bu.as_ref()),
             Self::BindingUsage(bu) => env.eval(bu),
             Self::Block(block) => env.eval(block),
+            Self::Class(class) => env.eval(class.as_ref()),
             Self::If(if_e) => env.eval(if_e.as_ref()),
             Self::Index(index_e) => env.eval(index_e.as_ref()),
             Self::Break(break_e) => env.eval(break_e.as_ref()),

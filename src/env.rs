@@ -11,6 +11,7 @@ use ahash::RandomState;
 pub struct Env {
     stack: Vec<HashMap<String, Val, RandomState>>,
     timeout: Option<Instant>,
+    last_popped: Option<HashMap<String, Val, RandomState>>,
 }
 
 impl Env {
@@ -18,6 +19,7 @@ impl Env {
         Env {
             stack: vec![HashMap::default()],
             timeout: None,
+            last_popped: None,
         }
     }
 
@@ -26,6 +28,7 @@ impl Env {
         Env {
             stack: vec![HashMap::default()],
             timeout: Some(Instant::now() + Duration::from_secs_f32(0.1)),
+            last_popped: None,
         }
     }
 
@@ -34,7 +37,11 @@ impl Env {
     }
 
     pub fn pop(&mut self) {
-        self.stack.pop().expect("can't pop last stack frame");
+        self.last_popped = Some(self.stack.pop().expect("can't pop last stack frame"));
+    }
+
+    pub fn take_last_popped(&mut self) -> Option<HashMap<String, Val, RandomState>> {
+        self.last_popped.take()
     }
 
     pub fn store_binding(&mut self, name: String, val: Val) {

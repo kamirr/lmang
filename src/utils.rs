@@ -24,6 +24,8 @@ pub mod kwords {
     pub const INDEX: &'static str = "🪆";
     pub const REF: &'static str = "🔖";
 
+    pub const CLASS: &'static str = "🧑‍🏫";
+
     pub const ADD: &'static str = "+";
     pub const SUB: &'static str = "-";
     pub const MUL: &'static str = "*";
@@ -36,7 +38,7 @@ pub mod kwords {
     pub const LT: &'static str = "<";
     pub const NE: &'static str = "!=";
 
-    pub const ALL: [&'static str; 28] = [
+    pub const ALL: [&'static str; 29] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
         EXPR_SEP,
@@ -55,6 +57,7 @@ pub mod kwords {
         STR_LIT,
         INDEX,
         REF,
+        CLASS,
         ADD,
         SUB,
         MUL,

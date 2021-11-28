@@ -94,6 +94,10 @@ impl Callee for RustFn {
         use std::fmt::Debug;
         self.fmt(f)
     }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
+    }
 }
 
 #[cfg(test)]

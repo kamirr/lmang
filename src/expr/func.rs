@@ -1,8 +1,10 @@
 use crate::env::{Env, Eval};
-use crate::expr::block::Block;
+use crate::expr::Block;
 use crate::utils::{self, kwords};
 use crate::val::{Callee, DynFunc, Val};
+use std::any::Any;
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -12,33 +14,6 @@ pub struct Arg(pub String);
 pub struct Func {
     pub args: Vec<Arg>,
     pub body: Block,
-}
-
-impl Callee for Func {
-    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, String> {
-        if args.len() != self.args.len() {
-            return Err("Invalid number of args".to_string());
-        }
-
-        env.push();
-        for (Arg(arg_name), arg_val) in self.args.iter().zip(args.iter()) {
-            env.store_binding(arg_name.clone(), arg_val.clone());
-        }
-
-        let result = env.eval(&self.body).map(|cow| cow.as_ref().to_owned());
-        env.pop();
-
-        result
-    }
-
-    fn clone_box(&self) -> Box<dyn Callee> {
-        Box::new(self.clone())
-    }
-
-    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use std::fmt::Debug;
-        self.fmt(f)
-    }
 }
 
 impl Func {
@@ -70,7 +45,56 @@ impl Func {
 
 impl Eval for Func {
     fn eval<'a, 'b>(&'a self, _env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
-        Ok(Cow::Owned(Val::Func(DynFunc(Box::new(self.clone())))))
+        let funcval = FuncVal {
+            args: self.args.clone(),
+            body: self.body.clone(),
+            parent: None,
+        };
+        Ok(Cow::Owned(Val::Func(DynFunc(Box::new(funcval)))))
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct FuncVal {
+    pub args: Vec<Arg>,
+    pub body: Block,
+    pub parent: Option<HashMap<String, Val, ahash::RandomState>>,
+}
+
+impl Callee for FuncVal {
+    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, String> {
+        if args.len() != self.args.len() {
+            return Err("Invalid number of args".to_string());
+        }
+
+        env.push();
+        if let Some(parent_vars) = &self.parent {
+            for (k, v) in parent_vars {
+                env.store_binding(k.to_string(), v.clone());
+            }
+        }
+
+        for (Arg(arg_name), arg_val) in self.args.iter().zip(args.iter()) {
+            env.store_binding(arg_name.clone(), arg_val.clone());
+        }
+
+        let result = env.eval(&self.body).map(|cow| cow.as_ref().to_owned());
+        env.pop();
+
+        result
+    }
+
+    fn clone_box(&self) -> Box<dyn Callee> {
+        Box::new(self.clone())
+    }
+
+    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        use std::fmt::Debug;
+        self.fmt(f)
+    }
+
+    fn as_any_mut(&mut self) -> &mut dyn Any {
+        self
     }
 }
 
@@ -144,13 +168,14 @@ mod tests {
     #[test]
     fn func_eval_id() {
         let (_, func_e) = Func::new("🧰 a ➡️ a 🧑‍🦲").unwrap();
-        let expected = Func {
+        let expected = FuncVal {
             args: vec![Arg("a".to_string())],
             body: Block {
                 exprs: vec![Expr::BindingUsage(BindingUsage {
                     name: "a".to_string(),
                 })],
             },
+            parent: None,
         };
 
         let mut env = Env::test();
