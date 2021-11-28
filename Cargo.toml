@@ -19,4 +19,10 @@ path = "src/lib.rs"
 
 [dependencies]
 rand = {version = "0.8", default-features = false, features = ["small_rng"]}
+mimalloc = { version = "0.1.17", default-features = false }
 ahash = "0.7"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"
