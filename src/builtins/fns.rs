@@ -21,7 +21,7 @@ fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
     let mut line = String::new();
     std::io::stdin().lock().read_line(&mut line).unwrap();
 
-    let deque = line.chars().map(|c| Val::Char(c)).collect();
+    let deque = line.strip_suffix("\n").unwrap().chars().map(|c| Val::Char(c)).collect();
     Ok(Val::Deque(Box::new(deque)))
 }
 
