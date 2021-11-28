@@ -147,7 +147,7 @@ impl Eval for Expr {
     fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         match self {
             Self::Operation { lhs, rhs, op } => {
-                let lhs = env.eval(lhs.as_ref())?.as_ref().to_owned();
+                let lhs = env.eval(lhs.as_ref())?.as_ref().to_owned().try_match_type(&Val::Number(0))?;
                 let rhs = env.eval(rhs.as_ref())?;
 
                 Ok(Cow::Owned(match op {

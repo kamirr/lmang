@@ -46,7 +46,7 @@ impl fmt::Display for Val {
 }
 
 impl Val {
-    fn try_match_type(&self, other: &Self) -> Result<Self, String> {
+    pub fn try_match_type(&self, other: &Self) -> Result<Self, String> {
         let err = format!("can't convert type `{}` to `{}`", "?", "?");
 
         use Val::*;
