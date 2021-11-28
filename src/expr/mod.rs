@@ -25,6 +25,8 @@ use literal::Literal;
 use loop_expr::Loop;
 use ref_expr::Ref;
 
+use std::borrow::Cow;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Op {
     Add,
@@ -138,23 +140,23 @@ impl Expr {
 }
 
 impl Eval for Expr {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         match self {
             Self::Operation { lhs, rhs, op } => {
-                let lhs = env.eval(lhs.as_ref())?;
+                let lhs = env.eval(lhs.as_ref())?.as_ref().to_owned();
                 let rhs = env.eval(rhs.as_ref())?;
 
-                match op {
-                    Op::Add => lhs + rhs,
-                    Op::Sub => lhs - rhs,
-                    Op::Mul => lhs * rhs,
-                    Op::Div => lhs / rhs,
-                    Op::Greater => lhs.try_gt(&rhs),
-                    Op::GreaterEq => lhs.try_ge(&rhs),
-                    Op::Eq => lhs.try_eq(&rhs),
-                    Op::LessEq => lhs.try_le(&rhs),
-                    Op::Less => lhs.try_lt(&rhs),
-                }
+                Ok(Cow::Owned(match op {
+                    Op::Add => (&lhs + rhs.as_ref())?,
+                    Op::Sub => (&lhs - rhs.as_ref())?,
+                    Op::Mul => (&lhs * rhs.as_ref())?,
+                    Op::Div => (&lhs / rhs.as_ref())?,
+                    Op::Greater => lhs.try_gt(rhs.as_ref())?,
+                    Op::GreaterEq => lhs.try_ge(rhs.as_ref())?,
+                    Op::Eq => lhs.try_eq(rhs.as_ref())?,
+                    Op::LessEq => lhs.try_le(rhs.as_ref())?,
+                    Op::Less => lhs.try_lt(rhs.as_ref())?,
+                }))
             }
             Self::BindingUpdate(bu) => env.eval(bu.as_ref()),
             Self::BindingUsage(bu) => env.eval(bu),
@@ -165,7 +167,7 @@ impl Eval for Expr {
             Self::Loop(loop_e) => env.eval(loop_e.as_ref()),
             Self::Func(func_e) => env.eval(func_e.as_ref()),
             Self::Call(call_e) => env.eval(call_e.as_ref()),
-            Self::Literal(val) => Ok(val.0.clone()),
+            Self::Literal(val) => Ok(Cow::Owned(val.0.clone())),
             Self::Ref(ref_expr) => env.eval(ref_expr),
         }
     }
@@ -268,7 +270,7 @@ mod tests {
                 rhs: Box::new(Expr::Literal(Literal(Val::Number(10)))),
                 op: Op::Add,
             }),
-            Ok(Val::Number(20)),
+            Ok(Cow::Owned(Val::Number(20))),
         );
     }
 
@@ -282,7 +284,7 @@ mod tests {
                 rhs: Box::new(Expr::Literal(Literal(Val::Number(5)))),
                 op: Op::Sub,
             }),
-            Ok(Val::Number(-4)),
+            Ok(Cow::Owned(Val::Number(-4))),
         );
     }
 
@@ -296,7 +298,7 @@ mod tests {
                 rhs: Box::new(Expr::Literal(Literal(Val::Number(6)))),
                 op: Op::Mul,
             }),
-            Ok(Val::Number(30)),
+            Ok(Cow::Owned(Val::Number(30))),
         );
     }
 
@@ -310,7 +312,7 @@ mod tests {
                 rhs: Box::new(Expr::Literal(Literal(Val::Number(20)))),
                 op: Op::Div,
             }),
-            Ok(Val::Number(10)),
+            Ok(Cow::Owned(Val::Number(10))),
         );
     }
 
@@ -356,7 +358,7 @@ mod tests {
                     let expr_s = format!("{} {} {}", n1, op.0, n2);
                     let (_, expr) = Expr::new(&expr_s).unwrap();
 
-                    let expected = Ok(Val::Bool(op.1(*n1, *n2)));
+                    let expected = Ok(Cow::Owned(Val::Bool(op.1(*n1, *n2))));
 
                     let mut env = Env::test();
                     let result = env.eval(&expr);

@@ -1,6 +1,7 @@
 use crate::env::{Env, Eval};
 use crate::utils;
 use crate::val::Val;
+use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BindingUsage {
@@ -21,7 +22,7 @@ impl BindingUsage {
 }
 
 impl Eval for BindingUsage {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         env.get_binding(&self.name)
     }
 }

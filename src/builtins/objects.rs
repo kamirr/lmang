@@ -1,13 +1,12 @@
+use super::{FnState, RustFn};
 use crate::env::{Env, Eval};
 use crate::val::{DynObject, Object, Val};
+use rand::rngs::SmallRng;
+use rand::{RngCore as _, SeedableRng};
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::fmt;
 use std::rc::Rc;
-
-use super::{FnState, RustFn};
-
-use rand::{RngCore as _, SeedableRng};
-use rand::rngs::SmallRng;
 
 #[derive(Clone, Debug)]
 struct Rng {
@@ -49,7 +48,7 @@ impl Object for Rng {
             "next" => {
                 let func = RustFn::stateful("next", Rng::next, &self.rng).into_val();
                 Ok(func)
-            },
+            }
             "seed" => {
                 let func = RustFn::stateful("seed", Rng::seed, &self.rng).into_val();
                 Ok(func)
@@ -70,9 +69,9 @@ impl Object for Rng {
 pub struct BuiltinObjects;
 
 impl Eval for BuiltinObjects {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         env.store_binding("rng".to_string(), Val::Object(DynObject(Rng::boxed())));
 
-        Ok(Val::Unit)
+        Ok(Cow::Owned(Val::Unit))
     }
 }

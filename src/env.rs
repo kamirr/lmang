@@ -1,4 +1,5 @@
 use crate::val::Val;
+use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -55,24 +56,24 @@ impl Env {
         Err(format!("binding with name `{}` does not exist", name))
     }
 
-    pub fn get_binding(&self, name: &str) -> Result<Val, String> {
+    pub fn get_binding<'a, 'b>(&'a self, name: &'b str) -> Result<Cow<'a, Val>, String> {
         for frame in self.stack.iter().rev() {
             if let Some(val) = frame.get(name) {
-                return Ok(val.clone());
+                return Ok(Cow::Borrowed(val));
             }
         }
 
         Err(format!("binding with name `{}` does not exist", name))
     }
 
-    pub fn take_ref(&mut self, name: &str) -> Result<Val, String> {
+    pub fn take_ref<'a, 'b>(&'a mut self, name: &'b str) -> Result<Cow<'a, Val>, String> {
         for frame in self.stack.iter_mut().rev() {
             if let Some(val) = frame.remove(name) {
                 let rc = Rc::new(RefCell::new(val));
                 let val = Val::Ref(rc);
                 frame.insert(name.into(), val.clone());
 
-                return Ok(val);
+                return Ok(Cow::Owned(val));
             }
         }
 
@@ -83,7 +84,7 @@ impl Env {
         self.timeout = Some(Instant::now() + dur);
     }
 
-    pub fn eval(&mut self, expr: &impl Eval) -> Result<Val, String> {
+    pub fn eval<'a, 'b>(&'a mut self, expr: &'b impl Eval) -> Result<Cow<'a, Val>, String> {
         if self.timeout.map(|t| Instant::now() > t).unwrap_or(false) {
             Err("timeout".to_string())
         } else {
@@ -93,7 +94,7 @@ impl Env {
 }
 
 pub trait Eval {
-    fn eval(&self, env: &mut Env) -> Result<Val, String>;
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String>;
 }
 
 #[cfg(test)]
@@ -106,7 +107,7 @@ mod tests {
 
         let mut env = Env::test();
         env.store_binding("a".to_string(), val.clone());
-        assert_eq!(env.get_binding("a"), Ok(val));
+        assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&val)));
     }
 
     #[test]
@@ -115,32 +116,32 @@ mod tests {
         env.store_binding("a".to_string(), Val::Number(3));
         env.store_binding("c".to_string(), Val::Number(9));
 
-        assert_eq!(env.get_binding("a"), Ok(Val::Number(3)));
+        assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&Val::Number(3))));
         assert_eq!(
             env.get_binding("b"),
             Err("binding with name `b` does not exist".to_string())
         );
-        assert_eq!(env.get_binding("c"), Ok(Val::Number(9)));
+        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(9))));
 
         env.push();
         env.store_binding("a".to_string(), Val::Bool(false));
         env.store_binding("b".to_string(), Val::Unit);
 
-        assert_eq!(env.get_binding("c"), Ok(Val::Number(9)));
+        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(9))));
 
         env.set_binding("c", Val::Number(7)).unwrap();
 
-        assert_eq!(env.get_binding("a"), Ok(Val::Bool(false)));
-        assert_eq!(env.get_binding("b"), Ok(Val::Unit));
-        assert_eq!(env.get_binding("c"), Ok(Val::Number(7)));
+        assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&Val::Bool(false))));
+        assert_eq!(env.get_binding("b"), Ok(Cow::Borrowed(&Val::Unit)));
+        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(7))));
         env.pop();
 
-        assert_eq!(env.get_binding("a"), Ok(Val::Number(3)));
+        assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&Val::Number(3))));
         assert_eq!(
             env.get_binding("b"),
             Err("binding with name `b` does not exist".to_string())
         );
-        assert_eq!(env.get_binding("c"), Ok(Val::Number(7)));
+        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(7))));
     }
 
     #[test]
@@ -149,14 +150,14 @@ mod tests {
         env.store_binding("a".to_string(), Val::Number(0));
 
         let val_ref = env.take_ref("a").unwrap();
-        if let Val::Ref(rc) = val_ref {
+        if let Val::Ref(rc) = val_ref.as_ref() {
             assert_eq!(*rc.borrow(), Val::Number(0));
             *rc.borrow_mut() = Val::Number(4);
         } else {
             panic!("val not ref");
         }
 
-        if let Val::Ref(rc) = env.get_binding("a").unwrap() {
+        if let Val::Ref(rc) = env.get_binding("a").unwrap().as_ref() {
             assert_eq!(*rc.borrow(), Val::Number(4));
         } else {
             panic!("val not ref");

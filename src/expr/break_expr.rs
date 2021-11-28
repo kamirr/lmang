@@ -2,6 +2,7 @@ use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
 use crate::val::Val;
+use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Break {
@@ -20,8 +21,10 @@ impl Break {
 }
 
 impl Eval for Break {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        Ok(Val::Break(Box::new(env.eval(&self.body)?)))
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+        Ok(Cow::Owned(Val::Break(Box::new(
+            env.eval(&self.body)?.as_ref().to_owned(),
+        ))))
     }
 }
 
@@ -84,7 +87,7 @@ mod tests {
         let (_, expr) = Expr::new(input).unwrap();
 
         let result = env.eval(&expr);
-        let expected = Ok(Val::Break(Box::new(Val::Unit)));
+        let expected = Ok(Cow::Owned(Val::Break(Box::new(Val::Unit))));
 
         assert_eq!(result, expected);
     }
@@ -97,7 +100,7 @@ mod tests {
         let (_, expr) = Expr::new(input).unwrap();
 
         let result = env.eval(&expr);
-        let expected = Ok(Val::Break(Box::new(Val::Number(2))));
+        let expected = Ok(Cow::Owned(Val::Break(Box::new(Val::Number(2)))));
 
         assert_eq!(result, expected);
     }
@@ -114,6 +117,6 @@ mod tests {
         let (_, expr) = Expr::new(input).unwrap();
 
         let result = env.eval(&expr);
-        assert_eq!(result, Ok(Val::Unit));
+        assert_eq!(result, Ok(Cow::Owned(Val::Unit)));
     }
 }

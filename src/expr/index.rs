@@ -2,6 +2,7 @@ use crate::env::{Env, Eval};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
+use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Index {
@@ -50,14 +51,14 @@ impl Index {
 }
 
 impl Eval for Index {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
-        let mut val = env.eval(&self.root)?;
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+        let mut val = env.eval(&self.root)?.as_ref().to_owned();
         for ident in &self.idents {
             let obj = val.as_object()?;
             val = obj.0.member(ident.as_ref())?;
         }
 
-        Ok(val)
+        Ok(Cow::Owned(val))
     }
 }
 
@@ -131,6 +132,6 @@ mod tests {
         let _ = env.eval(&crate::builtins::Builtins).unwrap();
         let result = env.eval(&call_e);
 
-        assert!(matches!(result, Ok(Val::Number(_))))
+        assert!(matches!(result, Ok(Cow::Owned(Val::Number(_)))))
     }
 }

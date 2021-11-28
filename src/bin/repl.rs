@@ -61,6 +61,7 @@ fn main() -> Result<(), String> {
         };
 
         if let Some(res) = maybe_res {
+            let res = res.map(|cow| cow.into_owned());
             if let Ok(Val::Unit) = res {
                 prompt = "✅";
             } else {

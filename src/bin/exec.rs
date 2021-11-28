@@ -13,7 +13,7 @@ fn main() {
     env.eval(&Builtins).unwrap();
     let val = env.eval(&expr).unwrap();
 
-    if val != Val::Unit {
-        println!("{}", val);
+    if *val.as_ref() != Val::Unit {
+        println!("{}", val.as_ref());
     }
 }

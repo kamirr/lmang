@@ -2,6 +2,7 @@ use crate::env::{Env, Eval};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
+use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Call {
@@ -31,12 +32,16 @@ impl Call {
 }
 
 impl Eval for Call {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         let func = env.eval(&self.func)?.as_func()?;
-        let args: Result<Vec<Val>, _> = self.args.iter().map(|arg| env.eval(arg)).collect();
+        let args: Result<Vec<Val>, _> = self
+            .args
+            .iter()
+            .map(|arg| env.eval(arg).map(|cow| cow.as_ref().to_owned()))
+            .collect();
         let args = args?;
 
-        func.0.call(args.as_slice(), env)
+        func.0.call(args.as_slice(), env).map(|v| Cow::Owned(v))
     }
 }
 
@@ -87,7 +92,7 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&call_e);
 
-        assert_eq!(result, Ok(Val::Number(5)));
+        assert_eq!(result, Ok(Cow::Owned(Val::Number(5))));
     }
 
     #[test]
@@ -124,7 +129,7 @@ mod tests {
         for (arg, fib) in cases.iter() {
             env.store_binding("💾".to_string(), Val::Number(*arg));
             let result = env.eval(&expr_e);
-            assert_eq!(result, Ok(Val::Number(*fib)));
+            assert_eq!(result, Ok(Cow::Owned(Val::Number(*fib))));
         }
     }
 }

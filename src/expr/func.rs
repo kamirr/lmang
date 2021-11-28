@@ -2,6 +2,7 @@ use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
 use crate::val::{Callee, DynFunc, Val};
+use std::borrow::Cow;
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -24,7 +25,7 @@ impl Callee for Func {
             env.store_binding(arg_name.clone(), arg_val.clone());
         }
 
-        let result = env.eval(&self.body);
+        let result = env.eval(&self.body).map(|cow| cow.as_ref().to_owned());
         env.pop();
 
         result
@@ -68,8 +69,8 @@ impl Func {
 }
 
 impl Eval for Func {
-    fn eval(&self, _env: &mut Env) -> Result<Val, String> {
-        Ok(Val::Func(DynFunc(Box::new(self.clone()))))
+    fn eval<'a, 'b>(&'a self, _env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+        Ok(Cow::Owned(Val::Func(DynFunc(Box::new(self.clone())))))
     }
 }
 
@@ -155,7 +156,7 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&func_e);
 
-        assert_eq!(result, Ok(Val::Func(DynFunc(Box::new(expected)))));
+        assert_eq!(result, Ok(Cow::Owned(Val::Func(DynFunc(Box::new(expected))))));
     }
 
     #[test]
@@ -181,9 +182,9 @@ mod tests {
         env.store_binding("x".to_string(), Val::Number(8));
         let res = env.eval(&func_call);
 
-        assert_eq!(res, Ok(Val::Number(1)));
-        assert_eq!(env.get_binding("c"), Ok(Val::Number(1)));
-        assert_eq!(env.get_binding("x"), Ok(Val::Number(1)));
+        assert_eq!(res, Ok(Cow::Owned(Val::Number(1))));
+        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(1))));
+        assert_eq!(env.get_binding("x"), Ok(Cow::Borrowed(&Val::Number(1))));
         assert_eq!(
             env.get_binding("a"),
             Err("binding with name `a` does not exist".to_string())

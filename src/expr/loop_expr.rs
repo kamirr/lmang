@@ -2,6 +2,7 @@ use crate::env::{Env, Eval};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
 use crate::val::Val;
+use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Loop {
@@ -21,10 +22,11 @@ impl Loop {
 }
 
 impl Eval for Loop {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         Ok(loop {
             match env.eval(&self.body)? {
-                Val::Break(inner_box) => break *inner_box,
+                Cow::Owned(Val::Break(inner_box)) => break Cow::Owned(*inner_box),
+                Cow::Borrowed(Val::Break(_)) => todo!(),
                 _ => continue,
             }
         })
@@ -221,7 +223,7 @@ mod tests {
         let mut env = Env::test();
         let res = env.eval(&loop_e);
 
-        assert_eq!(res, Ok(expected));
+        assert_eq!(res, Ok(Cow::Owned(expected)));
     }
 
     #[test]
@@ -251,7 +253,7 @@ mod tests {
             env.store_binding("a".to_string(), Val::Number(case.0));
             let result = env.eval(&loop_e);
 
-            assert_eq!(result, Ok(Val::Number(case.1)));
+            assert_eq!(result, Ok(Cow::Borrowed(&Val::Number(case.1))));
         }
     }
 

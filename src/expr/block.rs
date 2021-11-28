@@ -2,6 +2,7 @@ use crate::env::{Env, Eval};
 use crate::expr::{Expr, Literal};
 use crate::utils::{self, kwords};
 use crate::val::Val;
+use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Block {
@@ -65,16 +66,16 @@ impl Block {
     }
 }
 impl Eval for Block {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         let len = self.exprs.len();
 
         if len == 0 {
-            Ok(Val::Unit)
+            Ok(Cow::Owned(Val::Unit))
         } else {
             env.push();
 
             for expr in &self.exprs[0..len - 1] {
-                let intermediate = match env.eval(expr) {
+                let intermediate = match env.eval(expr).map(|cow| cow.as_ref().to_owned()) {
                     Ok(v) => v,
                     Err(e) => {
                         env.pop();
@@ -83,11 +84,13 @@ impl Eval for Block {
                 };
                 if let Val::Break(_) = &intermediate {
                     env.pop();
-                    return Ok(intermediate);
+                    return Ok(Cow::Owned(intermediate));
                 }
             }
 
-            let result = env.eval(&self.exprs[len - 1]);
+            let result = env
+                .eval(&self.exprs[len - 1])
+                .map(|cow| Cow::Owned(cow.as_ref().to_owned()));
             env.pop();
 
             result
@@ -264,7 +267,7 @@ mod tests {
         let mut env = Env::test();
         let value = env.eval(&block);
 
-        assert_eq!(value, Ok(Val::Unit));
+        assert_eq!(value, Ok(Cow::Owned(Val::Unit)));
     }
 
     #[test]
@@ -274,7 +277,7 @@ mod tests {
         let mut env = Env::test();
         let value = env.eval(&block);
 
-        assert_eq!(value, Ok(Val::Number(44)));
+        assert_eq!(value, Ok(Cow::Owned(Val::Number(44))));
     }
 
     #[test]
@@ -292,6 +295,6 @@ mod tests {
         let mut env = Env::test();
         let value = env.eval(&block);
 
-        assert_eq!(value, Ok(Val::Number(12)));
+        assert_eq!(value, Ok(Cow::Owned(Val::Number(12))));
     }
 }

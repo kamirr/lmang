@@ -1,8 +1,7 @@
+use super::{FnState, RustFn};
 use crate::env::{Env, Eval};
 use crate::val::Val;
-
-use super::{FnState, RustFn};
-
+use std::borrow::Cow;
 use std::io::BufRead;
 
 fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
@@ -29,10 +28,10 @@ fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
 pub struct BuiltinFns;
 
 impl Eval for BuiltinFns {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         env.store_binding("🗣️".to_string(), RustFn::new("print", print).into_val());
         env.store_binding("👂".to_string(), RustFn::new("read", read).into_val());
 
-        Ok(Val::Unit)
+        Ok(Cow::Owned(Val::Unit))
     }
 }

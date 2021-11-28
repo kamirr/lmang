@@ -1,6 +1,7 @@
-use crate::env::{Eval, Env};
+use crate::env::{Env, Eval};
 use crate::utils;
 use crate::val::Val;
+use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Ref {
@@ -11,18 +12,21 @@ impl Ref {
     pub fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag("🔖", s)?;
-        
+
         let (s, _) = utils::extract_whitespace(s);
         let (s, ident) = utils::extract_ident(s)?;
 
-        Ok((s, Ref {
-            ident: ident.to_string(),
-        }))
+        Ok((
+            s,
+            Ref {
+                ident: ident.to_string(),
+            },
+        ))
     }
 }
 
 impl Eval for Ref {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         env.take_ref(&self.ident)
     }
 }
@@ -34,7 +38,9 @@ mod tests {
     #[test]
     fn parse_ref() {
         let ref_e = Ref::new("🔖x");
-        let expected = Ref { ident: "x".to_string() };
+        let expected = Ref {
+            ident: "x".to_string(),
+        };
 
         assert_eq!(ref_e, Ok(("", expected)))
     }
@@ -42,7 +48,9 @@ mod tests {
     #[test]
     fn parse_ref_emoji() {
         let ref_e = Ref::new("🔖🔥🔥");
-        let expected = Ref { ident: "🔥🔥".to_string() };
+        let expected = Ref {
+            ident: "🔥🔥".to_string(),
+        };
 
         assert_eq!(ref_e, Ok(("", expected)))
     }

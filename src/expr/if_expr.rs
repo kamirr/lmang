@@ -2,6 +2,7 @@ use crate::env::{Env, Eval};
 use crate::expr::{block::Block, Expr};
 use crate::utils::{self, kwords};
 use crate::val::Val;
+use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct If {
@@ -71,7 +72,7 @@ impl If {
 }
 
 impl Eval for If {
-    fn eval(&self, env: &mut Env) -> Result<Val, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         let cond_val = env.eval(&self.cond)?;
         if cond_val.as_bool()? {
             env.eval(&self.body)
@@ -83,7 +84,7 @@ impl Eval for If {
             }
             match &self.body_else {
                 Some(be) => env.eval(be),
-                None => Ok(Val::Unit),
+                None => Ok(Cow::Owned(Val::Unit)),
             }
         }
     }
@@ -263,11 +264,11 @@ mod tests {
 
         env.store_binding("a".to_string(), Val::Number(3));
         let res = env.eval(&if_e);
-        assert_eq!(res, Ok(Val::Number(5)));
+        assert_eq!(res, Ok(Cow::Owned(Val::Number(5))));
 
         env.store_binding("a".to_string(), Val::Number(0));
         let res = env.eval(&if_e);
-        assert_eq!(res, Ok(Val::Unit));
+        assert_eq!(res, Ok(Cow::Owned(Val::Unit)));
     }
 
     #[test]
@@ -291,11 +292,11 @@ mod tests {
 
         env.store_binding("a".to_string(), Val::Number(3));
         let res = env.eval(&if_e);
-        assert_eq!(res, Ok(Val::Number(5)));
+        assert_eq!(res, Ok(Cow::Owned(Val::Number(5))));
 
         env.store_binding("a".to_string(), Val::Number(0));
         let res = env.eval(&if_e);
-        assert_eq!(res, Ok(Val::Number(1)));
+        assert_eq!(res, Ok(Cow::Borrowed(&Val::Number(1))));
     }
 
     #[test]
@@ -332,7 +333,11 @@ mod tests {
         for (if_in, if_out) in results {
             env.store_binding("a".to_string(), Val::Number(if_in));
             let res = env.eval(&if_e);
-            assert_eq!(res, Ok(Val::Number(if_out)));
+            if if_in > 0 {
+                assert_eq!(res, Ok(Cow::Borrowed(&Val::Number(if_out))));
+            } else {
+                assert_eq!(res, Ok(Cow::Owned(Val::Number(if_out))));
+            }
         }
     }
 }

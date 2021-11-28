@@ -63,6 +63,7 @@ mod tests {
     use super::*;
     use crate::env::Env;
     use crate::expr::{BindingUpdate, BindingUsage, Block, Call, Expr, Func};
+    use std::borrow::Cow;
 
     #[test]
     fn parse_number() {
@@ -158,6 +159,6 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&expr_e);
 
-        assert_eq!(result, Ok(Val::Deque(expected)));
+        assert_eq!(result, Ok(Cow::Owned(Val::Deque(expected))));
     }
 }
