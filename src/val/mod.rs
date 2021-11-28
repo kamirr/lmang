@@ -2,14 +2,33 @@ mod dynfunc;
 mod dynobject;
 
 pub use dynfunc::{placeholder_func, Callee, DynFunc};
-pub use dynobject::{DynObject, Object};
+pub use dynobject::{placeholder_object, DynObject, Object};
 
 use std::cell::RefCell;
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::collections::VecDeque;
 use std::fmt;
 use std::ops::{Add, Div, Mul, Sub};
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
+
+#[derive(Debug, Clone)]
+pub struct WeakWrapper(pub Weak<RefCell<Val>>);
+
+impl WeakWrapper {
+    pub fn upgrade(&self) -> Option<Rc<RefCell<Val>>> {
+        self.0.upgrade()
+    }
+}
+
+impl PartialEq for WeakWrapper {
+    fn eq(&self, other: &Self) -> bool {
+        match (self.0.upgrade(), other.0.upgrade()) {
+            (Some(rc_self), Some(rc_other)) => rc_self.borrow().eq(&*rc_other.borrow()),
+            (None, None) => true,
+            _ => false,
+        }
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Val {
@@ -18,13 +37,14 @@ pub enum Val {
     Char(char),
     Bool(bool),
     Unit,
-    // collections
+    // collectionsv
     Break(Box<Val>),
     Deque(Box<VecDeque<Val>>),
     // special
     Func(DynFunc),
     Object(DynObject),
     Ref(Rc<RefCell<Val>>),
+    Weak(WeakWrapper),
 }
 
 impl fmt::Display for Val {
@@ -41,17 +61,45 @@ impl fmt::Display for Val {
             Self::Func(df) => write!(f, "{:?}", df),
             Self::Object(obj) => write!(f, "{}", obj),
             Self::Ref(rc) => write!(f, "🔖{}", rc.borrow()),
+            Self::Weak(wk) => {
+                write!(f, "{}", self.variant_name())?;
+                match wk.upgrade() {
+                    Some(rc) => write!(f, "{}", rc.borrow().variant_name()),
+                    None => write!(f, "🥵"),
+                }
+            }
         }
     }
 }
 
 impl Val {
+    pub fn variant_name(&self) -> &'static str {
+        use Val::*;
+
+        match self {
+            Number(_) => "🔢",
+            Char(_) => "🔡",
+            Bool(_) => "😵‍💫",
+            Unit => "📦🧑‍🦲",
+            Break(_) => "💔",
+            Deque(_) => "😵‍💫😵‍💫",
+            Func(_) => "🧰",
+            Object(_) => "🧑‍🏫",
+            Ref(_) => "🔖",
+            Weak(_) => "🦽",
+        }
+    }
+
     pub fn try_match_type(&self, other: &Self) -> Result<Self, String> {
-        let err = format!("can't convert type `{}` to `{}`", "?", "?");
+        let err = format!("can't convert type `{}` to `{}`", self.variant_name(), other.variant_name());
 
         use Val::*;
         match self {
             Ref(rc) => rc.borrow().try_match_type(other),
+            Weak(wk) => match wk.upgrade() {
+                Some(rc) => rc.borrow().try_match_type(other),
+                _ => Err(err),
+            }
             Func(f) => match other {
                 Func(_) => Ok(Func(f.clone())),
                 _ => Err(err),
@@ -115,21 +163,21 @@ impl Val {
 
         match self_func {
             Self::Func(f) => Ok(f.clone()),
-            _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
+            _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Func(placeholder_func()).variant_name())),
         }
     }
 
     pub fn as_val_ref(&self) -> Result<Rc<RefCell<Val>>, String> {
         match self {
             Self::Ref(rc) => Ok(rc.clone()),
-            _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
+            _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Ref(Rc::new(RefCell::new(Val::Unit))).variant_name())),
         }
     }
 
     pub fn as_object(&self) -> Result<DynObject, String> {
         match self {
             Self::Object(obj) => Ok(obj.clone()),
-            _ => Err(format!("can't convert type `{}` to `{}`", "?", "?")),
+            _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Object(placeholder_object()).variant_name())),
         }
     }
 
@@ -137,7 +185,7 @@ impl Val {
         if let Some(_) = self.partial_cmp(other) {
             Ok(Self::Bool(self > other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
         }
     }
 
@@ -145,7 +193,7 @@ impl Val {
         if let Some(_) = self.partial_cmp(other) {
             Ok(Self::Bool(self >= other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
         }
     }
 
@@ -153,7 +201,7 @@ impl Val {
         if let Some(_) = self.partial_cmp(other) {
             Ok(Self::Bool(!(self > other) && !(self < other)))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
         }
     }
 
@@ -161,7 +209,7 @@ impl Val {
         if let Some(_) = self.partial_cmp(other) {
             Ok(Self::Bool(self < other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
         }
     }
 
@@ -169,7 +217,7 @@ impl Val {
         if let Some(_) = self.partial_cmp(other) {
             Ok(Self::Bool(self <= other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", "?", "?"))
+            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
         }
     }
 }

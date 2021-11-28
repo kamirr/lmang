@@ -1,7 +1,7 @@
 use crate::env::{Env, Eval};
 use crate::expr::{func::FuncVal, Block};
 use crate::utils::{self, kwords};
-use crate::val::{DynFunc, DynObject, Object, Val};
+use crate::val::{DynFunc, DynObject, Object, Val, WeakWrapper};
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -41,7 +41,9 @@ impl Eval for Class {
                 if let Val::Func(DynFunc(df)) = &mut *b {
                     if let Some(func_val) = df.as_any_mut().downcast_mut::<FuncVal>() {
                         let mut subenv = frozen.clone();
-                        subenv.remove(key);
+                        let self_rc = subenv.remove(key).unwrap().as_val_ref()?;
+                        let weak_val = Val::Weak(WeakWrapper(Rc::downgrade(&self_rc)));
+                        subenv.insert(key.clone(), weak_val);
                         func_val.parent = Some(subenv);
                     }
                 }
@@ -200,5 +202,25 @@ mod tests {
 
         let result_a = env.eval(&get_x);
         assert_eq!(result_a, Ok(Cow::Borrowed(&Val::Number(10))));
+    }
+
+    #[test]
+    fn check_class_recurrent_method() {
+        let (_, def_class) = Expr::new("👶 obj = 🧑‍🏫
+            👶 log2 = 🧰 n ➡️
+                ❓ n < 1
+                    0
+                🧑‍🦲 😡
+                    1 + 📞 log2 📦 n / 2 🧑‍🦲
+                🧑‍🦲
+            🧑‍🦲
+        🧑‍🦲").unwrap();
+        let (_, eval_log2_10) = Expr::new("📞 obj🪆log2 10").unwrap();
+
+        let mut env = Env::test();
+        env.eval(&def_class).unwrap();
+        let result = env.eval(&eval_log2_10);
+
+        assert_eq!(result, Ok(Cow::Owned(Val::Number(4))));
     }
 }
