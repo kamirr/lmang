@@ -8,6 +8,7 @@ pub mod if_expr;
 pub mod index;
 pub mod literal;
 pub mod loop_expr;
+pub mod ref_expr;
 
 use crate::env::{Env, Eval};
 use crate::utils::{self, kwords};
@@ -22,6 +23,7 @@ use if_expr::If;
 use index::Index;
 use literal::Literal;
 use loop_expr::Loop;
+use ref_expr::Ref;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Op {
@@ -68,6 +70,7 @@ pub enum Expr {
     Loop(Box<Loop>),
     Func(Box<Func>),
     Call(Box<Call>),
+    Ref(Ref),
 }
 
 impl Expr {
@@ -86,6 +89,7 @@ impl Expr {
             .or_else(|_| Func::new(s).map(|(s, func_e)| (s, Self::Func(Box::new(func_e)))))
             .or_else(|_| Literal::new(s).map(|(s, literal)| (s, Self::Literal(literal))))
             .or_else(|_| BindingUsage::new(s).map(|(s, usage)| (s, Self::BindingUsage(usage))))
+            .or_else(|_| Ref::new(s).map(|(s, ref_expr)| (s, Self::Ref(ref_expr))))
     }
 
     fn new_operation(s: &str) -> Result<(&str, Self), String> {
@@ -162,6 +166,7 @@ impl Eval for Expr {
             Self::Func(func_e) => env.eval(func_e.as_ref()),
             Self::Call(call_e) => env.eval(call_e.as_ref()),
             Self::Literal(val) => Ok(val.0.clone()),
+            Self::Ref(ref_expr) => env.eval(ref_expr),
         }
     }
 }
