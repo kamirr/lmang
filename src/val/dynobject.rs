@@ -46,13 +46,13 @@ pub fn placeholder_object() -> DynObject {
         fn member_names(&self) -> Vec<String> {
             unreachable!()
         }
-        fn member(&self, name: &str) -> Result<Val, String> {
+        fn member(&self, _name: &str) -> Result<Val, String> {
             unreachable!()
         }
         fn clone_box(&self) -> Box<dyn Object> {
             unreachable!()
         }
-        fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        fn dyn_debug(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
             unreachable!()
         }
     }
