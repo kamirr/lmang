@@ -1,11 +1,12 @@
-#LMA🆖
+# LMA🆖
 ---
 Meaning: *to compute* in Poleese
+
 Pronunciation: *lee-ming* (g as in mingle)
 
 ---
 
-##About
+## About
 LMA🆖 emb**a**ldens you to write safe and efficient software in an ergonomic manner. It does so in a number of ways, most important of them being:
 
 * Dynamic typing, ridding you of nosy compilers.
@@ -96,7 +97,7 @@ But this is just a nested function call - we call `🗣` passing to it the resul
 
 As you must have noticed, we have more tokens that close blocks (`🧑‍🦲`) than we do those that open them (`📦`). As was explained in the *about* section, opening a block is often implied. In this program it happened for `❓`, `😡` and `🧰`. Other expressions that make use of this feature are `😠` (angry-but-not-very-much `❓` path, sometimes referred to as `elif`) and `💔` (premature exit from a block, similar to `break` in other languages).
 
-If you'd like to see some more samples of LMA🆖, take a look at the `examples/` folder. There are no comments of course, as the language is way too readable for them to be useful. To run them, use `carg run --bin lmang-exec -- ./examples/….🆖`
+If you'd like to see some more samples of LMA🆖, take a look at the `examples/` folder. There are no comments of course, as the language is way too readable for them to be useful. To run them, use `carg run --release --bin lmang-exec -- ./examples/….🆖`
 
 ## Book
 TODO
