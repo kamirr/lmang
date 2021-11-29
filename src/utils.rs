@@ -1,44 +1,44 @@
 pub mod kwords {
-    pub const BLOCK_OPEN: &'static str = "📦";
-    pub const BLOCK_CLOSE: &'static str = "🧑‍🦲";
-    pub const EXPR_SEP: &'static str = "💪";
+    pub const BLOCK_OPEN: &str = "📦";
+    pub const BLOCK_CLOSE: &str = "🧑‍🦲";
+    pub const EXPR_SEP: &str = "💪";
 
-    pub const IF: &'static str = "❓";
-    pub const ELIF: &'static str = "😠";
-    pub const ELSE: &'static str = "😡";
+    pub const IF: &str = "❓";
+    pub const ELIF: &str = "😠";
+    pub const ELSE: &str = "😡";
 
-    pub const BREAK: &'static str = "💔";
-    pub const LOOP: &'static str = "🔁";
+    pub const BREAK: &str = "💔";
+    pub const LOOP: &str = "🔁";
 
-    pub const LET: &'static str = "👶";
-    pub const SET: &'static str = "♻️";
-    pub const UPDATE_SEP: &'static str = "=";
+    pub const LET: &str = "👶";
+    pub const SET: &str = "♻️";
+    pub const UPDATE_SEP: &str = "=";
 
-    pub const FUNC: &'static str = "🧰";
-    pub const FUNC_SEP: &'static str = "➡️";
-    pub const CALL: &'static str = "📞";
+    pub const FUNC: &str = "🧰";
+    pub const FUNC_SEP: &str = "➡️";
+    pub const CALL: &str = "📞";
 
-    pub const CHAR_LIT: &'static str = "🔡";
-    pub const STR_LIT: &'static str = "🧵";
+    pub const CHAR_LIT: &str = "🔡";
+    pub const STR_LIT: &str = "🧵";
 
-    pub const INDEX: &'static str = "🪆";
-    pub const REF: &'static str = "🔖";
+    pub const INDEX: &str = "🪆";
+    pub const REF: &str = "🔖";
 
-    pub const CLASS: &'static str = "🧑‍🏫";
+    pub const CLASS: &str = "🧑‍🏫";
 
-    pub const ADD: &'static str = "+";
-    pub const SUB: &'static str = "-";
-    pub const MUL: &'static str = "*";
-    pub const DIV: &'static str = "/";
+    pub const ADD: &str = "+";
+    pub const SUB: &str = "-";
+    pub const MUL: &str = "*";
+    pub const DIV: &str = "/";
 
-    pub const GT: &'static str = ">";
-    pub const GE: &'static str = ">=";
-    pub const EQ: &'static str = "==";
-    pub const LE: &'static str = "<=";
-    pub const LT: &'static str = "<";
-    pub const NE: &'static str = "!=";
+    pub const GT: &str = ">";
+    pub const GE: &str = ">=";
+    pub const EQ: &str = "==";
+    pub const LE: &str = "<=";
+    pub const LT: &str = "<";
+    pub const NE: &str = "!=";
 
-    pub const ALL: [&'static str; 29] = [
+    pub const ALL: [&str; 29] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
         EXPR_SEP,
@@ -106,12 +106,12 @@ fn is_whitespace(c: char) -> bool {
 }
 
 pub(crate) fn extract_whitespace(s: &str) -> (&str, &str) {
-    take_while(|c| is_whitespace(c), s)
+    take_while(is_whitespace, s)
 }
 
 #[allow(unused)]
 pub(crate) fn extract_whitespace1(s: &str) -> Result<(&str, &str), String> {
-    take_while1(|c| is_whitespace(c), s, "expected a space".to_string())
+    take_while1(is_whitespace, s, "expected a space".to_string())
 }
 
 pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
@@ -126,13 +126,7 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
     }
 
     let mut bytes = 0;
-    let mut chars = 0;
-    loop {
-        let c = match s.chars().skip(chars).next() {
-            Some(c) => c,
-            None => break,
-        };
-
+    for c in s.chars() {
         if c.is_whitespace() {
             break;
         }
@@ -148,7 +142,6 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
         }
 
         bytes += c.len_utf8();
-        chars += 1;
     }
 
     if bytes == 0 {
@@ -159,8 +152,8 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
 }
 
 pub(crate) fn tag<'a, 'b>(starting_text: &'a str, s: &'b str) -> Result<&'b str, String> {
-    if s.starts_with(starting_text) {
-        Ok(&s[starting_text.len()..])
+    if let Some(stripped) = s.strip_prefix(starting_text) {
+        Ok(stripped)
     } else {
         Err(format!("expected {}", starting_text))
     }

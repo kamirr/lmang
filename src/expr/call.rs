@@ -41,7 +41,7 @@ impl Eval for Call {
             .collect();
         let args = args?;
 
-        func.0.call(args.as_slice(), env).map(|v| Cow::Owned(v))
+        func.0.call(args.as_slice(), env).map(Cow::Owned)
     }
 }
 

@@ -110,9 +110,8 @@ impl Expr {
 
             let c = s
                 .chars()
-                .skip(op_c_idx)
-                .next()
-                .ok_or("unexpected eof".to_string())?;
+                .nth(op_c_idx)
+                .ok_or_else(|| "unexpected eof".to_string())?;
 
             op_b_idx += c.len_utf8();
             op_c_idx += 1;
@@ -121,7 +120,7 @@ impl Expr {
         let (sub, lhs) = Expr::new(&s[0..op_b_idx])?;
         let (sub, _) = utils::extract_whitespace(sub);
 
-        if sub.len() > 0 {
+        if !sub.is_empty() {
             return Err("malformed operation".to_string());
         }
 

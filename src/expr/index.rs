@@ -22,7 +22,7 @@ impl Index {
 
         let (expr_rem, root) = Expr::new(expr_s)?;
         let (maybe_empty, _) = utils::extract_whitespace(expr_rem);
-        if maybe_empty.len() > 0 {
+        if !maybe_empty.is_empty() {
             return Err("invalid expr".to_string());
         }
 

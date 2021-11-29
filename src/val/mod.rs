@@ -55,9 +55,13 @@ impl fmt::Display for Val {
             Self::Bool(b) => write!(f, "{}", b),
             Self::Unit => write!(f, "📦🧑‍🦲"),
             Self::Break(val) => write!(f, "💔{}", val.as_ref()),
-            Self::Deque(vals) => Ok(for v in vals.as_ref() {
-                write!(f, "{}", v)?;
-            }),
+            Self::Deque(vals) => {
+                for v in vals.as_ref() {
+                    write!(f, "{}", v)?;
+                }
+
+                Ok(())
+            },
             Self::Func(df) => write!(f, "{:?}", df),
             Self::Object(obj) => write!(f, "{}", obj),
             Self::Ref(rc) => write!(f, "🔖{}", rc.borrow()),
@@ -118,7 +122,7 @@ impl Val {
                 _ => Err(err),
             },
             Number(n) => match other {
-                Char(_) => char::from_u32(*n as u32).map(|c| Char(c)).ok_or(err),
+                Char(_) => char::from_u32(*n as u32).map(Char).ok_or(err),
                 Number(_) => Ok(Number(*n)),
                 _ => Err(err),
             },
@@ -162,7 +166,7 @@ impl Val {
         let self_func = self.try_match_type(&Func(placeholder_func()))?;
 
         match self_func {
-            Self::Func(f) => Ok(f.clone()),
+            Self::Func(f) => Ok(f),
             _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Func(placeholder_func()).variant_name())),
         }
     }
@@ -182,7 +186,7 @@ impl Val {
     }
 
     pub fn try_gt(&self, other: &Val) -> Result<Self, String> {
-        if let Some(_) = self.partial_cmp(other) {
+        if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self > other))
         } else {
             Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
@@ -190,7 +194,7 @@ impl Val {
     }
 
     pub fn try_ge(&self, other: &Val) -> Result<Self, String> {
-        if let Some(_) = self.partial_cmp(other) {
+        if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self >= other))
         } else {
             Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
@@ -198,15 +202,15 @@ impl Val {
     }
 
     pub fn try_eq(&self, other: &Val) -> Result<Self, String> {
-        if let Some(_) = self.partial_cmp(other) {
-            Ok(Self::Bool(!(self > other) && !(self < other)))
+        if self.partial_cmp(other).is_some() {
+            Ok(Self::Bool(self == other))
         } else {
             Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
         }
     }
 
     pub fn try_lt(&self, other: &Val) -> Result<Self, String> {
-        if let Some(_) = self.partial_cmp(other) {
+        if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self < other))
         } else {
             Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
@@ -214,7 +218,7 @@ impl Val {
     }
 
     pub fn try_le(&self, other: &Val) -> Result<Self, String> {
-        if let Some(_) = self.partial_cmp(other) {
+        if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self <= other))
         } else {
             Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))

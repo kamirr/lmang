@@ -69,8 +69,8 @@ impl Object for ClassObject {
     fn member(&self, name: &str) -> Result<Val, String> {
         self.members
             .get(name)
-            .map(|v| v.clone())
-            .ok_or("no member".to_string())
+            .cloned()
+            .ok_or_else(|| "no member".to_string())
     }
 
     fn clone_box(&self) -> Box<dyn Object> {

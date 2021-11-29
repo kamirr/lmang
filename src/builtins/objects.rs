@@ -20,14 +20,14 @@ impl Rng {
         })
     }
 
-    pub fn next<'a, 'b>(_: &'a [Val], _: &'b mut Env, state: FnState) -> Result<Val, String> {
+    pub fn next(_: &[Val], _: &mut Env, state: FnState) -> Result<Val, String> {
         let mut borrow = state.0.borrow_mut();
         let rng: &mut SmallRng = borrow.downcast_mut::<SmallRng>().unwrap();
 
         Ok(Val::Number(rng.next_u32() as i32))
     }
 
-    pub fn seed<'a, 'b>(vals: &'a [Val], _: &'b mut Env, state: FnState) -> Result<Val, String> {
+    pub fn seed(vals: &[Val], _: &mut Env, state: FnState) -> Result<Val, String> {
         let mut borrow = state.0.borrow_mut();
         let rng: &mut SmallRng = borrow.downcast_mut::<SmallRng>().unwrap();
 

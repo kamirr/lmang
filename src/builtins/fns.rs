@@ -5,13 +5,13 @@ use std::borrow::Cow;
 use std::io::BufRead;
 
 fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
-    if args.len() > 0 {
+    if !args.is_empty() {
         for arg in &args[0..args.len() - 1] {
             print!("{} ", arg);
         }
         println!("{}", args.last().unwrap());
     } else {
-        println!("");
+        println!();
     }
 
     Ok(Val::Unit)
@@ -21,7 +21,7 @@ fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
     let mut line = String::new();
     std::io::stdin().lock().read_line(&mut line).unwrap();
 
-    let deque = line.strip_suffix("\n").unwrap().chars().map(|c| Val::Char(c)).collect();
+    let deque = line.strip_suffix('\n').unwrap().chars().map(Val::Char).collect();
     Ok(Val::Deque(Box::new(deque)))
 }
 

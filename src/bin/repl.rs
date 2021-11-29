@@ -22,8 +22,8 @@ fn main() -> Result<(), String> {
             break Ok(());
         }
 
-        let maybe_res: Option<_> = if line.trim().len() != 0 {
-            if input.len() > 0 {
+        let maybe_res: Option<_> = if !line.trim().is_empty() {
+            if !input.is_empty() {
                 input.push_str(&line);
 
                 match Expr::new(&input[..]) {

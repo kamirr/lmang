@@ -20,7 +20,7 @@ impl Char {
     fn new(s: &str) -> Result<(&str, Self), String> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(utils::kwords::CHAR_LIT, s)?;
-        let c = s.chars().next().ok_or("unexpected eof".to_string())?;
+        let c = s.chars().next().ok_or_else(|| "unexpected eof".to_string())?;
         let s = &s[c.len_utf8()..];
         let s = utils::tag(utils::kwords::CHAR_LIT, s)?;
 
@@ -40,7 +40,7 @@ impl StringLiteral {
         let (s, lit) = utils::take_while(|c| !STR_LIT.starts_with(c), s);
         let s = utils::tag(STR_LIT, s)?;
 
-        let deque = lit.chars().map(|c| Val::Char(c)).collect();
+        let deque = lit.chars().map(Val::Char).collect();
 
         Ok((s, Self(deque)))
     }
