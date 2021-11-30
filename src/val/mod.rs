@@ -323,18 +323,10 @@ impl<'a, 'b> Add<&'b Val> for &'a Val {
     type Output = Result<Val, String>;
 
     fn add(self, other: &'b Val) -> Self::Output {
-        let err = Err(format!(
-            "can't add bindings of types `{}` and `{}`",
-            "?", "?"
-        ));
-
-        match self {
-            Val::Number(n1) => {
-                let n2 = other.apply_to_root(|v| v.as_number().map(|n| *n))??;
-                Ok(Val::Number(n1 + n2))
-            }
-            _ => err,
-        }
+        let n = self.apply_to_root(|v1| {
+            other.apply_to_root::<Result<_, String>, _>(|v2| Ok(v1.as_number()? + v2.as_number()?))
+        })???;
+        Ok(Val::Number(n))
     }
 }
 
@@ -350,18 +342,10 @@ impl<'a, 'b> Sub<&'b Val> for &'a Val {
     type Output = Result<Val, String>;
 
     fn sub(self, other: &'b Val) -> Self::Output {
-        let err = Err(format!(
-            "can't sub bindings of types `{}` and `{}`",
-            "?", "?"
-        ));
-
-        match self {
-            Val::Number(n1) => {
-                let n2 = other.apply_to_root(|v| v.as_number().map(|n| *n))??;
-                Ok(Val::Number(n1 - n2))
-            }
-            _ => err,
-        }
+        let n = self.apply_to_root(|v1| {
+            other.apply_to_root::<Result<_, String>, _>(|v2| Ok(v1.as_number()? - v2.as_number()?))
+        })???;
+        Ok(Val::Number(n))
     }
 }
 
@@ -377,18 +361,10 @@ impl<'a, 'b> Mul<&'b Val> for &'a Val {
     type Output = Result<Val, String>;
 
     fn mul(self, other: &'b Val) -> Self::Output {
-        let err = Err(format!(
-            "can't mul bindings of types `{}` and `{}`",
-            "?", "?"
-        ));
-
-        match self {
-            Val::Number(n1) => {
-                let n2 = other.apply_to_root(|v| v.as_number().map(|n| *n))??;
-                Ok(Val::Number(n1 * n2))
-            }
-            _ => err,
-        }
+        let n = self.apply_to_root(|v1| {
+            other.apply_to_root::<Result<_, String>, _>(|v2| Ok(v1.as_number()? * v2.as_number()?))
+        })???;
+        Ok(Val::Number(n))
     }
 }
 
@@ -404,18 +380,10 @@ impl<'a, 'b> Div<&'b Val> for &'a Val {
     type Output = Result<Val, String>;
 
     fn div(self, other: &'b Val) -> Self::Output {
-        let err = Err(format!(
-            "can't div bindings of types `{}` and `{}`",
-            "?", "?"
-        ));
-
-        match self {
-            Val::Number(n1) => {
-                let n2 = other.apply_to_root(|v| v.as_number().map(|n| *n))??;
-                Ok(Val::Number(n1 / n2))
-            }
-            _ => err,
-        }
+        let n = self.apply_to_root(|v1| {
+            other.apply_to_root::<Result<_, String>, _>(|v2| Ok(v1.as_number()? / v2.as_number()?))
+        })???;
+        Ok(Val::Number(n))
     }
 }
 
