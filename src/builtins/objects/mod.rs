@@ -1,4 +1,5 @@
 mod deque;
+mod file;
 mod rng;
 mod rustobj;
 mod sys;
@@ -9,6 +10,7 @@ use std::borrow::Cow;
 use std::cell::RefCell;
 
 use deque::make_deque_builtin;
+use file::make_file_builtin;
 use rng::make_rng_builtin;
 use sys::make_sys_builtin;
 
@@ -26,6 +28,10 @@ impl BuiltinObjects {
 
 impl Eval for BuiltinObjects {
     fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+        env.store_binding(
+            "file".to_string(),
+            Val::Object(DynObject(make_file_builtin())),
+        );
         env.store_binding(
             "rng".to_string(),
             Val::Object(DynObject(make_rng_builtin())),
