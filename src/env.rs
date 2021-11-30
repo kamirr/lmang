@@ -1,8 +1,6 @@
 use crate::val::Val;
 use std::borrow::Cow;
-use std::cell::RefCell;
 use std::collections::HashMap;
-use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use ahash::RandomState;
@@ -75,12 +73,9 @@ impl Env {
 
     pub fn take_ref<'a, 'b>(&'a mut self, name: &'b str) -> Result<Cow<'a, Val>, String> {
         for frame in self.stack.iter_mut().rev() {
-            if let Some(val) = frame.remove(name) {
-                let rc = Rc::new(RefCell::new(val));
-                let val = Val::Ref(rc);
-                frame.insert(name.into(), val.clone());
-
-                return Ok(Cow::Owned(val));
+            if let Some(val) = frame.get_mut(name) {
+                let val_ref = val.make_ref();
+                return Ok(Cow::Owned(val_ref));
             }
         }
 
@@ -107,6 +102,8 @@ pub trait Eval {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::RefCell;
+    use std::rc::Rc;
 
     #[test]
     fn env_store_get() {
@@ -149,6 +146,19 @@ mod tests {
             Err("binding with name `b` does not exist".to_string())
         );
         assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(7))));
+    }
+
+    #[test]
+    fn prevent_double_ref() {
+        let mut env = Env::test();
+        env.store_binding("a".to_string(), Val::Unit);
+        let _ = env.take_ref("a").unwrap();
+        let val_ref = env.take_ref("a");
+
+        assert_eq!(
+            val_ref,
+            Ok(Cow::Borrowed(&Val::Ref(Rc::new(RefCell::new(Val::Unit)))))
+        );
     }
 
     #[test]

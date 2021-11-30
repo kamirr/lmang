@@ -173,6 +173,91 @@ impl Val {
         }
     }
 
+    pub fn as_number_mut(&mut self) -> Result<&mut i32, String> {
+        match self {
+            Val::Number(n) => Ok(n),
+            _ => Err(format!("{}, not a 🔢", self.variant_name())),
+        }
+    }
+
+    pub fn as_char_mut(&mut self) -> Result<&mut char, String> {
+        match self {
+            Val::Char(c) => Ok(c),
+            _ => Err(format!("{}, not a 🔡", self.variant_name())),
+        }
+    }
+
+    pub fn as_bool_mut(&mut self) -> Result<&mut bool, String> {
+        match self {
+            Val::Bool(b) => Ok(b),
+            _ => Err(format!("{}, not a 😵‍💫", self.variant_name())),
+        }
+    }
+
+    pub fn as_break_mut(&mut self) -> Result<&mut Val, String> {
+        match self {
+            Val::Break(b) => Ok(b.as_mut()),
+            _ => Err(format!("{}, not a 💔", self.variant_name())),
+        }
+    }
+
+    pub fn as_deque_mut(&mut self) -> Result<&mut VecDeque<Val>, String> {
+        match self {
+            Self::Deque(obj) => Ok(obj.as_mut()),
+            _ => Err(format!("{}, not a 😵‍💫😵‍💫", self.variant_name())),
+        }
+    }
+
+    pub fn as_func_mut(&mut self) -> Result<&mut DynFunc, String> {
+        match self {
+            Val::Func(f) => Ok(f),
+            _ => Err(format!("{}, not a 🧰", self.variant_name())),
+        }
+    }
+
+    pub fn as_object_mut(&mut self) -> Result<&mut DynObject, String> {
+        match self {
+            Self::Object(obj) => Ok(obj),
+            _ => Err(format!("{}, not a 🧑‍🏫", self.variant_name())),
+        }
+    }
+
+    pub fn as_val_ref_mut(&mut self) -> Result<&mut Rc<RefCell<Val>>, String> {
+        match self {
+            Self::Ref(rc) => Ok(rc),
+            _ => Err(format!("{}, not a 🔖", self.variant_name())),
+        }
+    }
+
+    pub fn apply_to_root_mut<T, F>(&mut self, f: F) -> Result<T, String>
+    where
+        F: FnOnce(&mut Val) -> T,
+    {
+        let wk_err = || "dangling weak ref".to_string();
+
+        match self {
+            Val::Ref(rc) => rc.borrow_mut().apply_to_root_mut(f),
+            Val::Weak(wk) => match wk.upgrade() {
+                Some(rc) => rc.borrow_mut().apply_to_root_mut(f),
+                _ => Err(wk_err()),
+            },
+            root => Ok(f(root)),
+        }
+    }
+
+    pub fn make_ref(&mut self) -> Val {
+        match self {
+            Val::Ref(rc) => Val::Ref(rc.clone()),
+            _ => {
+                let self_own = std::mem::replace(self, Val::Unit);
+                let rc = Rc::new(RefCell::new(self_own));
+                *self = Val::Ref(rc.clone());
+
+                Val::Ref(rc)
+            }
+        }
+    }
+
     pub fn try_gt(&self, other: &Val) -> Result<Self, String> {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self > other))
