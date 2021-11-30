@@ -9,6 +9,7 @@ pub mod if_expr;
 pub mod index;
 pub mod literal;
 pub mod loop_expr;
+pub mod named;
 pub mod ref_expr;
 
 use crate::env::{Env, Eval};
@@ -25,6 +26,7 @@ use if_expr::If;
 use index::Index;
 use literal::Literal;
 use loop_expr::Loop;
+use named::Named;
 use ref_expr::Ref;
 
 use std::borrow::Cow;
@@ -78,6 +80,7 @@ pub enum Expr {
     Func(Box<Func>),
     Call(Box<Call>),
     Ref(Ref),
+    Named(Box<Named>),
 }
 
 impl Expr {
@@ -86,6 +89,9 @@ impl Expr {
 
         BindingUpdate::new(s)
             .map(|(s, update)| (s, Self::BindingUpdate(Box::new(update))))
+            .or_else(|_| {
+                Named::new(s).map(|(s, named_expr)| (s, Self::Named(Box::new(named_expr))))
+            })
             .or_else(|_| Self::new_operation(s))
             .or_else(|_| Block::explicit(s).map(|(s, block)| (s, Self::Block(block))))
             .or_else(|_| Call::new(s).map(|(s, call_e)| (s, Self::Call(Box::new(call_e)))))
@@ -180,6 +186,7 @@ impl Eval for Expr {
             Self::Call(call_e) => env.eval(call_e.as_ref()),
             Self::Literal(val) => Ok(Cow::Owned(val.0.clone())),
             Self::Ref(ref_expr) => env.eval(ref_expr),
+            Self::Named(named_expr) => env.eval(named_expr.as_ref()),
         };
 
         let weak_err = "dangling ref expired".to_string();

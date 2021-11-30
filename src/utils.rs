@@ -29,6 +29,8 @@ pub mod kwords {
 
     pub const CLASS: &str = "🧑‍🏫";
 
+    pub const NAMED: &str = ":";
+
     pub const ADD: &str = "+";
     pub const SUB: &str = "-";
     pub const MUL: &str = "*";
@@ -42,7 +44,7 @@ pub mod kwords {
     pub const NE: &str = "!=";
     pub const FE: &str = "~=";
 
-    pub const ALL: [&str; 32] = [
+    pub const ALL: [&str; 33] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
         EXPR_SEP,
@@ -64,6 +66,7 @@ pub mod kwords {
         INDEX,
         REF,
         CLASS,
+        NAMED,
         ADD,
         SUB,
         MUL,

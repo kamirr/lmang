@@ -4,6 +4,7 @@ mod dynobject;
 pub use dynfunc::{placeholder_func, Callee, DynFunc};
 pub use dynobject::{placeholder_object, DynObject, Object};
 
+use crate::utils::kwords;
 use std::cell::RefCell;
 use std::cmp::{Ordering, PartialEq, PartialOrd};
 use std::collections::VecDeque;
@@ -37,7 +38,7 @@ pub enum Val {
     Char(char),
     Bool(bool),
     Unit,
-    // collectionsv
+    // collections
     Break(Box<Val>),
     Deque(Box<VecDeque<Val>>),
     // special
@@ -45,6 +46,7 @@ pub enum Val {
     Object(DynObject),
     Ref(Rc<RefCell<Val>>),
     Weak(WeakWrapper),
+    Named((String, Box<Val>)),
 }
 
 fn pretty_print_deque(dq: &VecDeque<Val>, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -84,6 +86,7 @@ impl fmt::Display for Val {
                     None => write!(f, "🥵"),
                 }
             }
+            Self::Named((name, val)) => write!(f, "{}{}{}", name, kwords::NAMED, &val),
         }
     }
 }
@@ -103,6 +106,7 @@ impl Val {
             Object(_) => "🧑‍🏫",
             Ref(_) => "🔖",
             Weak(_) => "🦽",
+            Named(_) => ":",
         }
     }
 

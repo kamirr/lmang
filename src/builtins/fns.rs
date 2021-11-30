@@ -6,12 +6,34 @@ use std::io::BufRead;
 
 fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
     if !args.is_empty() {
-        for arg in &args[0..args.len() - 1] {
-            print!("{} ", arg);
+        let mut args = &args[..];
+        let mut sep = None;
+        let mut end = None;
+        while let Ok(Some((name, val))) = args[0].apply_to_root(|v| {
+            if let Val::Named((s, inner)) = v {
+                Some((s.clone(), inner.clone()))
+            } else {
+                None
+            }
+        }) {
+            args = &args[1..];
+            if name == "sep" {
+                sep = Some(format!("{}", val));
+            } else if name == "end" {
+                end = Some(format!("{}", val));
+            }
         }
-        println!("{}", args.last().unwrap());
+
+        let args = args;
+        let sep = sep.unwrap_or_else(|| " ".to_string());
+        let end = end.unwrap_or_else(|| "\n".to_string());
+
+        for arg in &args[0..args.len() - 1] {
+            print!("{}{}", arg, sep);
+        }
+        print!("{}{}", args.last().unwrap(), end);
     } else {
-        println!();
+        println!("");
     }
 
     Ok(Val::Unit)
