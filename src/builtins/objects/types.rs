@@ -2,7 +2,6 @@ use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
 use crate::val::Val;
-use std::borrow::Borrow;
 
 fn to_char(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> {
     args[0]

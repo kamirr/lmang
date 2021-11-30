@@ -2,7 +2,6 @@ use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
 use crate::val::Val;
-use std::borrow::Borrow;
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
 use std::fs::File;
@@ -46,7 +45,8 @@ fn read(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, String> {
     let mut file = files.get(&id).ok_or_else(|| "no such file".to_string())?;
 
     let mut buf = String::new();
-    file.read_to_string(&mut buf);
+    file.read_to_string(&mut buf)
+        .map_err(|_| "couldn't read file".to_string())?;
 
     let deque = buf.chars().map(Val::Char).collect();
 
