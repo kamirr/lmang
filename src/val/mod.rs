@@ -171,17 +171,26 @@ impl Val {
         }
     }
 
-    pub fn as_val_ref(&self) -> Result<Rc<RefCell<Val>>, String> {
+    pub fn as_val_ref(&self) -> Result<&Rc<RefCell<Val>>, String> {
         match self {
-            Self::Ref(rc) => Ok(rc.clone()),
+            Self::Ref(rc) => Ok(rc),
             _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Ref(Rc::new(RefCell::new(Val::Unit))).variant_name())),
         }
     }
 
-    pub fn as_object(&self) -> Result<DynObject, String> {
+    pub fn as_object(&self) -> Result<&DynObject, String> {
         match self {
-            Self::Object(obj) => Ok(obj.clone()),
+            Self::Object(obj) => Ok(obj),
             _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Object(placeholder_object()).variant_name())),
+        }
+    }
+
+    pub fn as_deque(&self) -> Result<&VecDeque<Val>, String> {
+        use Val::*;
+
+        match self {
+            Self::Deque(obj) => Ok(obj.as_ref()),
+            _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Deque(Box::new(VecDeque::new())).variant_name())),
         }
     }
 

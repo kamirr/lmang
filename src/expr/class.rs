@@ -41,7 +41,8 @@ impl Eval for Class {
                 if let Val::Func(DynFunc(df)) = &mut *b {
                     if let Some(func_val) = df.as_any_mut().downcast_mut::<FuncVal>() {
                         let mut subenv = frozen.clone();
-                        let self_rc = subenv.remove(key).unwrap().as_val_ref()?;
+                        let self_val = subenv.remove(key).unwrap();
+                        let self_rc = self_val.as_val_ref()?;
                         let weak_val = Val::Weak(WeakWrapper(Rc::downgrade(&self_rc)));
                         subenv.insert(key.clone(), weak_val);
                         func_val.parent = Some(subenv);
