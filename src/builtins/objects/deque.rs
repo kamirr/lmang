@@ -61,6 +61,29 @@ fn at_mut(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> 
     Ok(result)
 }
 
+fn remove(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> {
+    use std::ops::Sub;
+
+    if args.len() != 2 {
+        return Err("invalid number of arguments".to_string());
+    }
+
+    let idx = args[1].apply_to_root(|v| v.as_number().map(|n| *n))??;
+    let result = match args[0].as_val_ref().borrow().as_ref() {
+        Ok(vr) => vr
+            .borrow_mut()
+            .apply_to_root_mut(|v| -> Result<_, String> {
+                let dq_len = v.as_deque()?.len();
+                let idx_rel = if idx >= 0 { idx as usize } else { dq_len.sub((-idx) as usize) };
+
+                v.as_deque_mut()?.remove(idx_rel).ok_or_else(|| format!("no index {}", idx))
+            })??,
+        _ => args[0].as_deque()?[idx as usize].clone(),
+    };
+
+    Ok(result)
+}
+
 pub fn make_deque_builtin() -> Box<RustObj<()>> {
     RustObj::boxed(
         "deque",
@@ -69,6 +92,7 @@ pub fn make_deque_builtin() -> Box<RustObj<()>> {
             RustFn::new("append", append),
             RustFn::new("at", at),
             RustFn::new("mut", at_mut),
+            RustFn::new("remove", remove),
         ],
         None,
     )
@@ -178,6 +202,37 @@ mod tests {
             tmp.push_back(Val::Number(1));
             tmp.push_back(Val::Number(2));
             tmp.push_back(Val::Ref(Rc::new(RefCell::new(Val::Number(3)))));
+
+            tmp
+        };
+        let expected_dq_val = Val::Ref(Rc::new(RefCell::new(Val::Deque(Box::new(expected_dq)))));
+        let expected = Cow::Borrowed(&expected_dq_val);
+        assert_eq!(dq, expected);
+    }
+
+    #[test]
+    fn test_remove() {
+        let mut env = deque_test_env();
+        let (_, remove_2_e) = Expr::new("📞 d_test🪆remove 🔖d 2").unwrap();
+        let (_, remove_20_e) = Expr::new("📞 d_test🪆remove 🔖d 20").unwrap();
+
+        let result = env.eval(&remove_2_e);
+        assert_eq!(
+            result,
+            Ok(Cow::Owned(Val::Number(3)))
+        );
+
+        let result = env.eval(&remove_20_e);
+        assert_eq!(
+            result,
+            Err("no index 20".to_string())
+        );
+
+        let dq = env.get_binding("d").unwrap();
+        let expected_dq = {
+            let mut tmp = VecDeque::new();
+            tmp.push_back(Val::Number(1));
+            tmp.push_back(Val::Number(2));
 
             tmp
         };
