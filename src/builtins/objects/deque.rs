@@ -74,9 +74,15 @@ fn remove(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> 
             .borrow_mut()
             .apply_to_root_mut(|v| -> Result<_, String> {
                 let dq_len = v.as_deque()?.len();
-                let idx_rel = if idx >= 0 { idx as usize } else { dq_len.sub((-idx) as usize) };
+                let idx_rel = if idx >= 0 {
+                    idx as usize
+                } else {
+                    dq_len.sub((-idx) as usize)
+                };
 
-                v.as_deque_mut()?.remove(idx_rel).ok_or_else(|| format!("no index {}", idx))
+                v.as_deque_mut()?
+                    .remove(idx_rel)
+                    .ok_or_else(|| format!("no index {}", idx))
             })??,
         _ => args[0].as_deque()?[idx as usize].clone(),
     };
@@ -217,16 +223,10 @@ mod tests {
         let (_, remove_20_e) = Expr::new("📞 d_test🪆remove 🔖d 20").unwrap();
 
         let result = env.eval(&remove_2_e);
-        assert_eq!(
-            result,
-            Ok(Cow::Owned(Val::Number(3)))
-        );
+        assert_eq!(result, Ok(Cow::Owned(Val::Number(3))));
 
         let result = env.eval(&remove_20_e);
-        assert_eq!(
-            result,
-            Err("no index 20".to_string())
-        );
+        assert_eq!(result, Err("no index 20".to_string()));
 
         let dq = env.get_binding("d").unwrap();
         let expected_dq = {

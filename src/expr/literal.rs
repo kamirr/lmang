@@ -54,7 +54,7 @@ struct Bool(bool);
 
 impl Bool {
     fn new(s: &str) -> Result<(&str, Self), String> {
-        use utils::kwords::{TRUE, FALSE};
+        use utils::kwords::{FALSE, TRUE};
 
         let (s, _) = utils::extract_whitespace(s);
         if let Ok(s) = utils::tag(TRUE, s) {

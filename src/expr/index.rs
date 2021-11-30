@@ -129,7 +129,9 @@ mod tests {
         let (_, call_e) = Expr::new("📞rng🪆next").unwrap();
         let mut env = Env::test();
 
-        let _ = env.eval(&crate::builtins::Builtins).unwrap();
+        let _ = env
+            .eval(&crate::builtins::Builtins::new(std::iter::empty()))
+            .unwrap();
         let result = env.eval(&call_e);
 
         assert!(matches!(result, Ok(Cow::Owned(Val::Number(_)))))

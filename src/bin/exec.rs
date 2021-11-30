@@ -10,7 +10,7 @@ fn main() {
     let (_, expr) = Expr::new(&code).unwrap();
 
     let mut env = Env::new();
-    env.eval(&Builtins).unwrap();
+    env.eval(&Builtins::new(std::env::args().skip(2))).unwrap();
     let val = env.eval(&expr).unwrap();
 
     if *val.as_ref() != Val::Unit {

@@ -5,7 +5,7 @@ use lmang_lib::{builtins::Builtins, env::Env, expr::Expr, val::Val};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();
-    env.eval(&Builtins)?;
+    env.eval(&Builtins::new(std::env::args().skip(1)))?;
 
     let mut prompt = "✅";
     let mut input = String::new();
