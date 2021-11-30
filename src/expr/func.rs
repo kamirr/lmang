@@ -93,6 +93,10 @@ impl Callee for FuncVal {
         self.fmt(f)
     }
 
+    fn dyn_display(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "user-defined")
+    }
+
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
     }

@@ -10,13 +10,18 @@ use std::rc::Rc;
 #[derive(Clone, Debug)]
 pub struct RngBuiltin {
     rng: Rc<RefCell<SmallRng>>,
+    fns: Vec<RustFn>,
 }
 
 impl RngBuiltin {
     pub fn boxed() -> Box<Self> {
-        Box::new(RngBuiltin {
-            rng: Rc::new(RefCell::new(SmallRng::seed_from_u64(0))),
-        })
+        let rng = Rc::new(RefCell::new(SmallRng::seed_from_u64(0)));
+        let fns = vec![
+            RustFn::stateful("next", RngBuiltin::next, &rng),
+            RustFn::stateful("seed", RngBuiltin::seed, &rng),
+        ];
+
+        Box::new(RngBuiltin { rng, fns })
     }
 
     fn next(_: &[Val], _: &mut Env, state: FnState) -> Result<Val, String> {
@@ -39,21 +44,17 @@ impl RngBuiltin {
 
 impl Object for RngBuiltin {
     fn member_names(&self) -> Vec<String> {
-        vec!["next".to_string(), "state".to_string()]
+        self.fns.iter().map(|f| f.name.clone()).collect()
     }
 
     fn member(&self, name: &str) -> Result<Val, String> {
-        match name {
-            "next" => {
-                let func = RustFn::stateful("next", RngBuiltin::next, &self.rng).into_val();
-                Ok(func)
+        for func in self.fns.iter() {
+            if func.name == name {
+                return Ok(func.clone().into_val());
             }
-            "seed" => {
-                let func = RustFn::stateful("seed", RngBuiltin::seed, &self.rng).into_val();
-                Ok(func)
-            }
-            _ => Err(format!("no member {}", name)),
         }
+
+        Err(format!("no member {}", name))
     }
 
     fn clone_box(&self) -> Box<dyn Object> {
@@ -62,5 +63,9 @@ impl Object for RngBuiltin {
 
     fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
+    }
+
+    fn name(&self) -> &str {
+        "rng"
     }
 }

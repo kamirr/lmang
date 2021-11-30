@@ -6,6 +6,7 @@ pub trait Callee {
     fn call(&self, args: &[Val], env: &mut crate::env::Env) -> Result<Val, String>;
     fn clone_box(&self) -> Box<dyn Callee>;
     fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
+    fn dyn_display(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
@@ -33,6 +34,12 @@ impl fmt::Debug for DynFunc {
     }
 }
 
+impl fmt::Display for DynFunc {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.dyn_display(f)
+    }
+}
+
 pub fn placeholder_func() -> DynFunc {
     struct ImplDetail;
 
@@ -44,6 +51,9 @@ pub fn placeholder_func() -> DynFunc {
             unreachable!()
         }
         fn dyn_debug(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            unreachable!()
+        }
+        fn dyn_display(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
             unreachable!()
         }
         fn as_any_mut(&mut self) -> &mut dyn Any {

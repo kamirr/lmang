@@ -5,11 +5,20 @@ use std::borrow::Borrow;
 use std::fmt;
 
 #[derive(Clone, Debug)]
-pub struct DequeBuiltin {}
+pub struct DequeBuiltin {
+    fns: Vec<RustFn>,
+}
 
 impl DequeBuiltin {
     pub fn boxed() -> Box<Self> {
-        Box::new(DequeBuiltin {})
+        let fns = vec![
+            RustFn::new("len", DequeBuiltin::len),
+            RustFn::new("append", DequeBuiltin::append),
+            RustFn::new("at", DequeBuiltin::at),
+            RustFn::new("mut", DequeBuiltin::at_mut),
+        ];
+
+        Box::new(DequeBuiltin { fns })
     }
 
     fn len(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> {
@@ -74,29 +83,17 @@ impl DequeBuiltin {
 
 impl Object for DequeBuiltin {
     fn member_names(&self) -> Vec<String> {
-        vec!["len".to_string()]
+        self.fns.iter().map(|f| f.name.clone()).collect()
     }
 
     fn member(&self, name: &str) -> Result<Val, String> {
-        match name {
-            "len" => {
-                let func = RustFn::new("len", DequeBuiltin::len).into_val();
-                Ok(func)
+        for func in self.fns.iter() {
+            if func.name == name {
+                return Ok(func.clone().into_val());
             }
-            "append" => {
-                let func = RustFn::new("append", DequeBuiltin::append).into_val();
-                Ok(func)
-            }
-            "at" => {
-                let func = RustFn::new("at", DequeBuiltin::at).into_val();
-                Ok(func)
-            }
-            "mut" => {
-                let func = RustFn::new("mut", DequeBuiltin::at_mut).into_val();
-                Ok(func)
-            }
-            _ => Err(format!("no member {}", name)),
         }
+
+        Err(format!("no member {}", name))
     }
 
     fn clone_box(&self) -> Box<dyn Object> {
@@ -105,5 +102,9 @@ impl Object for DequeBuiltin {
 
     fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
+    }
+
+    fn name(&self) -> &str {
+        "deque"
     }
 }

@@ -62,7 +62,7 @@ impl fmt::Display for Val {
 
                 Ok(())
             }
-            Self::Func(df) => write!(f, "{:?}", df),
+            Self::Func(df) => write!(f, "{}", df),
             Self::Object(obj) => write!(f, "{}", obj),
             Self::Ref(rc) => write!(f, "🔖{}", rc.borrow()),
             Self::Weak(wk) => {

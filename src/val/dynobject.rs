@@ -1,3 +1,4 @@
+use crate::utils::kwords;
 use crate::val::Val;
 use std::fmt;
 
@@ -6,6 +7,7 @@ pub trait Object {
     fn member(&self, name: &str) -> Result<Val, String>;
     fn clone_box(&self) -> Box<dyn Object>;
     fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
+    fn name(&self) -> &str;
 }
 
 pub struct DynObject(pub Box<dyn Object>);
@@ -35,7 +37,13 @@ impl fmt::Debug for DynObject {
 
 impl fmt::Display for DynObject {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{}{}", kwords::CLASS, self.0.name())?;
+        write!(f, " (")?;
+        for m in &self.0.member_names() {
+            write!(f, "{}:{}, ", m, self.0.member(m).unwrap())?;
+        }
+        writeln!(f, ")")?;
+        Ok(())
     }
 }
 
@@ -54,6 +62,9 @@ pub fn placeholder_object() -> DynObject {
         }
         fn dyn_debug(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
             unreachable!()
+        }
+        fn name(&self) -> &str {
+            todo!()
         }
     }
 

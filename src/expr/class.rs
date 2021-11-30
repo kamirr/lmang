@@ -81,6 +81,10 @@ impl Object for ClassObject {
     fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         <Self as fmt::Debug>::fmt(self, f)
     }
+
+    fn name(&self) -> &str {
+        "user-defined"
+    }
 }
 
 #[cfg(test)]

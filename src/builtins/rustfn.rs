@@ -19,9 +19,9 @@ type BuiltinImpl = fn(&[Val], &mut Env, FnState) -> Result<Val, String>;
 
 #[derive(Clone)]
 pub struct RustFn {
-    dbg_name: String,
-    func: BuiltinImpl,
-    state: FnState,
+    pub name: String,
+    pub func: BuiltinImpl,
+    pub state: FnState,
 }
 
 impl RustFn {
@@ -36,7 +36,7 @@ impl RustFn {
         state: &Rc<RefCell<T>>,
     ) -> Self {
         RustFn {
-            dbg_name: name.into(),
+            name: name.into(),
             func,
             state: FnState(state.clone()),
         }
@@ -75,7 +75,7 @@ impl RustFn {
 impl fmt::Debug for RustFn {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("RustFn")
-            .field("dbg_name", &self.dbg_name)
+            .field("name", &self.name)
             .field("func", &"[...]")
             .finish()
     }
@@ -97,6 +97,10 @@ impl Callee for RustFn {
 
     fn as_any_mut(&mut self) -> &mut dyn Any {
         self
+    }
+
+    fn dyn_display(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "🦀")
     }
 }
 
