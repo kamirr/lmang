@@ -49,6 +49,24 @@ impl StringLiteral {
     }
 }
 
+#[derive(Debug, PartialEq)]
+struct Bool(bool);
+
+impl Bool {
+    fn new(s: &str) -> Result<(&str, Self), String> {
+        use utils::kwords::{TRUE, FALSE};
+
+        let (s, _) = utils::extract_whitespace(s);
+        if let Ok(s) = utils::tag(TRUE, s) {
+            Ok((s, Self(true)))
+        } else if let Ok(s) = utils::tag(FALSE, s) {
+            Ok((s, Self(false)))
+        } else {
+            Err("not a boolean".to_string())
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Literal(pub Val);
 
@@ -57,6 +75,7 @@ impl Literal {
         Number::new(s)
             .map(|(s, number)| (s, Self(Val::Number(number.0))))
             .or_else(|_| Char::new(s).map(|(s, char_lit)| (s, Self(Val::Char(char_lit.0)))))
+            .or_else(|_| Bool::new(s).map(|(s, bool_lit)| (s, Self(Val::Bool(bool_lit.0)))))
             .or_else(|_| {
                 StringLiteral::new(s).map(|(s, str_lit)| (s, Self(Val::Deque(Box::new(str_lit.0)))))
             })
@@ -108,6 +127,16 @@ mod tests {
     #[test]
     fn parse_literal_char() {
         assert_eq!(Literal::new("🔡💈🔡"), Ok(("", Literal(Val::Char('💈')))));
+    }
+
+    #[test]
+    fn parse_literal_true() {
+        assert_eq!(Literal::new("🙆‍♀️"), Ok(("", Literal(Val::Bool(true)))));
+    }
+
+    #[test]
+    fn parse_literal_false() {
+        assert_eq!(Literal::new("🙅‍♀️"), Ok(("", Literal(Val::Bool(false)))));
     }
 
     #[test]

@@ -83,7 +83,7 @@ impl Val {
         match self {
             Number(_) => "🔢",
             Char(_) => "🔡",
-            Bool(_) => "😵‍💫",
+            Bool(_) => "🤨",
             Unit => "📦🧑‍🦲",
             Break(_) => "💔",
             Deque(_) => "😵‍💫😵‍💫",
