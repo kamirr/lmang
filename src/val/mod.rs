@@ -61,7 +61,7 @@ impl fmt::Display for Val {
                 }
 
                 Ok(())
-            },
+            }
             Self::Func(df) => write!(f, "{:?}", df),
             Self::Object(obj) => write!(f, "{}", obj),
             Self::Ref(rc) => write!(f, "🔖{}", rc.borrow()),
@@ -94,103 +94,82 @@ impl Val {
         }
     }
 
-    pub fn try_match_type(&self, other: &Self) -> Result<Self, String> {
-        let err = format!("can't convert type `{}` to `{}`", self.variant_name(), other.variant_name());
-
-        use Val::*;
+    pub fn as_number(&self) -> Result<&i32, String> {
         match self {
-            Ref(rc) => rc.borrow().try_match_type(other),
-            Weak(wk) => match wk.upgrade() {
-                Some(rc) => rc.borrow().try_match_type(other),
-                _ => Err(err),
-            }
-            Func(f) => match other {
-                Func(_) => Ok(Func(f.clone())),
-                _ => Err(err),
-            },
-            Object(obj) => match other {
-                Object(_) => Ok(Object(obj.clone())),
-                _ => Err(err),
-            },
-            Deque(d) => match other {
-                Deque(_) => Ok(Deque(d.clone())),
-                _ => Err(err),
-            },
-            Char(c) => match other {
-                Char(_) => Ok(Char(*c)),
-                Number(_) => Ok(Number(*c as i32)),
-                _ => Err(err),
-            },
-            Number(n) => match other {
-                Char(_) => char::from_u32(*n as u32).map(Char).ok_or(err),
-                Number(_) => Ok(Number(*n)),
-                _ => Err(err),
-            },
-            Bool(b) => match other {
-                Bool(_) => Ok(Bool(*b)),
-                _ => Err(err),
-            },
-            Unit => match other {
-                Unit => Ok(Val::Unit),
-                _ => Err(err),
-            },
-            _ => Err(err),
-        }
-    }
-
-    pub fn as_number(&self) -> Result<i32, String> {
-        use Val::*;
-
-        let self_number = self.try_match_type(&Number(0))?;
-
-        match self_number {
             Val::Number(n) => Ok(n),
-            _ => unreachable!(),
+            _ => Err(format!("{}, not a 🔢", self.variant_name())),
         }
     }
 
-    pub fn as_bool(&self) -> Result<bool, String> {
-        use Val::*;
-
-        let self_number = self.try_match_type(&Bool(false))?;
-
-        match self_number {
-            Val::Bool(b) => Ok(b),
-            _ => unreachable!(),
-        }
-    }
-
-    pub fn as_func(&self) -> Result<DynFunc, String> {
-        use Val::*;
-
-        let self_func = self.try_match_type(&Func(placeholder_func()))?;
-
-        match self_func {
-            Self::Func(f) => Ok(f),
-            _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Func(placeholder_func()).variant_name())),
-        }
-    }
-
-    pub fn as_val_ref(&self) -> Result<&Rc<RefCell<Val>>, String> {
+    pub fn as_char(&self) -> Result<&char, String> {
         match self {
-            Self::Ref(rc) => Ok(rc),
-            _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Ref(Rc::new(RefCell::new(Val::Unit))).variant_name())),
+            Val::Char(c) => Ok(c),
+            _ => Err(format!("{}, not a 🔡", self.variant_name())),
+        }
+    }
+
+    pub fn as_bool(&self) -> Result<&bool, String> {
+        match self {
+            Val::Bool(b) => Ok(b),
+            _ => Err(format!("{}, not a 😵‍💫", self.variant_name())),
+        }
+    }
+
+    pub fn as_unit(&self) -> Result<&(), String> {
+        match self {
+            Val::Unit => Ok(&()),
+            _ => Err(format!("{}, not a 📦🧑‍🦲", self.variant_name())),
+        }
+    }
+
+    pub fn as_break(&self) -> Result<&Val, String> {
+        match self {
+            Val::Break(b) => Ok(b.as_ref()),
+            _ => Err(format!("{}, not a 💔", self.variant_name())),
+        }
+    }
+
+    pub fn as_deque(&self) -> Result<&VecDeque<Val>, String> {
+        match self {
+            Self::Deque(obj) => Ok(obj.as_ref()),
+            _ => Err(format!("{}, not a 😵‍💫😵‍💫", self.variant_name())),
+        }
+    }
+
+    pub fn as_func(&self) -> Result<&DynFunc, String> {
+        match self {
+            Val::Func(f) => Ok(f),
+            _ => Err(format!("{}, not a 🧰", self.variant_name())),
         }
     }
 
     pub fn as_object(&self) -> Result<&DynObject, String> {
         match self {
             Self::Object(obj) => Ok(obj),
-            _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Object(placeholder_object()).variant_name())),
+            _ => Err(format!("{}, not a 🧑‍🏫", self.variant_name())),
         }
     }
 
-    pub fn as_deque(&self) -> Result<&VecDeque<Val>, String> {
-        use Val::*;
+    pub fn as_val_ref(&self) -> Result<&Rc<RefCell<Val>>, String> {
+        match self {
+            Self::Ref(rc) => Ok(rc),
+            _ => Err(format!("{}, not a 🔖", self.variant_name())),
+        }
+    }
+
+    pub fn apply_to_root<T, F>(&self, f: F) -> Result<T, String>
+    where
+        F: FnOnce(&Val) -> T,
+    {
+        let wk_err = || "dangling weak ref".to_string();
 
         match self {
-            Self::Deque(obj) => Ok(obj.as_ref()),
-            _ => Err(format!("can't convert type `{}` to `{}`", self.variant_name(), Val::Deque(Box::new(VecDeque::new())).variant_name())),
+            Val::Ref(rc) => rc.borrow().apply_to_root(f),
+            Val::Weak(wk) => match wk.upgrade() {
+                Some(rc) => rc.borrow().apply_to_root(f),
+                _ => Err(wk_err()),
+            },
+            root => Ok(f(root)),
         }
     }
 
@@ -198,7 +177,11 @@ impl Val {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self > other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
+            Err(format!(
+                "can't compare types `{}` and `{}`",
+                self.variant_name(),
+                other.variant_name()
+            ))
         }
     }
 
@@ -206,7 +189,11 @@ impl Val {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self >= other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
+            Err(format!(
+                "can't compare types `{}` and `{}`",
+                self.variant_name(),
+                other.variant_name()
+            ))
         }
     }
 
@@ -214,7 +201,11 @@ impl Val {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self == other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
+            Err(format!(
+                "can't compare types `{}` and `{}`",
+                self.variant_name(),
+                other.variant_name()
+            ))
         }
     }
 
@@ -222,7 +213,11 @@ impl Val {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self < other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
+            Err(format!(
+                "can't compare types `{}` and `{}`",
+                self.variant_name(),
+                other.variant_name()
+            ))
         }
     }
 
@@ -230,7 +225,11 @@ impl Val {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self <= other))
         } else {
-            Err(format!("can't compare types `{}` and `{}`", self.variant_name(), other.variant_name()))
+            Err(format!(
+                "can't compare types `{}` and `{}`",
+                self.variant_name(),
+                other.variant_name()
+            ))
         }
     }
 }
@@ -244,9 +243,11 @@ impl<'a, 'b> Add<&'b Val> for &'a Val {
             "?", "?"
         ));
 
-        use Val::*;
         match self {
-            Number(n) => Ok(Number(n + other.as_number()?)),
+            Val::Number(n1) => {
+                let n2 = other.apply_to_root(|v| v.as_number().map(|n| *n))??;
+                Ok(Val::Number(n1 + n2))
+            }
             _ => err,
         }
     }
@@ -269,9 +270,11 @@ impl<'a, 'b> Sub<&'b Val> for &'a Val {
             "?", "?"
         ));
 
-        use Val::*;
         match self {
-            Number(n) => Ok(Number(n - other.as_number()?)),
+            Val::Number(n1) => {
+                let n2 = other.apply_to_root(|v| v.as_number().map(|n| *n))??;
+                Ok(Val::Number(n1 - n2))
+            }
             _ => err,
         }
     }
@@ -294,9 +297,11 @@ impl<'a, 'b> Mul<&'b Val> for &'a Val {
             "?", "?"
         ));
 
-        use Val::*;
         match self {
-            Number(n) => Ok(Number(n * other.as_number()?)),
+            Val::Number(n1) => {
+                let n2 = other.apply_to_root(|v| v.as_number().map(|n| *n))??;
+                Ok(Val::Number(n1 * n2))
+            }
             _ => err,
         }
     }
@@ -319,9 +324,11 @@ impl<'a, 'b> Div<&'b Val> for &'a Val {
             "?", "?"
         ));
 
-        use Val::*;
         match self {
-            Number(n) => Ok(Number(n / other.as_number()?)),
+            Val::Number(n1) => {
+                let n2 = other.apply_to_root(|v| v.as_number().map(|n| *n))??;
+                Ok(Val::Number(n1 / n2))
+            }
             _ => err,
         }
     }
@@ -338,7 +345,10 @@ impl Div for Val {
 impl PartialOrd for Val {
     fn partial_cmp(&self, other: &Val) -> Option<Ordering> {
         match self {
-            Self::Number(n1) => other.as_number().map(|n2| n1.cmp(&n2)).ok(),
+            Self::Number(n1) => {
+                let n2 = other.apply_to_root(|v| Some(*v.as_number().ok()?)).ok()??;
+                Some(n1.cmp(&n2))
+            }
             _ => None,
         }
     }

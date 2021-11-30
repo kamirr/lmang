@@ -207,7 +207,8 @@ mod tests {
 
     #[test]
     fn check_class_recurrent_method() {
-        let (_, def_class) = Expr::new("👶 obj = 🧑‍🏫
+        let (_, def_class) = Expr::new(
+            "👶 obj = 🧑‍🏫
             👶 log2 = 🧰 n ➡️
                 ❓ n < 1
                     0
@@ -215,7 +216,9 @@ mod tests {
                     1 + 📞 log2 📦 n / 2 🧑‍🦲
                 🧑‍🦲
             🧑‍🦲
-        🧑‍🦲").unwrap();
+        🧑‍🦲",
+        )
+        .unwrap();
         let (_, eval_log2_10) = Expr::new("📞 obj🪆log2 10").unwrap();
 
         let mut env = Env::test();

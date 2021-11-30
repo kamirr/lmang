@@ -33,7 +33,6 @@ impl Call {
 
 impl Eval for Call {
     fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
-        let func = env.eval(&self.func)?.as_func()?;
         let args: Result<Vec<Val>, _> = self
             .args
             .iter()
@@ -41,7 +40,10 @@ impl Eval for Call {
             .collect();
         let args = args?;
 
-        func.0.call(args.as_slice(), env).map(Cow::Owned)
+        let func_owned = env.eval(&self.func)?.as_ref().clone();
+        func_owned.apply_to_root(|v| -> Result<_, String> {
+            v.as_func()?.0.call(args.as_slice(), env).map(Cow::Owned)
+        })?
     }
 }
 

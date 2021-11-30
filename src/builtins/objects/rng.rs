@@ -30,7 +30,7 @@ impl RngBuiltin {
         let mut borrow = state.0.borrow_mut();
         let rng: &mut SmallRng = borrow.downcast_mut::<SmallRng>().unwrap();
 
-        let new_seed = vals[0].as_number()?;
+        let new_seed = vals[0].apply_to_root(|v| v.as_number().map(|n| *n))??;
         *rng = SmallRng::seed_from_u64(new_seed as u64);
 
         Ok(Val::Unit)

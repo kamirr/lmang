@@ -74,11 +74,11 @@ impl If {
 impl Eval for If {
     fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         let cond_val = env.eval(&self.cond)?;
-        if cond_val.as_bool()? {
+        if *cond_val.as_bool()? {
             env.eval(&self.body)
         } else {
             for (elif_cond, elif_body) in &self.elifs {
-                if env.eval(elif_cond)?.as_bool()? {
+                if *env.eval(elif_cond)?.as_bool()? {
                     return env.eval(elif_body);
                 }
             }

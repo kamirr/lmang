@@ -5,18 +5,17 @@ use std::collections::VecDeque;
 use std::fmt;
 
 #[derive(Clone, Debug)]
-pub struct DequeBuiltin { }
+pub struct DequeBuiltin {}
 
 impl DequeBuiltin {
     pub fn boxed() -> Box<Self> {
-        Box::new(DequeBuiltin { })
+        Box::new(DequeBuiltin {})
     }
 
     fn len(args: &[Val], _: &mut Env, _: FnState) -> Result<Val, String> {
-        let dq_val = args[0].try_match_type(&Val::Deque(Box::new(VecDeque::new())))?;
-        let dq = dq_val.as_deque()?;
+        let len = args[0].apply_to_root::<Result<_, String>, _>(|v| Ok(v.as_deque()?.len()))??;
 
-        Ok(Val::Number(dq.len() as i32))
+        Ok(Val::Number(len as i32))
     }
 }
 

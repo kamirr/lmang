@@ -146,7 +146,7 @@ impl Eval for Expr {
     fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
         let result = match self {
             Self::Operation { lhs, rhs, op } => {
-                let lhs = env.eval(lhs.as_ref())?.as_ref().to_owned().try_match_type(&Val::Number(0))?;
+                let lhs = env.eval(lhs.as_ref())?.as_ref().clone();
                 let rhs = env.eval(rhs.as_ref())?;
 
                 Ok(Cow::Owned(match op {
@@ -177,8 +177,12 @@ impl Eval for Expr {
 
         let weak_err = "dangling ref expired".to_string();
         match result {
-            Ok(Cow::Owned(Val::Weak(ref wk))) => Ok(Cow::Owned(Val::Ref(wk.upgrade().ok_or(weak_err)?))), 
-            Ok(Cow::Borrowed(Val::Weak(wk))) => Ok(Cow::Owned(Val::Ref(wk.upgrade().ok_or(weak_err)?))),
+            Ok(Cow::Owned(Val::Weak(ref wk))) => {
+                Ok(Cow::Owned(Val::Ref(wk.upgrade().ok_or(weak_err)?)))
+            }
+            Ok(Cow::Borrowed(Val::Weak(wk))) => {
+                Ok(Cow::Owned(Val::Ref(wk.upgrade().ok_or(weak_err)?)))
+            }
             other => other,
         }
     }

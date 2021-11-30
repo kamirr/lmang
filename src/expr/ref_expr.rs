@@ -57,6 +57,9 @@ mod tests {
 
     #[test]
     fn eval_ref() {
+        use std::cell::RefCell;
+        use std::rc::Rc;
+
         let (_, ref_e) = Ref::new("🔖 var").unwrap();
 
         let mut env = Env::new();
@@ -67,6 +70,9 @@ mod tests {
 
         let var_val = env.get_binding("var").unwrap();
 
-        assert_eq!(*var_val.as_val_ref().unwrap().borrow(), Val::Number(42));
+        assert_eq!(
+            var_val.as_val_ref(),
+            Ok(&Rc::new(RefCell::new(Val::Number(42))))
+        );
     }
 }
