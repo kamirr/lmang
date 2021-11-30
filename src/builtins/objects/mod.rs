@@ -3,6 +3,7 @@ mod file;
 mod rng;
 mod rustobj;
 mod sys;
+mod types;
 
 use crate::env::{Env, Eval};
 use crate::val::{DynObject, Val};
@@ -13,6 +14,7 @@ use deque::make_deque_builtin;
 use file::make_file_builtin;
 use rng::make_rng_builtin;
 use sys::make_sys_builtin;
+use types::make_types_builtin;
 
 pub struct BuiltinObjects {
     args: RefCell<Option<Box<dyn Iterator<Item = String>>>>,
@@ -45,6 +47,10 @@ impl Eval for BuiltinObjects {
             Val::Object(DynObject(make_sys_builtin(
                 self.args.borrow_mut().take().unwrap(),
             ))),
+        );
+        env.store_binding(
+            "types".to_string(),
+            Val::Object(DynObject(make_types_builtin())),
         );
 
         Ok(Cow::Owned(Val::Unit))
