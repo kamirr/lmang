@@ -40,8 +40,9 @@ pub mod kwords {
     pub const LE: &str = "<=";
     pub const LT: &str = "<";
     pub const NE: &str = "!=";
+    pub const FE: &str = "~=";
 
-    pub const ALL: [&str; 31] = [
+    pub const ALL: [&str; 32] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
         EXPR_SEP,
@@ -73,6 +74,7 @@ pub mod kwords {
         LE,
         LT,
         NE,
+        FE,
     ];
 }
 

@@ -40,6 +40,7 @@ pub enum Op {
     Eq,
     LessEq,
     Less,
+    FuzzyEq,
 }
 
 impl Op {
@@ -54,6 +55,7 @@ impl Op {
             .or_else(|_| utils::tag(kwords::LE, s).map(|s| (s, Self::LessEq)))
             .or_else(|_| utils::tag(kwords::LT, s).map(|s| (s, Self::Less)))
             .or_else(|_| utils::tag(kwords::EQ, s).map(|s| (s, Self::Eq)))
+            .or_else(|_| utils::tag(kwords::FE, s).map(|s| (s, Self::FuzzyEq)))
     }
 }
 
@@ -156,7 +158,12 @@ impl Eval for Expr {
                     Op::Div => (&lhs / rhs.as_ref())?,
                     Op::Greater => lhs.try_gt(rhs.as_ref())?,
                     Op::GreaterEq => lhs.try_ge(rhs.as_ref())?,
-                    Op::Eq => lhs.try_eq(rhs.as_ref())?,
+                    Op::Eq => Val::Bool(&lhs == rhs.as_ref()),
+                    Op::FuzzyEq => {
+                        let b = lhs.apply_to_root(|v1| rhs.apply_to_root(|v2| v1 == v2))??;
+
+                        Val::Bool(b)
+                    }
                     Op::LessEq => lhs.try_le(rhs.as_ref())?,
                     Op::Less => lhs.try_lt(rhs.as_ref())?,
                 }))

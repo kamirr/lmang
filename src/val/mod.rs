@@ -48,9 +48,7 @@ pub enum Val {
 }
 
 fn pretty_print_deque(dq: &VecDeque<Val>, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    let all_chars = dq.iter()
-        .map(|v| v.as_char())
-        .all(|v| matches!(v, Ok(_)));
+    let all_chars = dq.iter().map(|v| v.as_char()).all(|v| matches!(v, Ok(_)));
 
     if all_chars {
         for v in dq.iter() {
@@ -287,18 +285,6 @@ impl Val {
     pub fn try_ge(&self, other: &Val) -> Result<Self, String> {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self >= other))
-        } else {
-            Err(format!(
-                "can't compare types `{}` and `{}`",
-                self.variant_name(),
-                other.variant_name()
-            ))
-        }
-    }
-
-    pub fn try_eq(&self, other: &Val) -> Result<Self, String> {
-        if self.partial_cmp(other).is_some() {
-            Ok(Self::Bool(self == other))
         } else {
             Err(format!(
                 "can't compare types `{}` and `{}`",
