@@ -1,0 +1,62 @@
+📦
+👶 args = 📞 sys🪆args💪
+👶 filename = 📞 deque🪆at args 0💪
+👶 f = 📞 file🪆open filename💪
+👶 bf = 📞 file🪆read f💪
+👶 bf_len = 📞 deque🪆len 🔖bf💪
+
+👶 mem = 🧵🧵💪
+👶 stack = 🧵🧵💪
+👶 ptr = 15000💪
+
+👶 idx = 0💪
+🔁
+    ❓ idx >= 📦ptr*2🧑‍🦲
+        💔🧑‍🦲
+    🧑‍🦲💪
+    
+    📞 deque🪆append 🔖mem 0💪
+    
+    ♻️ idx = idx + 1💪
+🧑‍🦲💪
+
+👶 idx = 0💪
+🔁
+    ❓ idx >= bf_len
+        💔🧑‍🦲
+    🧑‍🦲💪
+    
+    👶 c = 📞 deque🪆at bf idx💪
+    
+    ❓ c == 🔡+🔡
+        👶 val = 📞 deque🪆mut 🔖mem ptr💪
+        ♻️ val = val + 1💪
+    🧑‍🦲😠 c == 🔡-🔡
+        👶 val = 📞 deque🪆mut 🔖mem ptr💪
+        ♻️ val = val - 1💪
+    🧑‍🦲😠 c == 🔡>🔡
+        ♻️ ptr = ptr + 1💪
+    🧑‍🦲😠 c == 🔡<🔡
+        ♻️ ptr = ptr - 1💪
+    🧑‍🦲😠 c == 🔡[🔡
+        📞 deque🪆append 🔖stack idx💪
+    🧑‍🦲😠 c == 🔡]🔡
+        👶 val = 📞 deque🪆at 🔖mem ptr💪
+        👶 zero = 0💪
+        ❓ val == 🔖zero
+            👶 top_idx = 📦📞 deque🪆len 🔖stack🧑‍🦲 - 1💪
+            👶 new_idx = 📞 deque🪆at 🔖stack top_idx💪
+            📞 deque🪆remove 🔖stack top_idx💪
+        🧑‍🦲😡
+            👶 top_idx = 📦📞 deque🪆len 🔖stack🧑‍🦲 - 1💪
+            👶 new_idx = 📞 deque🪆at 🔖stack top_idx💪
+            ♻️ idx = new_idx💪
+        🧑‍🦲💪
+    🧑‍🦲😠 c == 🔡.🔡
+        👶 val = 📞 deque🪆at 🔖mem ptr💪
+        📞 🗣️ 📞 types🪆char val💪
+    🧑‍🦲💪
+    
+    ♻️ idx = idx + 1💪
+🧑‍🦲💪
+🧑‍🦲
