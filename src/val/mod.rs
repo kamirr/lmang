@@ -47,6 +47,26 @@ pub enum Val {
     Weak(WeakWrapper),
 }
 
+fn pretty_print_deque(dq: &VecDeque<Val>, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    let all_chars = dq.iter()
+        .map(|v| v.as_char())
+        .all(|v| matches!(v, Ok(_)));
+
+    if all_chars {
+        for v in dq.iter() {
+            write!(f, "{}", v)?;
+        }
+    } else {
+        write!(f, "🧵")?;
+        for v in dq.iter() {
+            write!(f, "{},", v)?;
+        }
+        write!(f, "🧵")?;
+    }
+
+    Ok(())
+}
+
 impl fmt::Display for Val {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -55,13 +75,7 @@ impl fmt::Display for Val {
             Self::Bool(b) => write!(f, "{}", b),
             Self::Unit => write!(f, "📦🧑‍🦲"),
             Self::Break(val) => write!(f, "💔{}", val.as_ref()),
-            Self::Deque(vals) => {
-                for v in vals.as_ref() {
-                    write!(f, "{}", v)?;
-                }
-
-                Ok(())
-            }
+            Self::Deque(vals) => pretty_print_deque(vals, f),
             Self::Func(df) => write!(f, "{}", df),
             Self::Object(obj) => write!(f, "{}", obj),
             Self::Ref(rc) => write!(f, "🔖{}", rc.borrow()),
