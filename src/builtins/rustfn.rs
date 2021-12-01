@@ -1,4 +1,5 @@
 use crate::env::Env;
+use crate::error::RuntimeError;
 use crate::val::{Callee, DynFunc, Val};
 
 use std::any::Any;
@@ -15,7 +16,7 @@ impl Default for FnState {
     }
 }
 
-type BuiltinImpl = fn(&[Val], &mut Env, FnState) -> Result<Val, String>;
+type BuiltinImpl = fn(&[Val], &mut Env, FnState) -> Result<Val, RuntimeError>;
 
 #[derive(Clone)]
 pub struct RustFn {
@@ -58,7 +59,7 @@ impl RustFn {
 
     #[cfg(test)]
     fn cnt() -> Self {
-        fn func(_: &[Val], _: &mut Env, s: FnState) -> Result<Val, String> {
+        fn func(_: &[Val], _: &mut Env, s: FnState) -> Result<Val, RuntimeError> {
             let mut borrow = s.0.borrow_mut();
             let n: &mut i32 = borrow.downcast_mut::<i32>().unwrap();
             let res = *n;
@@ -82,7 +83,7 @@ impl fmt::Debug for RustFn {
 }
 
 impl Callee for RustFn {
-    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, String> {
+    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, RuntimeError> {
         (self.func)(args, env, self.state.clone())
     }
 

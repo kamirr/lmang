@@ -1,6 +1,7 @@
 use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
+use crate::error::RuntimeError;
 use crate::val::Val;
 use std::cell::RefCell;
 use std::collections::VecDeque;
@@ -11,7 +12,7 @@ pub struct SysState {
     args: Vec<VecDeque<Val>>,
 }
 
-fn get_args(_args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, String> {
+fn get_args(_args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let mut borrow = state.0.borrow_mut();
     let sys: &SysState = borrow.downcast_mut::<SysState>().unwrap();
 

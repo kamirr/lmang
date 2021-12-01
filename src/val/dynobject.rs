@@ -1,10 +1,11 @@
+use crate::error::RuntimeError;
 use crate::utils::kwords;
 use crate::val::Val;
 use std::fmt;
 
 pub trait Object {
     fn member_names(&self) -> Vec<String>;
-    fn member(&self, name: &str) -> Result<Val, String>;
+    fn member(&self, name: &str) -> Result<Val, RuntimeError>;
     fn clone_box(&self) -> Box<dyn Object>;
     fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
     fn name(&self) -> &str;
@@ -54,7 +55,7 @@ pub fn placeholder_object() -> DynObject {
         fn member_names(&self) -> Vec<String> {
             unreachable!()
         }
-        fn member(&self, _name: &str) -> Result<Val, String> {
+        fn member(&self, _name: &str) -> Result<Val, RuntimeError> {
             unreachable!()
         }
         fn clone_box(&self) -> Box<dyn Object> {

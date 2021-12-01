@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -11,7 +12,7 @@ pub struct Call {
 }
 
 impl Call {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::CALL, s)?;
 
@@ -32,7 +33,7 @@ impl Call {
 }
 
 impl Eval for Call {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         let args: Result<Vec<Val>, _> = self
             .args
             .iter()
@@ -41,7 +42,7 @@ impl Eval for Call {
         let args = args?;
 
         let func_owned = env.eval(&self.func)?.as_ref().clone();
-        func_owned.apply_to_root(|v| -> Result<_, String> {
+        func_owned.apply_to_root(|v| -> Result<_, RuntimeError> {
             v.as_func()?.0.call(args.as_slice(), env).map(Cow::Owned)
         })?
     }

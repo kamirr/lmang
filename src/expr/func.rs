@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::Block;
 use crate::utils::{self, kwords};
 use crate::val::{Callee, DynFunc, Val};
@@ -17,7 +18,7 @@ pub struct Func {
 }
 
 impl Func {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::FUNC, s)?;
 
@@ -44,7 +45,7 @@ impl Func {
 }
 
 impl Eval for Func {
-    fn eval<'a, 'b>(&'a self, _env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, _env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         let funcval = FuncVal {
             args: self.args.clone(),
             body: self.body.clone(),
@@ -62,9 +63,9 @@ pub struct FuncVal {
 }
 
 impl Callee for FuncVal {
-    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, String> {
+    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, RuntimeError> {
         if args.len() != self.args.len() {
-            return Err("Invalid number of args".to_string());
+            return Err(RuntimeError::WrongArgsN);
         }
 
         env.push();
@@ -219,11 +220,11 @@ mod tests {
         assert_eq!(env.get_binding("x"), Ok(Cow::Borrowed(&Val::Number(1))));
         assert_eq!(
             env.get_binding("a"),
-            Err("binding with name `a` does not exist".to_string())
+            Err(RuntimeError::NoBinding("a".into()))
         );
         assert_eq!(
             env.get_binding("b"),
-            Err("binding with name `b` does not exist".to_string())
+            Err(RuntimeError::NoBinding("b".into()))
         );
     }
 }

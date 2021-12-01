@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -10,7 +11,7 @@ pub struct Break {
 }
 
 impl Break {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::BREAK, s)?;
 
@@ -21,7 +22,7 @@ impl Break {
 }
 
 impl Eval for Break {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         Ok(Cow::Owned(Val::Break(Box::new(
             env.eval(&self.body)?.as_ref().to_owned(),
         ))))

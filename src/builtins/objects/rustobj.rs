@@ -1,4 +1,5 @@
 use crate::builtins::rustfn::RustFn;
+use crate::error::RuntimeError;
 use crate::val::{Object, Val};
 use std::cell::RefCell;
 use std::fmt;
@@ -36,14 +37,14 @@ where
         self.funcs.iter().map(|f| f.name.clone()).collect()
     }
 
-    fn member(&self, name: &str) -> Result<Val, String> {
+    fn member(&self, name: &str) -> Result<Val, RuntimeError> {
         for func in self.funcs.iter() {
             if func.name == name {
                 return Ok(func.clone().into_val());
             }
         }
 
-        Err(format!("no member {}", name))
+        Err(RuntimeError::NoKey(name.into()))
     }
 
     fn clone_box(&self) -> Box<dyn Object> {

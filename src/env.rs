@@ -1,3 +1,4 @@
+use crate::error::RuntimeError;
 use crate::val::Val;
 use std::borrow::Cow;
 use std::collections::HashMap;
@@ -46,7 +47,7 @@ impl Env {
         self.stack.last_mut().map(|frame| frame.insert(name, val));
     }
 
-    pub fn set_binding(&mut self, name: &str, new_val: Val) -> Result<(), String> {
+    pub fn set_binding(&mut self, name: &str, new_val: Val) -> Result<(), RuntimeError> {
         for frame in self.stack.iter_mut().rev() {
             if let Some(val) = frame.get_mut(name) {
                 match val {
@@ -58,20 +59,20 @@ impl Env {
             }
         }
 
-        Err(format!("binding with name `{}` does not exist", name))
+        Err(RuntimeError::NoBinding(name.into()))
     }
 
-    pub fn get_binding<'a, 'b>(&'a self, name: &'b str) -> Result<Cow<'a, Val>, String> {
+    pub fn get_binding<'a, 'b>(&'a self, name: &'b str) -> Result<Cow<'a, Val>, RuntimeError> {
         for frame in self.stack.iter().rev() {
             if let Some(val) = frame.get(name) {
                 return Ok(Cow::Borrowed(val));
             }
         }
 
-        Err(format!("binding with name `{}` does not exist", name))
+        Err(RuntimeError::NoBinding(name.into()))
     }
 
-    pub fn take_ref<'a, 'b>(&'a mut self, name: &'b str) -> Result<Cow<'a, Val>, String> {
+    pub fn take_ref<'a, 'b>(&'a mut self, name: &'b str) -> Result<Cow<'a, Val>, RuntimeError> {
         for frame in self.stack.iter_mut().rev() {
             if let Some(val) = frame.get_mut(name) {
                 let val_ref = val.make_ref();
@@ -79,16 +80,16 @@ impl Env {
             }
         }
 
-        Err(format!("binding with name `{}` does not exist", name))
+        Err(RuntimeError::NoBinding(name.into()))
     }
 
     pub fn set_timeout(&mut self, dur: Duration) {
         self.timeout = Some(Instant::now() + dur);
     }
 
-    pub fn eval<'a, 'b>(&'a mut self, expr: &'b impl Eval) -> Result<Cow<'a, Val>, String> {
+    pub fn eval<'a, 'b>(&'a mut self, expr: &'b impl Eval) -> Result<Cow<'a, Val>, RuntimeError> {
         if self.timeout.map(|t| Instant::now() > t).unwrap_or(false) {
-            Err("timeout".to_string())
+            Err(RuntimeError::Timeout)
         } else {
             expr.eval(self)
         }
@@ -96,7 +97,7 @@ impl Env {
 }
 
 pub trait Eval {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String>;
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError>;
 }
 
 #[cfg(test)]
@@ -123,7 +124,7 @@ mod tests {
         assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&Val::Number(3))));
         assert_eq!(
             env.get_binding("b"),
-            Err("binding with name `b` does not exist".to_string())
+            Err(RuntimeError::NoBinding("b".into()))
         );
         assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(9))));
 
@@ -143,7 +144,7 @@ mod tests {
         assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&Val::Number(3))));
         assert_eq!(
             env.get_binding("b"),
-            Err("binding with name `b` does not exist".to_string())
+            Err(RuntimeError::NoBinding("b".into()))
         );
         assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(7))));
     }

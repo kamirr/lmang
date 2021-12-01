@@ -1,10 +1,11 @@
 use super::{FnState, RustFn};
 use crate::env::{Env, Eval};
+use crate::error::RuntimeError;
 use crate::val::Val;
 use std::borrow::Cow;
 use std::io::{BufRead, Write};
 
-fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
+fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, RuntimeError> {
     if !args.is_empty() {
         let mut args = &args[..];
         let mut sep = None;
@@ -38,12 +39,15 @@ fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
     std::io::stdout()
         .lock()
         .flush()
-        .map_err(|_| "couldn't flush".to_string())?;
+        .map_err(|e| RuntimeError::IoError {
+            file: "stdout".into(),
+            reason: e.to_string(),
+        })?;
 
     Ok(Val::Unit)
 }
 
-fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
+fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, RuntimeError> {
     let mut line = String::new();
     std::io::stdin().lock().read_line(&mut line).unwrap();
 
@@ -59,7 +63,7 @@ fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
 pub struct BuiltinFns;
 
 impl Eval for BuiltinFns {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         env.store_binding("🗣️".to_string(), RustFn::new("print", print).into_val());
         env.store_binding("👂".to_string(), RustFn::new("read", read).into_val());
 

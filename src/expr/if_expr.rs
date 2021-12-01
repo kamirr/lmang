@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::{block::Block, Expr};
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -13,7 +14,7 @@ pub struct If {
 }
 
 impl If {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::IF, s)?;
 
@@ -44,7 +45,7 @@ impl If {
             elifs.push((cond, body));
         }
 
-        let (s, body_else) = || -> Result<(&str, Option<Block>), String> {
+        let (s, body_else) = || -> Result<(&str, Option<Block>), ParseError> {
             let old_s = s;
 
             let (s, _) = utils::extract_whitespace(s);
@@ -72,7 +73,7 @@ impl If {
 }
 
 impl Eval for If {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         let cond_val = env.eval(&self.cond)?;
         if *cond_val.as_bool()? {
             env.eval(&self.body)

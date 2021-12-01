@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::utils;
 use crate::val::Val;
 use std::borrow::Cow;
@@ -9,7 +10,7 @@ pub struct BindingUsage {
 }
 
 impl BindingUsage {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, name) = utils::extract_ident(s)?;
 
         Ok((
@@ -22,7 +23,7 @@ impl BindingUsage {
 }
 
 impl Eval for BindingUsage {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         env.get_binding(&self.name)
     }
 }
@@ -52,7 +53,7 @@ mod tests {
             empty_env.eval(&BindingUsage {
                 name: "i_dont_exist".to_string(),
             }),
-            Err("binding with name `i_dont_exist` does not exist".to_string()),
+            Err(RuntimeError::NoBinding("i_dont_exist".into()))
         );
     }
 }

@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::block::Block;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -10,7 +11,7 @@ pub struct Loop {
 }
 
 impl Loop {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::LOOP, s)?;
 
@@ -22,7 +23,7 @@ impl Loop {
 }
 
 impl Eval for Loop {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         Ok(loop {
             match env.eval(&self.body)? {
                 Cow::Owned(Val::Break(inner_box)) => break Cow::Owned(*inner_box),
@@ -262,6 +263,6 @@ mod tests {
         let (_, loop_e) = Loop::new("🔁🧑‍🦲").unwrap();
         let mut env = Env::test();
 
-        assert_eq!(env.eval(&loop_e), Err("timeout".to_string()))
+        assert_eq!(env.eval(&loop_e), Err(RuntimeError::Timeout))
     }
 }

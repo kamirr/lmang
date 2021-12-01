@@ -1,18 +1,20 @@
 use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
+use crate::error::RuntimeError;
 use crate::val::Val;
 use std::borrow::Borrow;
 
-fn len(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> {
-    let len = args[0].apply_to_root(|v| -> Result<_, String> { Ok(v.as_deque()?.len()) })??;
+fn len(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let len =
+        args[0].apply_to_root(|v| -> Result<_, RuntimeError> { Ok(v.as_deque()?.len()) })??;
 
     Ok(Val::Number(len as i32))
 }
 
-fn append(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> {
+fn append(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
     if args.len() != 2 {
-        return Err("invalid number of arguments".to_string());
+        return Err(RuntimeError::WrongArgsN);
     }
 
     let val = args[1].clone();
@@ -21,7 +23,7 @@ fn append(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> 
         .borrow()
         .as_ref()?
         .borrow_mut()
-        .apply_to_root_mut(|v| -> Result<_, String> {
+        .apply_to_root_mut(|v| -> Result<_, RuntimeError> {
             v.as_deque_mut()?.push_back(val);
             Ok(())
         })??;
@@ -29,28 +31,29 @@ fn append(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> 
     Ok(Val::Unit)
 }
 
-fn at(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> {
+fn at(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
     if args.len() != 2 {
-        return Err("invalid number of arguments".to_string());
+        return Err(RuntimeError::WrongArgsN);
     }
 
     let idx = args[1].apply_to_root(|v| v.as_number().map(|n| *n))??;
-    let result = args[0]
-        .apply_to_root(|v| -> Result<_, String> { Ok(v.as_deque()?[idx as usize].clone()) })??;
+    let result = args[0].apply_to_root(|v| -> Result<_, RuntimeError> {
+        Ok(v.as_deque()?[idx as usize].clone())
+    })??;
 
     Ok(result)
 }
 
-fn at_mut(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> {
+fn at_mut(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
     if args.len() != 2 {
-        return Err("invalid number of arguments".to_string());
+        return Err(RuntimeError::WrongArgsN);
     }
 
     let idx = args[1].apply_to_root(|v| v.as_number().map(|n| *n))??;
     let result = match args[0].as_val_ref().borrow().as_ref() {
         Ok(vr) => vr
             .borrow_mut()
-            .apply_to_root_mut(|v| -> Result<_, String> {
+            .apply_to_root_mut(|v| -> Result<_, RuntimeError> {
                 let val_ref = v.as_deque_mut()?[idx as usize].make_ref();
 
                 Ok(val_ref)
@@ -61,18 +64,18 @@ fn at_mut(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> 
     Ok(result)
 }
 
-fn remove(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> {
+fn remove(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
     use std::ops::Sub;
 
     if args.len() != 2 {
-        return Err("invalid number of arguments".to_string());
+        return Err(RuntimeError::WrongArgsN);
     }
 
     let idx = args[1].apply_to_root(|v| v.as_number().map(|n| *n))??;
     let result = match args[0].as_val_ref().borrow().as_ref() {
         Ok(vr) => vr
             .borrow_mut()
-            .apply_to_root_mut(|v| -> Result<_, String> {
+            .apply_to_root_mut(|v| -> Result<_, RuntimeError> {
                 let dq_len = v.as_deque()?.len();
                 let idx_rel = if idx >= 0 {
                     idx as usize
@@ -82,7 +85,7 @@ fn remove(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, String> 
 
                 v.as_deque_mut()?
                     .remove(idx_rel)
-                    .ok_or_else(|| format!("no index {}", idx))
+                    .ok_or_else(|| RuntimeError::OutOfBounds { idx, len: dq_len })
             })??,
         _ => args[0].as_deque()?[idx as usize].clone(),
     };
@@ -164,7 +167,13 @@ mod tests {
         let (_, call_val_e) = Expr::new("📞 d_test🪆append d 4").unwrap();
 
         let result_val = env.eval(&call_val_e);
-        assert_eq!(result_val, Err("😵‍💫😵‍💫, not a 🔖".to_string()));
+        assert_eq!(
+            result_val,
+            Err(RuntimeError::CastError {
+                from: "😵‍💫😵‍💫".into(),
+                to: "🔖".into()
+            })
+        );
 
         let (_, call_ref_e) = Expr::new("📞 d_test🪆append 🔖d 4").unwrap();
         assert_eq!(env.eval(&call_ref_e), Ok(Cow::Owned(Val::Unit)));
@@ -226,7 +235,7 @@ mod tests {
         assert_eq!(result, Ok(Cow::Owned(Val::Number(3))));
 
         let result = env.eval(&remove_20_e);
-        assert_eq!(result, Err("no index 20".to_string()));
+        assert_eq!(result, Err(RuntimeError::OutOfBounds { idx: 20, len: 2 }));
 
         let dq = env.get_binding("d").unwrap();
         let expected_dq = {

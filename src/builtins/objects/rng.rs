@@ -1,20 +1,21 @@
 use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
+use crate::error::RuntimeError;
 use crate::val::Val;
 use rand::rngs::SmallRng;
 use rand::{RngCore as _, SeedableRng};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-fn next(_: &[Val], _: &mut Env, state: FnState) -> Result<Val, String> {
+fn next(_: &[Val], _: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let mut borrow = state.0.borrow_mut();
     let rng: &mut SmallRng = borrow.downcast_mut::<SmallRng>().unwrap();
 
     Ok(Val::Number(rng.next_u32() as i32))
 }
 
-fn seed(vals: &[Val], _: &mut Env, state: FnState) -> Result<Val, String> {
+fn seed(vals: &[Val], _: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let mut borrow = state.0.borrow_mut();
     let rng: &mut SmallRng = borrow.downcast_mut::<SmallRng>().unwrap();
 

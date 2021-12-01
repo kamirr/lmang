@@ -13,6 +13,7 @@ pub mod named;
 pub mod ref_expr;
 
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::utils::{self, kwords};
 use crate::val::Val;
 use binding_update::BindingUpdate;
@@ -46,7 +47,7 @@ pub enum Op {
 }
 
 impl Op {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         utils::tag(kwords::ADD, s)
             .map(|s| (s, Self::Add))
             .or_else(|_| utils::tag(kwords::SUB, s).map(|s| (s, Self::Sub)))
@@ -84,7 +85,7 @@ pub enum Expr {
 }
 
 impl Expr {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
 
         BindingUpdate::new(s)
@@ -106,7 +107,7 @@ impl Expr {
             .or_else(|_| Ref::new(s).map(|(s, ref_expr)| (s, Self::Ref(ref_expr))))
     }
 
-    fn new_operation(s: &str) -> Result<(&str, Self), String> {
+    fn new_operation(s: &str) -> Result<(&str, Self), ParseError> {
         let mut op_b_idx = 0;
         let mut op_c_idx = 0;
 
@@ -119,7 +120,7 @@ impl Expr {
             let c = s
                 .chars()
                 .nth(op_c_idx)
-                .ok_or_else(|| "unexpected eof".to_string())?;
+                .ok_or_else(|| ParseError::UnexpectedEof)?;
 
             op_b_idx += c.len_utf8();
             op_c_idx += 1;
@@ -129,7 +130,7 @@ impl Expr {
         let (sub, _) = utils::extract_whitespace(sub);
 
         if !sub.is_empty() {
-            return Err("malformed operation".to_string());
+            return Err(ParseError::ExpectedExpr);
         }
 
         let s = &s[op_b_idx..];
@@ -151,7 +152,7 @@ impl Expr {
 }
 
 impl Eval for Expr {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         let result = match self {
             Self::Operation { lhs, rhs, op } => {
                 let lhs = env.eval(lhs.as_ref())?.as_ref().clone();
@@ -189,7 +190,7 @@ impl Eval for Expr {
             Self::Named(named_expr) => env.eval(named_expr.as_ref()),
         };
 
-        let weak_err = "dangling ref expired".to_string();
+        let weak_err = RuntimeError::Dangling;
         match result {
             Ok(Cow::Owned(Val::Weak(ref wk))) => {
                 Ok(Cow::Owned(Val::Ref(wk.upgrade().ok_or(weak_err)?)))

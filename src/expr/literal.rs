@@ -1,3 +1,4 @@
+use crate::error::ParseError;
 use crate::utils;
 use crate::val::Val;
 use std::collections::VecDeque;
@@ -6,7 +7,7 @@ use std::collections::VecDeque;
 struct Number(i32);
 
 impl Number {
-    fn new(s: &str) -> Result<(&str, Self), String> {
+    fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let (s, number) = utils::extract_digits(s)?;
         Ok((s, Self(number.parse().unwrap())))
@@ -17,13 +18,10 @@ impl Number {
 struct Char(char);
 
 impl Char {
-    fn new(s: &str) -> Result<(&str, Self), String> {
+    fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(utils::kwords::CHAR_LIT, s)?;
-        let c = s
-            .chars()
-            .next()
-            .ok_or_else(|| "unexpected eof".to_string())?;
+        let c = s.chars().next().ok_or_else(|| ParseError::UnexpectedEof)?;
         let s = &s[c.len_utf8()..];
         let s = utils::tag(utils::kwords::CHAR_LIT, s)?;
 
@@ -35,7 +33,7 @@ impl Char {
 struct StringLiteral(VecDeque<Val>);
 
 impl StringLiteral {
-    fn new(s: &str) -> Result<(&str, Self), String> {
+    fn new(s: &str) -> Result<(&str, Self), ParseError> {
         use utils::kwords::STR_LIT;
 
         let (s, _) = utils::extract_whitespace(s);
@@ -53,7 +51,7 @@ impl StringLiteral {
 struct Bool(bool);
 
 impl Bool {
-    fn new(s: &str) -> Result<(&str, Self), String> {
+    fn new(s: &str) -> Result<(&str, Self), ParseError> {
         use utils::kwords::{FALSE, TRUE};
 
         let (s, _) = utils::extract_whitespace(s);
@@ -62,7 +60,7 @@ impl Bool {
         } else if let Ok(s) = utils::tag(FALSE, s) {
             Ok((s, Self(false)))
         } else {
-            Err("not a boolean".to_string())
+            Err(ParseError::ExpectedBool)
         }
     }
 }
@@ -71,7 +69,7 @@ impl Bool {
 pub struct Literal(pub Val);
 
 impl Literal {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         Number::new(s)
             .map(|(s, number)| (s, Self(Val::Number(number.0))))
             .or_else(|_| Char::new(s).map(|(s, char_lit)| (s, Self(Val::Char(char_lit.0)))))
@@ -99,7 +97,10 @@ mod tests {
         assert_eq!(Char::new("🔡x🔡"), Ok(("", Char('x'))));
         assert_eq!(Char::new("🔡📞🔡"), Ok(("", Char('📞'))));
         assert_eq!(Char::new("🔡💈🔡"), Ok(("", Char('💈'))));
-        assert_eq!(Char::new("🔡💈y🔡"), Err("expected 🔡".to_string()));
+        assert_eq!(
+            Char::new("🔡💈y🔡"),
+            Err(ParseError::ExpectedTag("🔡".into()))
+        );
     }
 
     #[test]

@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -11,7 +12,7 @@ pub struct Named {
 }
 
 impl Named {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let (s, name) = utils::extract_ident(s)?;
         let s = utils::tag(kwords::NAMED, s)?;
@@ -28,7 +29,7 @@ impl Named {
 }
 
 impl Eval for Named {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         let val = Val::Named((
             self.name.clone(),
             Box::new(self.expr.eval(env)?.into_owned()),

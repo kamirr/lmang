@@ -6,6 +6,7 @@ mod sys;
 mod types;
 
 use crate::env::{Env, Eval};
+use crate::error::RuntimeError;
 use crate::val::{DynObject, Val};
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -29,7 +30,7 @@ impl BuiltinObjects {
 }
 
 impl Eval for BuiltinObjects {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         env.store_binding(
             "file".to_string(),
             Val::Object(DynObject(make_file_builtin())),

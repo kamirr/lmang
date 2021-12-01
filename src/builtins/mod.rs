@@ -3,6 +3,7 @@ mod objects;
 mod rustfn;
 
 use crate::env::{Env, Eval};
+use crate::error::RuntimeError;
 use crate::val::Val;
 use rustfn::{FnState, RustFn};
 use std::borrow::Cow;
@@ -21,7 +22,7 @@ impl Builtins {
 }
 
 impl Eval for Builtins {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         let args = self.args.borrow_mut().take().unwrap();
 
         env.eval(&fns::BuiltinFns)?;

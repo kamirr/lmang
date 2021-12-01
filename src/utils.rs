@@ -1,3 +1,5 @@
+use crate::error::ParseError;
+
 pub mod kwords {
     pub const BLOCK_OPEN: &str = "📦";
     pub const BLOCK_CLOSE: &str = "🧑‍🦲";
@@ -96,19 +98,19 @@ pub(crate) fn take_while(accept: impl Fn(char) -> bool, s: &str) -> (&str, &str)
 pub(crate) fn take_while1(
     accept: impl Fn(char) -> bool,
     s: &str,
-    error_msg: String,
-) -> Result<(&str, &str), String> {
+    error: ParseError,
+) -> Result<(&str, &str), ParseError> {
     let (remainder, extracted) = take_while(accept, s);
 
     if extracted.is_empty() {
-        Err(error_msg)
+        Err(error)
     } else {
         Ok((remainder, extracted))
     }
 }
 
-pub(crate) fn extract_digits(s: &str) -> Result<(&str, &str), String> {
-    take_while1(|c| c.is_ascii_digit(), s, "expected digits".to_string())
+pub(crate) fn extract_digits(s: &str) -> Result<(&str, &str), ParseError> {
+    take_while1(|c| c.is_ascii_digit(), s, ParseError::ExpectedDigits)
 }
 
 fn is_whitespace(c: char) -> bool {
@@ -120,12 +122,12 @@ pub(crate) fn extract_whitespace(s: &str) -> (&str, &str) {
 }
 
 #[allow(unused)]
-pub(crate) fn extract_whitespace1(s: &str) -> Result<(&str, &str), String> {
-    take_while1(is_whitespace, s, "expected a space".to_string())
+pub(crate) fn extract_whitespace1(s: &str) -> Result<(&str, &str), ParseError> {
+    take_while1(is_whitespace, s, ParseError::ExpectedWhitespace)
 }
 
-pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
-    let not_ident_err = Err("expected identifier".to_string());
+pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), ParseError> {
+    let not_ident_err = Err(ParseError::ExpectedIdent);
     if s.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(true) {
         return not_ident_err;
     }
@@ -155,17 +157,17 @@ pub(crate) fn extract_ident(s: &str) -> Result<(&str, &str), String> {
     }
 
     if bytes == 0 {
-        Err("expected identifier".to_string())
+        not_ident_err
     } else {
         Ok((&s[bytes..], &s[0..bytes]))
     }
 }
 
-pub(crate) fn tag<'a, 'b>(starting_text: &'a str, s: &'b str) -> Result<&'b str, String> {
+pub(crate) fn tag<'a>(starting_text: &'static str, s: &'a str) -> Result<&'a str, ParseError> {
     if let Some(stripped) = s.strip_prefix(starting_text) {
         Ok(stripped)
     } else {
-        Err(format!("expected {}", starting_text))
+        Err(ParseError::ExpectedTag(starting_text))
     }
 }
 
@@ -185,7 +187,7 @@ mod tests {
 
     #[test]
     fn do_not_extract_digits_when_input_is_invalid() {
-        assert_eq!(extract_digits("abcd"), Err("expected digits".to_string()));
+        assert_eq!(extract_digits("abcd"), Err(ParseError::ExpectedDigits));
     }
 
     #[test]
@@ -202,7 +204,7 @@ mod tests {
     fn do_not_extract_spaces1_when_input_does_not_start_with_them() {
         assert_eq!(
             extract_whitespace1("blah"),
-            Err("expected a space".to_string()),
+            Err(ParseError::ExpectedWhitespace),
         );
     }
 
@@ -218,8 +220,8 @@ mod tests {
 
     #[test]
     fn extract_reject_empty_ident() {
-        assert_eq!(extract_ident("  "), Err("expected identifier".to_string()));
-        assert_eq!(extract_ident(""), Err("expected identifier".to_string()));
+        assert_eq!(extract_ident("  "), Err(ParseError::ExpectedIdent));
+        assert_eq!(extract_ident(""), Err(ParseError::ExpectedIdent));
     }
 
     #[test]
@@ -229,10 +231,7 @@ mod tests {
 
     #[test]
     fn cannot_extract_ident_beginning_with_number() {
-        assert_eq!(
-            extract_ident("123abc"),
-            Err("expected identifier".to_string()),
-        );
+        assert_eq!(extract_ident("123abc"), Err(ParseError::ExpectedIdent),);
     }
 
     #[test]

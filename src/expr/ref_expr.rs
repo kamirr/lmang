@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::utils;
 use crate::val::Val;
 use std::borrow::Cow;
@@ -9,7 +10,7 @@ pub struct Ref {
 }
 
 impl Ref {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag("🔖", s)?;
 
@@ -26,7 +27,7 @@ impl Ref {
 }
 
 impl Eval for Ref {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         env.take_ref(&self.ident)
     }
 }

@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::{func::FuncVal, Block};
 use crate::utils::{self, kwords};
 use crate::val::{DynFunc, DynObject, Object, Val, WeakWrapper};
@@ -12,7 +13,7 @@ use std::rc::Rc;
 pub struct Class(Block);
 
 impl Class {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::CLASS, s)?;
 
@@ -23,7 +24,7 @@ impl Class {
 }
 
 impl Eval for Class {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         env.eval(&self.0)?;
 
         let mut members = env.take_last_popped().unwrap();
@@ -67,11 +68,11 @@ impl Object for ClassObject {
         self.members.keys().map(|rs| rs.to_string()).collect()
     }
 
-    fn member(&self, name: &str) -> Result<Val, String> {
+    fn member(&self, name: &str) -> Result<Val, RuntimeError> {
         self.members
             .get(name)
             .cloned()
-            .ok_or_else(|| "no member".to_string())
+            .ok_or_else(|| RuntimeError::NoKey(name.to_string()))
     }
 
     fn clone_box(&self) -> Box<dyn Object> {

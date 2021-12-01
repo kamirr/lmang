@@ -1,6 +1,7 @@
 use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
+use crate::error::RuntimeError;
 use crate::val::Val;
 use std::cell::RefCell;
 use std::collections::{HashMap, VecDeque};
@@ -14,15 +15,18 @@ pub struct FileState {
     cnt: i32,
 }
 
-fn open(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, String> {
+fn open(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let fname_dq: VecDeque<_> =
-        args[0].apply_to_root(|v| -> Result<_, String> { Ok(v.as_deque()?.clone()) })??;
+        args[0].apply_to_root(|v| -> Result<_, RuntimeError> { Ok(v.as_deque()?.clone()) })??;
     let fname_res: Result<String, _> = fname_dq
         .into_iter()
         .map(|v| v.as_char().map(|c| *c))
         .collect();
     let fname = fname_res?;
-    let file = File::open(&fname).map_err(|_| "cannot open file".to_string())?;
+    let file = File::open(&fname).map_err(|e| RuntimeError::IoError {
+        file: fname.clone(),
+        reason: e.to_string(),
+    })?;
 
     let mut borrow = state.0.borrow_mut();
     let fstate: &mut FileState = borrow.downcast_mut::<FileState>().unwrap();
@@ -36,17 +40,20 @@ fn open(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, String> {
     Ok(Val::Number(id))
 }
 
-fn read(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, String> {
+fn read(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let mut borrow = state.0.borrow_mut();
     let fstate: &mut FileState = borrow.downcast_mut::<FileState>().unwrap();
 
     let id = args[0].apply_to_root(|v| v.as_number().map(|n| *n))??;
     let files = fstate.files.borrow_mut();
-    let mut file = files.get(&id).ok_or_else(|| "no such file".to_string())?;
+    let mut file = files.get(&id).ok_or_else(|| RuntimeError::NoHandle(id))?;
 
     let mut buf = String::new();
     file.read_to_string(&mut buf)
-        .map_err(|_| "couldn't read file".to_string())?;
+        .map_err(|e| RuntimeError::IoError {
+            file: format!("handle({})", id),
+            reason: e.to_string(),
+        })?;
 
     let deque = buf.chars().map(Val::Char).collect();
 

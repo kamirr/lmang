@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::{Expr, Literal};
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -10,14 +11,14 @@ pub struct Block {
 }
 
 impl Block {
-    pub fn explicit(s: &str) -> Result<(&str, Self), String> {
+    pub fn explicit(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::BLOCK_OPEN, s)?;
 
         Self::strong_implicit(s)
     }
 
-    pub fn implicit(s: &str) -> Result<(&str, Self), String> {
+    pub fn implicit(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = match utils::tag(kwords::BLOCK_OPEN, s) {
             Ok(sub) => sub,
@@ -27,7 +28,7 @@ impl Block {
         Self::strong_implicit(s)
     }
 
-    fn strong_implicit(s: &str) -> Result<(&str, Self), String> {
+    fn strong_implicit(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
 
         let mut s = s;
@@ -66,7 +67,7 @@ impl Block {
     }
 }
 impl Eval for Block {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         let len = self.exprs.len();
 
         if len == 0 {
@@ -134,9 +135,18 @@ mod tests {
 
     #[test]
     fn parse_block_missing_token() {
-        assert_eq!(Block::implicit("📦"), Err("expected 🧑‍🦲".to_string()));
-        assert_eq!(Block::explicit("📦"), Err("expected 🧑‍🦲".to_string()));
-        assert_eq!(Block::explicit("🧑‍🦲"), Err("expected 📦".to_string()));
+        assert_eq!(
+            Block::implicit("📦"),
+            Err(ParseError::ExpectedTag("🧑‍🦲".into()))
+        );
+        assert_eq!(
+            Block::explicit("📦"),
+            Err(ParseError::ExpectedTag("🧑‍🦲".into()))
+        );
+        assert_eq!(
+            Block::explicit("🧑‍🦲"),
+            Err(ParseError::ExpectedTag("📦".into()))
+        );
     }
 
     #[test]

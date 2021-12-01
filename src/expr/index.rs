@@ -1,4 +1,5 @@
 use crate::env::{Env, Eval};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -11,19 +12,17 @@ pub struct Index {
 }
 
 impl Index {
-    pub fn new(s: &str) -> Result<(&str, Self), String> {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
 
-        let idx = s
-            .find(kwords::INDEX)
-            .ok_or(format!("expected {}", kwords::INDEX))?;
+        let idx = s.find(kwords::INDEX).ok_or(ParseError::ExpectedIndex)?;
         let expr_s = &s[0..idx];
         let rest_s = &s[idx..];
 
         let (expr_rem, root) = Expr::new(expr_s)?;
         let (maybe_empty, _) = utils::extract_whitespace(expr_rem);
         if !maybe_empty.is_empty() {
-            return Err("invalid expr".to_string());
+            return Err(ParseError::ExpectedExpr);
         }
 
         let s = utils::tag(kwords::INDEX, rest_s)?;
@@ -51,7 +50,7 @@ impl Index {
 }
 
 impl Eval for Index {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, String> {
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
         let mut val = env.eval(&self.root)?.as_ref().to_owned();
         for ident in &self.idents {
             let obj = val.as_object()?;
@@ -103,7 +102,7 @@ mod tests {
     #[test]
     fn index0_error() {
         let idx_e = Index::new("a");
-        let expected = Err("expected 🪆".to_string());
+        let expected = Err(ParseError::ExpectedIndex);
 
         assert_eq!(idx_e, expected);
     }

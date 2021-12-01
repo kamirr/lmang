@@ -1,7 +1,7 @@
 use std::io::BufRead;
 use std::io::Write;
 
-use lmang_lib::{builtins::Builtins, env::Env, expr::Expr, val::Val};
+use lmang_lib::{builtins::Builtins, env::Env, error::Error, expr::Expr, val::Val};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();
@@ -22,7 +22,7 @@ fn main() -> Result<(), String> {
             break Ok(());
         }
 
-        let maybe_res: Option<_> = if !line.trim().is_empty() {
+        let maybe_res: Option<Result<_, Error>> = if !line.trim().is_empty() {
             if !input.is_empty() {
                 input.push_str(&line);
 
@@ -31,13 +31,13 @@ fn main() -> Result<(), String> {
                         let res = env.eval(&expr);
                         input.clear();
 
-                        Some(res)
+                        Some(res.map_err(|err| err.into()))
                     }
                     Err(_) => None,
                 }
             } else {
                 match Expr::new(&line[..]) {
-                    Ok((_, expr)) => Some(env.eval(&expr)),
+                    Ok((_, expr)) => Some(env.eval(&expr).map_err(|err| err.into())),
                     Err(_) => {
                         input.push_str(&line);
 
@@ -51,11 +51,11 @@ fn main() -> Result<(), String> {
                     let res = env.eval(&expr);
                     input.clear();
 
-                    Some(res)
+                    Some(res.map_err(|err| err.into()))
                 }
                 Err(e) => {
                     input.clear();
-                    Some(Err(e))
+                    Some(Err(e.into()))
                 }
             }
         };

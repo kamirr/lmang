@@ -18,9 +18,10 @@ name = "lmang_lib"
 path = "src/lib.rs"
 
 [dependencies]
-rand = {version = "0.8", default-features = false, features = ["small_rng"]}
-mimalloc = { version = "0.1.17", default-features = false }
 ahash = "0.7"
+mimalloc = { version = "0.1.17", default-features = false }
+rand = {version = "0.8", default-features = false, features = ["small_rng"]}
+thiserror = "1"
 
 [profile.release]
 lto = "fat"

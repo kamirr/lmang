@@ -4,6 +4,7 @@ mod dynobject;
 pub use dynfunc::{placeholder_func, Callee, DynFunc};
 pub use dynobject::{placeholder_object, DynObject, Object};
 
+use crate::error::RuntimeError;
 use crate::utils::kwords;
 use std::cell::RefCell;
 use std::cmp::{Ordering, PartialEq, PartialOrd};
@@ -110,152 +111,203 @@ impl Val {
         }
     }
 
-    pub fn as_number(&self) -> Result<&i32, String> {
+    pub fn as_number(&self) -> Result<&i32, RuntimeError> {
         match self {
             Val::Number(n) => Ok(n),
-            _ => Err(format!("{}, not a 🔢", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🔢".into(),
+            }),
         }
     }
 
-    pub fn as_char(&self) -> Result<&char, String> {
+    pub fn as_char(&self) -> Result<&char, RuntimeError> {
         match self {
             Val::Char(c) => Ok(c),
-            _ => Err(format!("{}, not a 🔡", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🔡".into(),
+            }),
         }
     }
 
-    pub fn as_bool(&self) -> Result<&bool, String> {
+    pub fn as_bool(&self) -> Result<&bool, RuntimeError> {
         match self {
             Val::Bool(b) => Ok(b),
-            _ => Err(format!("{}, not a 😵‍💫", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "😵‍💫".into(),
+            }),
         }
     }
 
-    pub fn as_unit(&self) -> Result<&(), String> {
+    pub fn as_unit(&self) -> Result<&(), RuntimeError> {
         match self {
             Val::Unit => Ok(&()),
-            _ => Err(format!("{}, not a 📦🧑‍🦲", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "📦🧑‍🦲".into(),
+            }),
         }
     }
 
-    pub fn as_break(&self) -> Result<&Val, String> {
+    pub fn as_break(&self) -> Result<&Val, RuntimeError> {
         match self {
             Val::Break(b) => Ok(b.as_ref()),
-            _ => Err(format!("{}, not a 💔", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "💔".into(),
+            }),
         }
     }
 
-    pub fn as_deque(&self) -> Result<&VecDeque<Val>, String> {
+    pub fn as_deque(&self) -> Result<&VecDeque<Val>, RuntimeError> {
         match self {
             Self::Deque(obj) => Ok(obj.as_ref()),
-            _ => Err(format!("{}, not a 😵‍💫😵‍💫", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "😵‍💫😵‍💫".into(),
+            }),
         }
     }
 
-    pub fn as_func(&self) -> Result<&DynFunc, String> {
+    pub fn as_func(&self) -> Result<&DynFunc, RuntimeError> {
         match self {
             Val::Func(f) => Ok(f),
-            _ => Err(format!("{}, not a 🧰", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🧰".into(),
+            }),
         }
     }
 
-    pub fn as_object(&self) -> Result<&DynObject, String> {
+    pub fn as_object(&self) -> Result<&DynObject, RuntimeError> {
         match self {
             Self::Object(obj) => Ok(obj),
-            _ => Err(format!("{}, not a 🧑‍🏫", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🧑‍🏫".into(),
+            }),
         }
     }
 
-    pub fn as_val_ref(&self) -> Result<&Rc<RefCell<Val>>, String> {
+    pub fn as_val_ref(&self) -> Result<&Rc<RefCell<Val>>, RuntimeError> {
         match self {
             Self::Ref(rc) => Ok(rc),
-            _ => Err(format!("{}, not a 🔖", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🔖".into(),
+            }),
         }
     }
 
-    pub fn apply_to_root<T, F>(&self, f: F) -> Result<T, String>
+    pub fn apply_to_root<T, F>(&self, f: F) -> Result<T, RuntimeError>
     where
         F: FnOnce(&Val) -> T,
     {
-        let wk_err = || "dangling weak ref".to_string();
+        let wk_err = RuntimeError::Dangling;
 
         match self {
             Val::Ref(rc) => rc.borrow().apply_to_root(f),
             Val::Weak(wk) => match wk.upgrade() {
                 Some(rc) => rc.borrow().apply_to_root(f),
-                _ => Err(wk_err()),
+                _ => Err(wk_err),
             },
             root => Ok(f(root)),
         }
     }
 
-    pub fn as_number_mut(&mut self) -> Result<&mut i32, String> {
+    pub fn as_number_mut(&mut self) -> Result<&mut i32, RuntimeError> {
         match self {
             Val::Number(n) => Ok(n),
-            _ => Err(format!("{}, not a 🔢", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🔢".into(),
+            }),
         }
     }
 
-    pub fn as_char_mut(&mut self) -> Result<&mut char, String> {
+    pub fn as_char_mut(&mut self) -> Result<&mut char, RuntimeError> {
         match self {
             Val::Char(c) => Ok(c),
-            _ => Err(format!("{}, not a 🔡", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🔡".into(),
+            }),
         }
     }
 
-    pub fn as_bool_mut(&mut self) -> Result<&mut bool, String> {
+    pub fn as_bool_mut(&mut self) -> Result<&mut bool, RuntimeError> {
         match self {
             Val::Bool(b) => Ok(b),
-            _ => Err(format!("{}, not a 😵‍💫", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "😵‍💫".into(),
+            }),
         }
     }
 
-    pub fn as_break_mut(&mut self) -> Result<&mut Val, String> {
+    pub fn as_break_mut(&mut self) -> Result<&mut Val, RuntimeError> {
         match self {
             Val::Break(b) => Ok(b.as_mut()),
-            _ => Err(format!("{}, not a 💔", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "💔".into(),
+            }),
         }
     }
 
-    pub fn as_deque_mut(&mut self) -> Result<&mut VecDeque<Val>, String> {
+    pub fn as_deque_mut(&mut self) -> Result<&mut VecDeque<Val>, RuntimeError> {
         match self {
             Self::Deque(obj) => Ok(obj.as_mut()),
-            _ => Err(format!("{}, not a 😵‍💫😵‍💫", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "😵‍💫😵‍💫".into(),
+            }),
         }
     }
 
-    pub fn as_func_mut(&mut self) -> Result<&mut DynFunc, String> {
+    pub fn as_func_mut(&mut self) -> Result<&mut DynFunc, RuntimeError> {
         match self {
             Val::Func(f) => Ok(f),
-            _ => Err(format!("{}, not a 🧰", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🧰".into(),
+            }),
         }
     }
 
-    pub fn as_object_mut(&mut self) -> Result<&mut DynObject, String> {
+    pub fn as_object_mut(&mut self) -> Result<&mut DynObject, RuntimeError> {
         match self {
             Self::Object(obj) => Ok(obj),
-            _ => Err(format!("{}, not a 🧑‍🏫", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🧑‍🏫".into(),
+            }),
         }
     }
 
-    pub fn as_val_ref_mut(&mut self) -> Result<&mut Rc<RefCell<Val>>, String> {
+    pub fn as_val_ref_mut(&mut self) -> Result<&mut Rc<RefCell<Val>>, RuntimeError> {
         match self {
             Self::Ref(rc) => Ok(rc),
-            _ => Err(format!("{}, not a 🔖", self.variant_name())),
+            _ => Err(RuntimeError::CastError {
+                from: self.variant_name().to_string(),
+                to: "🔖".into(),
+            }),
         }
     }
 
-    pub fn apply_to_root_mut<T, F>(&mut self, f: F) -> Result<T, String>
+    pub fn apply_to_root_mut<T, F>(&mut self, f: F) -> Result<T, RuntimeError>
     where
         F: FnOnce(&mut Val) -> T,
     {
-        let wk_err = || "dangling weak ref".to_string();
+        let wk_err = RuntimeError::Dangling;
 
         match self {
             Val::Ref(rc) => rc.borrow_mut().apply_to_root_mut(f),
             Val::Weak(wk) => match wk.upgrade() {
                 Some(rc) => rc.borrow_mut().apply_to_root_mut(f),
-                _ => Err(wk_err()),
+                _ => Err(wk_err),
             },
             root => Ok(f(root)),
         }
@@ -274,68 +326,70 @@ impl Val {
         }
     }
 
-    pub fn try_gt(&self, other: &Val) -> Result<Self, String> {
+    pub fn try_gt(&self, other: &Val) -> Result<Self, RuntimeError> {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self > other))
         } else {
-            Err(format!(
-                "can't compare types `{}` and `{}`",
-                self.variant_name(),
-                other.variant_name()
-            ))
+            Err(RuntimeError::InvalidOp {
+                lhs: self.variant_name().into(),
+                rhs: other.variant_name().into(),
+                op: kwords::LT.into(),
+            })
         }
     }
 
-    pub fn try_ge(&self, other: &Val) -> Result<Self, String> {
+    pub fn try_ge(&self, other: &Val) -> Result<Self, RuntimeError> {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self >= other))
         } else {
-            Err(format!(
-                "can't compare types `{}` and `{}`",
-                self.variant_name(),
-                other.variant_name()
-            ))
+            Err(RuntimeError::InvalidOp {
+                lhs: self.variant_name().into(),
+                rhs: other.variant_name().into(),
+                op: kwords::GE.into(),
+            })
         }
     }
 
-    pub fn try_lt(&self, other: &Val) -> Result<Self, String> {
+    pub fn try_lt(&self, other: &Val) -> Result<Self, RuntimeError> {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self < other))
         } else {
-            Err(format!(
-                "can't compare types `{}` and `{}`",
-                self.variant_name(),
-                other.variant_name()
-            ))
+            Err(RuntimeError::InvalidOp {
+                lhs: self.variant_name().into(),
+                rhs: other.variant_name().into(),
+                op: kwords::LT.into(),
+            })
         }
     }
 
-    pub fn try_le(&self, other: &Val) -> Result<Self, String> {
+    pub fn try_le(&self, other: &Val) -> Result<Self, RuntimeError> {
         if self.partial_cmp(other).is_some() {
             Ok(Self::Bool(self <= other))
         } else {
-            Err(format!(
-                "can't compare types `{}` and `{}`",
-                self.variant_name(),
-                other.variant_name()
-            ))
+            Err(RuntimeError::InvalidOp {
+                lhs: self.variant_name().into(),
+                rhs: other.variant_name().into(),
+                op: kwords::LE.into(),
+            })
         }
     }
 }
 
 impl<'a, 'b> Add<&'b Val> for &'a Val {
-    type Output = Result<Val, String>;
+    type Output = Result<Val, RuntimeError>;
 
     fn add(self, other: &'b Val) -> Self::Output {
         let n = self.apply_to_root(|v1| {
-            other.apply_to_root::<Result<_, String>, _>(|v2| Ok(v1.as_number()? + v2.as_number()?))
+            other.apply_to_root::<Result<_, RuntimeError>, _>(|v2| {
+                Ok(v1.as_number()? + v2.as_number()?)
+            })
         })???;
         Ok(Val::Number(n))
     }
 }
 
 impl Add for Val {
-    type Output = Result<Val, String>;
+    type Output = Result<Val, RuntimeError>;
 
     fn add(self, other: Self) -> Self::Output {
         &self + &other
@@ -343,18 +397,20 @@ impl Add for Val {
 }
 
 impl<'a, 'b> Sub<&'b Val> for &'a Val {
-    type Output = Result<Val, String>;
+    type Output = Result<Val, RuntimeError>;
 
     fn sub(self, other: &'b Val) -> Self::Output {
         let n = self.apply_to_root(|v1| {
-            other.apply_to_root::<Result<_, String>, _>(|v2| Ok(v1.as_number()? - v2.as_number()?))
+            other.apply_to_root::<Result<_, RuntimeError>, _>(|v2| {
+                Ok(v1.as_number()? - v2.as_number()?)
+            })
         })???;
         Ok(Val::Number(n))
     }
 }
 
 impl Sub for Val {
-    type Output = Result<Val, String>;
+    type Output = Result<Val, RuntimeError>;
 
     fn sub(self, other: Self) -> Self::Output {
         &self - &other
@@ -362,18 +418,20 @@ impl Sub for Val {
 }
 
 impl<'a, 'b> Mul<&'b Val> for &'a Val {
-    type Output = Result<Val, String>;
+    type Output = Result<Val, RuntimeError>;
 
     fn mul(self, other: &'b Val) -> Self::Output {
         let n = self.apply_to_root(|v1| {
-            other.apply_to_root::<Result<_, String>, _>(|v2| Ok(v1.as_number()? * v2.as_number()?))
+            other.apply_to_root::<Result<_, RuntimeError>, _>(|v2| {
+                Ok(v1.as_number()? * v2.as_number()?)
+            })
         })???;
         Ok(Val::Number(n))
     }
 }
 
 impl Mul for Val {
-    type Output = Result<Val, String>;
+    type Output = Result<Val, RuntimeError>;
 
     fn mul(self, other: Self) -> Self::Output {
         &self * &other
@@ -381,18 +439,20 @@ impl Mul for Val {
 }
 
 impl<'a, 'b> Div<&'b Val> for &'a Val {
-    type Output = Result<Val, String>;
+    type Output = Result<Val, RuntimeError>;
 
     fn div(self, other: &'b Val) -> Self::Output {
         let n = self.apply_to_root(|v1| {
-            other.apply_to_root::<Result<_, String>, _>(|v2| Ok(v1.as_number()? / v2.as_number()?))
+            other.apply_to_root::<Result<_, RuntimeError>, _>(|v2| {
+                Ok(v1.as_number()? / v2.as_number()?)
+            })
         })???;
         Ok(Val::Number(n))
     }
 }
 
 impl Div for Val {
-    type Output = Result<Val, String>;
+    type Output = Result<Val, RuntimeError>;
 
     fn div(self, other: Self) -> Self::Output {
         &self / &other
