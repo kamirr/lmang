@@ -1,62 +1,128 @@
 📦
-👶 args = 📞 sys🪆args💪
-👶 filename = 📞 deque🪆at args 0💪
-👶 f = 📞 file🪆open filename💪
-👶 bf = 📞 file🪆read f💪
-👶 bf_len = 📞 deque🪆len 🔖bf💪
+    👶 args = 📞 sys🪆args💪
+    👶 filename = 📞 deque🪆at args 0💪
+    👶 f = 📞 file🪆open filename💪
+    👶 bf = 📞 file🪆read f💪
+    👶 bf_len = 📞 deque🪆len 🔖bf💪
 
-👶 mem = 🧵🧵💪
-👶 stack = 🧵🧵💪
-👶 ptr = 15000💪
+    👶 mem = 🧵🧵💪
+    👶 stack = 🧵🧵💪
+    👶 matches = 🧵🧵💪
+    👶 ptr = 30000💪
+    
+    👶 zero = 0💪
+    👶 max = 255💪
 
-👶 idx = 0💪
-🔁
-    ❓ idx >= 📦ptr*2🧑‍🦲
-        💔🧑‍🦲
-    🧑‍🦲💪
-    
-    📞 deque🪆append 🔖mem 0💪
-    
-    ♻️ idx = idx + 1💪
-🧑‍🦲💪
-
-👶 idx = 0💪
-🔁
-    ❓ idx >= bf_len
-        💔🧑‍🦲
-    🧑‍🦲💪
-    
-    👶 c = 📞 deque🪆at bf idx💪
-    
-    ❓ c == 🔡+🔡
-        👶 val = 📞 deque🪆mut 🔖mem ptr💪
-        ♻️ val = val + 1💪
-    🧑‍🦲😠 c == 🔡-🔡
-        👶 val = 📞 deque🪆mut 🔖mem ptr💪
-        ♻️ val = val - 1💪
-    🧑‍🦲😠 c == 🔡>🔡
-        ♻️ ptr = ptr + 1💪
-    🧑‍🦲😠 c == 🔡<🔡
-        ♻️ ptr = ptr - 1💪
-    🧑‍🦲😠 c == 🔡[🔡
-        📞 deque🪆append 🔖stack idx💪
-    🧑‍🦲😠 c == 🔡]🔡
-        👶 val = 📞 deque🪆at 🔖mem ptr💪
-        👶 zero = 0💪
-        ❓ val == 🔖zero
-            👶 top_idx = 📦📞 deque🪆len 🔖stack🧑‍🦲 - 1💪
-            👶 new_idx = 📞 deque🪆at 🔖stack top_idx💪
-            📞 deque🪆remove 🔖stack top_idx💪
-        🧑‍🦲😡
-            👶 top_idx = 📦📞 deque🪆len 🔖stack🧑‍🦲 - 1💪
-            👶 new_idx = 📞 deque🪆at 🔖stack top_idx💪
-            ♻️ idx = new_idx💪
+    👶 idx = 0💪
+    🔁
+        ❓ idx >= ptr*2
+            💔🧑‍🦲
         🧑‍🦲💪
-    🧑‍🦲😠 c == 🔡.🔡
-        👶 val = 📞 deque🪆at 🔖mem ptr💪
-        📞 🗣️ 📞 types🪆char val💪
+        
+        📞 deque🪆append 🔖mem zero💪
+        
+        ♻️ idx = idx + 1💪
     🧑‍🦲💪
     
-    ♻️ idx = idx + 1💪
-🧑‍🦲💪
+    👶 idx = 0💪
+    🔁
+        ❓ idx >= bf_len
+            💔🧑‍🦲
+        🧑‍🦲💪
+        
+        👶 c = 📞 deque🪆at 🔖bf idx💪
+        ❓ c == 🔡[🔡
+            👶 cnt = 1💪
+            👶 idx = idx💪
+            👶 pair_idx = 🔁
+                ♻️ idx = idx + 1💪
+                    
+                👶 c = 📞 deque🪆at 🔖bf idx💪
+                ❓ c == 🔡]🔡
+                    ♻️ cnt = cnt - 1💪
+                🧑‍🦲😠 c == 🔡[🔡
+                    ♻️ cnt = cnt + 1💪
+                🧑‍🦲💪
+                    
+                ❓ cnt == 0
+                    💔 idx 🧑‍🦲
+                🧑‍🦲💪
+            🧑‍🦲💪
+            
+            📞 deque🪆append 🔖matches pair_idx💪
+        🧑‍🦲😠 c == 🔡]🔡
+            👶 cnt = 1💪
+            👶 idx = idx💪
+            👶 pair_idx = 🔁
+                ♻️ idx = idx - 1💪
+                    
+                👶 c = 📞 deque🪆at 🔖bf idx💪
+                ❓ c == 🔡[🔡
+                    ♻️ cnt = cnt - 1💪
+                🧑‍🦲😠 c == 🔡]🔡
+                    ♻️ cnt = cnt + 1💪
+                🧑‍🦲💪
+                    
+                ❓ cnt == 0
+                    💔 idx 🧑‍🦲
+                🧑‍🦲💪
+            🧑‍🦲💪
+
+            📞 deque🪆append 🔖matches pair_idx💪
+        🧑‍🦲😡
+            📞 deque🪆append 🔖matches 0💪
+        🧑‍🦲💪
+        
+        ♻️ idx = idx + 1💪
+    🧑‍🦲💪
+
+    👶 print_cnt = 0💪
+    👶 idx = 0💪
+    🔁
+        ❓ idx >= bf_len
+            💔🧑‍🦲
+        🧑‍🦲💪
+        
+        👶 c = 📞 deque🪆at 🔖bf idx💪
+        👶 val = 📞 deque🪆mut 🔖mem ptr💪
+        
+        ❓ c == 🔡+🔡
+            👶 val = 📞 deque🪆mut 🔖mem ptr💪
+            ❓ val ~= max
+                ♻️ val = zero💪
+            🧑‍🦲😡
+                ♻️ val = val + 1💪
+            🧑‍🦲💪
+        🧑‍🦲😠 c == 🔡-🔡
+            👶 val = 📞 deque🪆mut 🔖mem ptr💪
+            ❓ val ~= zero
+                ♻️ val = max💪
+            🧑‍🦲😡
+                ♻️ val = val - 1💪
+            🧑‍🦲💪
+        🧑‍🦲😠 c == 🔡>🔡
+            ♻️ ptr = ptr + 1💪
+        🧑‍🦲😠 c == 🔡<🔡
+            ♻️ ptr = ptr - 1💪
+        🧑‍🦲😠 c == 🔡[🔡
+            👶 val = 📞 deque🪆at 🔖mem ptr💪
+            ❓ val ~= zero
+                👶 match = 📞 deque🪆at 🔖matches idx💪
+                ♻️ idx = match💪
+            🧑‍🦲💪
+        🧑‍🦲😠 c == 🔡]🔡
+            👶 match = 📞 deque🪆at 🔖matches idx💪
+            ♻️ idx = match - 1💪
+        🧑‍🦲😠 c == 🔡.🔡
+            👶 val = 📞 deque🪆at 🔖mem ptr💪
+            📞 🗣️ end:🧵🧵 📞 types🪆char val💪
+            
+            ♻️ print_cnt = print_cnt + 1💪
+            ❓ print_cnt >= 10
+                💔🧑‍🦲
+            🧑‍🦲💪
+        🧑‍🦲💪
+        
+        ♻️ idx = idx + 1💪
+    🧑‍🦲💪
 🧑‍🦲
