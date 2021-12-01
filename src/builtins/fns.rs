@@ -2,7 +2,7 @@ use super::{FnState, RustFn};
 use crate::env::{Env, Eval};
 use crate::val::Val;
 use std::borrow::Cow;
-use std::io::BufRead;
+use std::io::{BufRead, Write};
 
 fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
     if !args.is_empty() {
@@ -35,6 +35,10 @@ fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, String> {
     } else {
         println!("");
     }
+    std::io::stdout()
+        .lock()
+        .flush()
+        .map_err(|_| "couldn't flush".to_string())?;
 
     Ok(Val::Unit)
 }
