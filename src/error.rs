@@ -23,6 +23,8 @@ pub enum ParseError {
     ExpectedIndex,
     #[error("Expected expression")]
     ExpectedExpr,
+    #[error("Variadic must be the last argument")]
+    PrematureVariadic,
 }
 
 #[derive(Error, Clone, Debug, PartialEq)]

@@ -52,6 +52,7 @@ impl Eval for Call {
 mod tests {
     use super::*;
     use crate::expr::{BindingUsage, Expr, Literal};
+    use std::collections::VecDeque;
 
     #[test]
     fn parse_call() {
@@ -96,6 +97,20 @@ mod tests {
         let result = env.eval(&call_e);
 
         assert_eq!(result, Ok(Cow::Owned(Val::Number(5))));
+    }
+
+    #[test]
+    fn eval_variadic() {
+        let (_, call_e) = Call::new("📞 🧰 👨‍👨‍👦🔍 ➡️ 🔍 🧑‍🦲 2 3 10").unwrap();
+        let mut env = Env::test();
+        let result = env.eval(&call_e);
+
+        let mut dq = VecDeque::new();
+        dq.push_back(Val::Number(2));
+        dq.push_back(Val::Number(3));
+        dq.push_back(Val::Number(10));
+        let dq_val = Val::Deque(Box::new(dq));
+        assert_eq!(result, Ok(Cow::Owned(dq_val)));
     }
 
     #[test]

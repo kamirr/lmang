@@ -5,11 +5,33 @@ use crate::utils::{self, kwords};
 use crate::val::{Callee, DynFunc, Val};
 use std::any::Any;
 use std::borrow::Cow;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fmt;
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Arg(pub String);
+pub enum Arg {
+    Single(String),
+    Variadic(String),
+}
+
+impl Arg {
+    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+        let (s, _) = utils::extract_whitespace(s);
+        let (s, variadic) = match utils::tag(kwords::VARIADIC, s) {
+            Ok(s) => (s, true),
+            _ => (s, false),
+        };
+        let (s, ident) = utils::extract_ident(s)?;
+
+        let arg = if variadic {
+            Arg::Variadic(ident.into())
+        } else {
+            Arg::Single(ident.into())
+        };
+
+        Ok((s, arg))
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Func {
@@ -28,11 +50,15 @@ impl Func {
         let (new_s, _) = utils::extract_whitespace(s);
         s = new_s;
 
-        while let Ok((new_s, ident)) = utils::extract_ident(s) {
-            let (new_s, _) = utils::extract_whitespace(new_s);
-            s = new_s;
+        let mut variadic_found = false;
+        while let Ok((new_s, arg)) = Arg::new(s) {
+            if variadic_found {
+                return Err(ParseError::PrematureVariadic);
+            }
 
-            args.push(Arg(ident.to_string()));
+            s = new_s;
+            variadic_found |= matches!(arg, Arg::Variadic(_));
+            args.push(arg);
         }
 
         let (s, _) = utils::extract_whitespace(s);
@@ -64,22 +90,40 @@ pub struct FuncVal {
 
 impl Callee for FuncVal {
     fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, RuntimeError> {
-        if args.len() != self.args.len() {
-            return Err(RuntimeError::WrongArgsN);
+        env.push();
+
+        let mut idx = 0;
+        for param in &self.args {
+            match param {
+                Arg::Single(name) => {
+                    let val = args[idx].clone();
+                    idx += 1;
+                    env.store_binding(name.to_string(), val);
+                }
+                Arg::Variadic(name) => {
+                    let mut dq = VecDeque::new();
+                    while idx < args.len() {
+                        dq.push_back(args[idx].clone());
+                        idx += 1;
+                    }
+
+                    env.store_binding(name.to_string(), Val::Deque(Box::new(dq)));
+                }
+            }
         }
 
-        env.push();
         if let Some(parent_vars) = &self.parent {
             for (k, v) in parent_vars {
                 env.store_binding(k.to_string(), v.clone());
             }
         }
 
-        for (Arg(arg_name), arg_val) in self.args.iter().zip(args.iter()) {
-            env.store_binding(arg_name.clone(), arg_val.clone());
-        }
+        let result = if idx == args.len() {
+            env.eval(&self.body).map(|cow| cow.as_ref().to_owned())
+        } else {
+            Err(RuntimeError::WrongArgsN)
+        };
 
-        let result = env.eval(&self.body).map(|cow| cow.as_ref().to_owned());
         env.pop();
 
         result
@@ -112,7 +156,7 @@ mod tests {
     fn func_parse_id() {
         let func_e = Func::new("🧰 a ➡️ a 🧑‍🦲");
         let expected = Func {
-            args: vec![Arg("a".to_string())],
+            args: vec![Arg::Single("a".to_string())],
             body: Block {
                 exprs: vec![Expr::BindingUsage(BindingUsage {
                     name: "a".to_string(),
@@ -124,10 +168,33 @@ mod tests {
     }
 
     #[test]
+    fn func_parse_variadic() {
+        let func_e = Func::new("🧰 👨‍👨‍👦v ➡️ v 🧑‍🦲");
+        let expected = Func {
+            args: vec![Arg::Variadic("v".to_string())],
+            body: Block {
+                exprs: vec![Expr::BindingUsage(BindingUsage {
+                    name: "v".to_string(),
+                })],
+            },
+        };
+
+        assert_eq!(func_e, Ok(("", expected)));
+    }
+
+    #[test]
+    fn error_on_premature_variadic() {
+        let func_e = Func::new("🧰 👨‍👨‍👦v x ➡️ v 🧑‍🦲");
+        let expected = ParseError::PrematureVariadic;
+
+        assert_eq!(func_e, Err(expected));
+    }
+
+    #[test]
     fn func_parse_sum() {
         let func_e = Func::new("🧰 a b ➡️ a + b 🧑‍🦲");
         let expected = Func {
-            args: vec![Arg("a".to_string()), Arg("b".to_string())],
+            args: vec![Arg::Single("a".to_string()), Arg::Single("b".to_string())],
             body: Block {
                 exprs: vec![Expr::Operation {
                     lhs: Box::new(Expr::BindingUsage(BindingUsage {
@@ -152,7 +219,7 @@ mod tests {
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "id".to_string(),
                     val: Expr::Func(Box::new(Func {
-                        args: vec![Arg("a".to_string())],
+                        args: vec![Arg::Single("a".to_string())],
                         body: Block {
                             exprs: vec![Expr::BindingUsage(BindingUsage {
                                 name: "a".to_string(),
@@ -174,7 +241,29 @@ mod tests {
     fn func_eval_id() {
         let (_, func_e) = Func::new("🧰 a ➡️ a 🧑‍🦲").unwrap();
         let expected = FuncVal {
-            args: vec![Arg("a".to_string())],
+            args: vec![Arg::Single("a".to_string())],
+            body: Block {
+                exprs: vec![Expr::BindingUsage(BindingUsage {
+                    name: "a".to_string(),
+                })],
+            },
+            parent: None,
+        };
+
+        let mut env = Env::test();
+        let result = env.eval(&func_e);
+
+        assert_eq!(
+            result,
+            Ok(Cow::Owned(Val::Func(DynFunc(Box::new(expected)))))
+        );
+    }
+
+    #[test]
+    fn func_eval_variadic_id() {
+        let (_, func_e) = Func::new("🧰 👨‍👨‍👦a ➡️ a 🧑‍🦲").unwrap();
+        let expected = FuncVal {
+            args: vec![Arg::Variadic("a".to_string())],
             body: Block {
                 exprs: vec![Expr::BindingUsage(BindingUsage {
                     name: "a".to_string(),

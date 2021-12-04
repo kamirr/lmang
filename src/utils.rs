@@ -20,6 +20,7 @@ pub mod kwords {
     pub const FALSE: &str = "🙅‍♀️";
 
     pub const FUNC: &str = "🧰";
+    pub const VARIADIC: &str = "👨‍👨‍👦";
     pub const FUNC_SEP: &str = "➡️";
     pub const CALL: &str = "📞";
 
@@ -46,7 +47,7 @@ pub mod kwords {
     pub const NE: &str = "!=";
     pub const FE: &str = "~=";
 
-    pub const ALL: [&str; 33] = [
+    pub const ALL: [&str; 34] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
         EXPR_SEP,
@@ -61,6 +62,7 @@ pub mod kwords {
         TRUE,
         FALSE,
         FUNC,
+        VARIADIC,
         FUNC_SEP,
         CALL,
         CHAR_LIT,
