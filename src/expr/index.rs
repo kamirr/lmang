@@ -129,7 +129,10 @@ mod tests {
         let mut env = Env::test();
 
         let _ = env
-            .eval(&crate::builtins::Builtins::new(std::iter::empty()))
+            .eval(&crate::builtins::Builtins::new(
+                std::iter::empty(),
+                Box::new(|_| unreachable!()),
+            ))
             .unwrap();
         let result = env.eval(&call_e);
 

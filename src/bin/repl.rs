@@ -1,11 +1,33 @@
 use std::io::BufRead;
 use std::io::Write;
 
-use lmang_lib::{builtins::Builtins, env::Env, error::Error, expr::Expr, val::Val};
+use lmang_lib::{
+    builtins::Builtins,
+    env::Env,
+    error::{Error, RuntimeError},
+    expr::Expr,
+    val::Val,
+};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();
-    env.eval(&Builtins::new(std::env::args().skip(1)))?;
+    env.eval(&Builtins::new(
+        std::env::args().skip(1),
+        Box::new(|s| -> Result<(), RuntimeError> {
+            print!("{}", s);
+
+            std::io::stdout()
+                .lock()
+                .flush()
+                .map_err(|e| RuntimeError::IoError {
+                    file: "stdout".into(),
+                    reason: e.to_string(),
+                })?;
+
+            Ok(())
+        }),
+    ))
+    .unwrap();
 
     let mut prompt = "✅";
     let mut input = String::new();

@@ -3,9 +3,18 @@ use crate::env::{Env, Eval};
 use crate::error::RuntimeError;
 use crate::val::Val;
 use std::borrow::Cow;
-use std::io::{BufRead, Write};
+use std::cell::RefCell;
+use std::fmt::Write as _;
+use std::io::BufRead;
+use std::rc::Rc;
 
-fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, RuntimeError> {
+pub type PrintImpl = Box<dyn FnMut(String) -> Result<(), RuntimeError>>;
+
+fn print(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+    let mut borrow = state.0.borrow_mut();
+    let print_impl: &mut PrintImpl = borrow.downcast_mut().unwrap();
+
+    let mut buf = String::new();
     if !args.is_empty() {
         let mut args = &args[..];
         let mut sep = None;
@@ -30,19 +39,23 @@ fn print(args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, RuntimeError> 
         let end = end.unwrap_or_else(|| "\n".to_string());
 
         for arg in &args[0..args.len() - 1] {
-            print!("{}{}", arg, sep);
+            write!(&mut buf, "{}{}", arg, sep).map_err(|e| RuntimeError::IoError {
+                file: "stdout".into(),
+                reason: e.to_string(),
+            })?;
         }
-        print!("{}{}", args.last().unwrap(), end);
-    } else {
-        println!("");
-    }
-    std::io::stdout()
-        .lock()
-        .flush()
-        .map_err(|e| RuntimeError::IoError {
+        write!(&mut buf, "{}{}", args.last().unwrap(), end).map_err(|e| RuntimeError::IoError {
             file: "stdout".into(),
             reason: e.to_string(),
         })?;
+    } else {
+        write!(&mut buf, "").map_err(|e| RuntimeError::IoError {
+            file: "stdout".into(),
+            reason: e.to_string(),
+        })?;
+    }
+
+    (*print_impl)(buf)?;
 
     Ok(Val::Unit)
 }
@@ -60,11 +73,24 @@ fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, RuntimeError> 
     Ok(Val::Deque(Box::new(deque)))
 }
 
-pub struct BuiltinFns;
+pub struct BuiltinFns {
+    print_impl: Rc<RefCell<PrintImpl>>,
+}
+
+impl BuiltinFns {
+    pub fn new(print_impl: PrintImpl) -> Self {
+        BuiltinFns {
+            print_impl: Rc::new(RefCell::new(print_impl)),
+        }
+    }
+}
 
 impl Eval for BuiltinFns {
     fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
-        env.store_binding("🗣️".to_string(), RustFn::new("print", print).into_val());
+        env.store_binding(
+            "🗣️".to_string(),
+            RustFn::stateful("print", print, &self.print_impl).into_val(),
+        );
         env.store_binding("👂".to_string(), RustFn::new("read", read).into_val());
 
         Ok(Cow::Owned(Val::Unit))
