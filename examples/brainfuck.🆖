@@ -76,7 +76,6 @@
         ♻️ idx = idx + 1💪
     🧑‍🦲💪
 
-    👶 print_cnt = 0💪
     👶 idx = 0💪
     🔁
         ❓ idx >= bf_len
@@ -84,7 +83,6 @@
         🧑‍🦲💪
         
         👶 c = 📞 deque🪆at 🔖bf idx💪
-        👶 val = 📞 deque🪆mut 🔖mem ptr💪
         
         ❓ c == 🔡+🔡
             👶 val = 📞 deque🪆mut 🔖mem ptr💪
@@ -116,11 +114,6 @@
         🧑‍🦲😠 c == 🔡.🔡
             👶 val = 📞 deque🪆at 🔖mem ptr💪
             📞 🗣️ end:🧵🧵 📞 types🪆char val💪
-            
-            ♻️ print_cnt = print_cnt + 1💪
-            ❓ print_cnt >= 10
-                💔🧑‍🦲
-            🧑‍🦲💪
         🧑‍🦲💪
         
         ♻️ idx = idx + 1💪
