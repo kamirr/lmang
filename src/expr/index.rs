@@ -65,6 +65,7 @@ impl Eval for Index {
 mod tests {
     use super::*;
     use crate::expr::{BindingUsage, Call};
+    use crate::system;
 
     #[test]
     fn index2_parse() {
@@ -128,12 +129,8 @@ mod tests {
         let (_, call_e) = Expr::new("📞rng🪆next").unwrap();
         let mut env = Env::test();
 
-        let _ = env
-            .eval(&crate::builtins::Builtins::new(
-                std::iter::empty(),
-                Box::new(|_| unreachable!()),
-            ))
-            .unwrap();
+        let (test_sys, _) = system::Test::new(&[]);
+        let _ = env.eval(&crate::builtins::Builtins::new(test_sys)).unwrap();
         let result = env.eval(&call_e);
 
         assert!(matches!(result, Ok(Cow::Owned(Val::Number(_)))))

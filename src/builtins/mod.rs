@@ -4,32 +4,25 @@ mod rustfn;
 
 use crate::env::{Env, Eval};
 use crate::error::RuntimeError;
+use crate::system::System;
 use crate::val::Val;
 use rustfn::{FnState, RustFn};
 use std::borrow::Cow;
-use std::cell::RefCell;
 
-pub struct Builtins {
-    args: RefCell<Option<Box<dyn Iterator<Item = String>>>>,
-    print_impl: RefCell<Option<fns::PrintImpl>>,
+pub struct Builtins<S: System> {
+    system: S,
 }
 
-impl Builtins {
-    pub fn new(args: impl Iterator<Item = String> + 'static, print_impl: fns::PrintImpl) -> Self {
-        Builtins {
-            args: RefCell::new(Some(Box::new(args))),
-            print_impl: RefCell::new(Some(print_impl)),
-        }
+impl<S: System> Builtins<S> {
+    pub fn new(system: S) -> Self {
+        Builtins { system }
     }
 }
 
-impl Eval for Builtins {
+impl<S: System> Eval for Builtins<S> {
     fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
-        let args = self.args.borrow_mut().take().unwrap();
-        let print_impl = self.print_impl.borrow_mut().take().unwrap();
-
-        env.eval(&fns::BuiltinFns::new(print_impl))?;
-        env.eval(&objects::BuiltinObjects::new(args))?;
+        env.eval(&fns::BuiltinFns::new(self.system.print()))?;
+        env.eval(&objects::BuiltinObjects::new(self.system.args()))?;
 
         Ok(Cow::Owned(Val::Unit))
     }
