@@ -1,12 +1,15 @@
 use crate::error::RuntimeError;
 use std::cell::RefCell;
+use std::collections::VecDeque;
 use std::fmt::Write as _;
+use std::io::BufRead as _;
 use std::io::Write as _;
 use std::rc::Rc;
 
 pub trait System {
     fn args(&self) -> Box<dyn Iterator<Item = String>>;
     fn print(&self) -> Box<dyn FnMut(String) -> Result<(), RuntimeError>>;
+    fn read(&self) -> Box<dyn FnMut() -> Result<String, RuntimeError>>;
 }
 
 pub struct Native {
@@ -39,11 +42,28 @@ impl System for Native {
             Ok(())
         })
     }
+
+    fn read(&self) -> Box<dyn FnMut() -> Result<String, RuntimeError>> {
+        Box::new(|| -> Result<String, RuntimeError> {
+            let mut line = String::new();
+            let stdin = std::io::stdin();
+            stdin
+                .lock()
+                .read_line(&mut line)
+                .map_err(|e| RuntimeError::IoError {
+                    file: "stdin".into(),
+                    reason: e.to_string(),
+                })?;
+
+            Ok(line)
+        })
+    }
 }
 
 pub struct Test {
     args: Vec<String>,
     stdout: Rc<RefCell<String>>,
+    stdin: Rc<RefCell<VecDeque<String>>>,
 }
 
 pub struct TestSystemOutput {
@@ -51,13 +71,14 @@ pub struct TestSystemOutput {
 }
 
 impl Test {
-    pub fn new(args: &[String]) -> (Self, TestSystemOutput) {
+    pub fn new(args: &[String], stdin: &[String]) -> (Self, TestSystemOutput) {
         let stdout = Rc::new(RefCell::new(String::new()));
 
         (
             Test {
                 args: args.into(),
                 stdout: stdout.clone(),
+                stdin: Rc::new(RefCell::new(stdin.iter().cloned().collect())),
             },
             TestSystemOutput { stdout },
         )
@@ -79,6 +100,19 @@ impl System for Test {
             })?;
 
             Ok(())
+        })
+    }
+
+    fn read(&self) -> Box<dyn FnMut() -> Result<String, RuntimeError>> {
+        let stdin = self.stdin.clone();
+        Box::new(move || -> Result<String, RuntimeError> {
+            let mut borrow = stdin.borrow_mut();
+            let line = borrow.pop_front().ok_or_else(|| RuntimeError::IoError {
+                file: "stdin".into(),
+                reason: "no more lines".to_string(),
+            })?;
+
+            Ok(line)
         })
     }
 }

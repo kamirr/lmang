@@ -129,7 +129,7 @@ mod tests {
         let (_, call_e) = Expr::new("📞rng🪆next").unwrap();
         let mut env = Env::test();
 
-        let (test_sys, _) = system::Test::new(&[]);
+        let (test_sys, _) = system::Test::new(&[], &[]);
         let _ = env.eval(&crate::builtins::Builtins::new(test_sys)).unwrap();
         let result = env.eval(&call_e);
 

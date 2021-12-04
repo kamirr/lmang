@@ -5,10 +5,10 @@ use crate::val::Val;
 use std::borrow::Cow;
 use std::cell::RefCell;
 use std::fmt::Write as _;
-use std::io::BufRead;
 use std::rc::Rc;
 
 pub type PrintImpl = Box<dyn FnMut(String) -> Result<(), RuntimeError>>;
+pub type ReadImpl = Box<dyn FnMut() -> Result<String, RuntimeError>>;
 
 fn print(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let mut borrow = state.0.borrow_mut();
@@ -60,10 +60,11 @@ fn print(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeErr
     Ok(Val::Unit)
 }
 
-fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, RuntimeError> {
-    let mut line = String::new();
-    std::io::stdin().lock().read_line(&mut line).unwrap();
+fn read(_args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+    let mut borrow = state.0.borrow_mut();
+    let read_impl: &mut ReadImpl = borrow.downcast_mut().unwrap();
 
+    let line = read_impl()?;
     let deque = line
         .strip_suffix('\n')
         .unwrap()
@@ -75,12 +76,14 @@ fn read(_args: &[Val], _env: &mut Env, _: FnState) -> Result<Val, RuntimeError> 
 
 pub struct BuiltinFns {
     print_impl: Rc<RefCell<PrintImpl>>,
+    read_impl: Rc<RefCell<ReadImpl>>,
 }
 
 impl BuiltinFns {
-    pub fn new(print_impl: PrintImpl) -> Self {
+    pub fn new(print_impl: PrintImpl, read_impl: ReadImpl) -> Self {
         BuiltinFns {
             print_impl: Rc::new(RefCell::new(print_impl)),
+            read_impl: Rc::new(RefCell::new(read_impl)),
         }
     }
 }
@@ -91,7 +94,10 @@ impl Eval for BuiltinFns {
             "🗣️".to_string(),
             RustFn::stateful("print", print, &self.print_impl).into_val(),
         );
-        env.store_binding("👂".to_string(), RustFn::new("read", read).into_val());
+        env.store_binding(
+            "👂".to_string(),
+            RustFn::stateful("read", read, &self.read_impl).into_val(),
+        );
 
         Ok(Cow::Owned(Val::Unit))
     }

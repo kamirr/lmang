@@ -21,7 +21,10 @@ impl<S: System> Builtins<S> {
 
 impl<S: System> Eval for Builtins<S> {
     fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
-        env.eval(&fns::BuiltinFns::new(self.system.print()))?;
+        env.eval(&fns::BuiltinFns::new(
+            self.system.print(),
+            self.system.read(),
+        ))?;
         env.eval(&objects::BuiltinObjects::new(self.system.args()))?;
 
         Ok(Cow::Owned(Val::Unit))
