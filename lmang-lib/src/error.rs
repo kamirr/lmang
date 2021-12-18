@@ -1,6 +1,9 @@
 use crate::utils::kwords;
 use thiserror::Error;
 
+#[cfg(feature = "web")]
+use wasm_bindgen::JsValue;
+
 #[derive(Error, Clone, Debug, PartialEq)]
 pub enum ParseError {
     #[error("Expected digits")]
@@ -53,11 +56,21 @@ pub enum RuntimeError {
     NoHandle(i32),
     #[error("No key {0}")]
     NoKey(String),
+    #[cfg(feature = "web")]
+    #[error("Js error {:?}", .0)]
+    JsError(JsValue),
 }
 
 impl<'a> From<&'a RuntimeError> for RuntimeError {
     fn from(re: &'a RuntimeError) -> Self {
         re.clone()
+    }
+}
+
+#[cfg(feature = "web")]
+impl From<JsValue> for RuntimeError {
+    fn from(jv: JsValue) -> Self {
+        Self::JsError(jv)
     }
 }
 

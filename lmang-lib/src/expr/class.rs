@@ -3,7 +3,6 @@ use crate::error::{ParseError, RuntimeError};
 use crate::expr::{func::FuncVal, Block};
 use crate::utils::{self, kwords};
 use crate::val::{DynFunc, DynObject, Object, Val, WeakWrapper};
-use std::borrow::Cow;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
@@ -24,7 +23,7 @@ impl Class {
 }
 
 impl Eval for Class {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
         env.eval(&self.0)?;
 
         let mut members = env.take_last_popped().unwrap();
@@ -52,9 +51,7 @@ impl Eval for Class {
             }
         }
 
-        Ok(Cow::Owned(Val::Object(DynObject(Box::new(ClassObject {
-            members,
-        })))))
+        Ok(Val::Object(DynObject(Box::new(ClassObject { members }))))
     }
 }
 
@@ -120,18 +117,13 @@ mod tests {
         let (_, use_e) = Expr::new("obj🪆x").unwrap();
 
         let mut env = Env::test();
-        let class_val = env.eval(&class_e).unwrap().into_owned();
+        let class_val = env.eval(&class_e).unwrap();
 
         env.store_binding("obj".to_string(), class_val);
 
         let result = env.eval(&use_e);
 
-        assert_eq!(
-            result,
-            Ok(Cow::Borrowed(&Val::Ref(Rc::new(RefCell::new(
-                Val::Number(0)
-            )))))
-        );
+        assert_eq!(result, Ok(Val::Ref(Rc::new(RefCell::new(Val::Number(0))))));
     }
 
     #[test]
@@ -142,19 +134,14 @@ mod tests {
         let (_, use_e) = Expr::new("obj🪆x").unwrap();
 
         let mut env = Env::test();
-        let class_val = env.eval(&class_e).unwrap().into_owned();
+        let class_val = env.eval(&class_e).unwrap();
         env.store_binding("obj".to_string(), class_val);
 
         env.eval(&let_e).unwrap();
         env.eval(&set_e).unwrap();
         let result = env.eval(&use_e);
 
-        assert_eq!(
-            result,
-            Ok(Cow::Borrowed(&Val::Ref(Rc::new(RefCell::new(
-                Val::Number(4)
-            )))))
-        );
+        assert_eq!(result, Ok(Val::Ref(Rc::new(RefCell::new(Val::Number(4))))));
     }
 
     #[test]
@@ -165,8 +152,8 @@ mod tests {
         let (_, use_e) = Expr::new("obj2🪆x").unwrap();
 
         let mut env = Env::test();
-        let class_val1 = env.eval(&class_e).unwrap().into_owned();
-        let class_val2 = env.eval(&class_e).unwrap().into_owned();
+        let class_val1 = env.eval(&class_e).unwrap();
+        let class_val2 = env.eval(&class_e).unwrap();
 
         env.store_binding("obj1".to_string(), class_val1);
         env.store_binding("obj2".to_string(), class_val2);
@@ -175,12 +162,7 @@ mod tests {
         env.eval(&set_e).unwrap();
         let result = env.eval(&use_e);
 
-        assert_eq!(
-            result,
-            Ok(Cow::Borrowed(&Val::Ref(Rc::new(RefCell::new(
-                Val::Number(0)
-            )))))
-        );
+        assert_eq!(result, Ok(Val::Ref(Rc::new(RefCell::new(Val::Number(0))))));
     }
 
     #[test]
@@ -201,13 +183,13 @@ mod tests {
         env.eval(&def_a).unwrap();
 
         let result_call = env.eval(&method_call);
-        assert_eq!(result_call, Ok(Cow::Owned(Val::Number(10))));
+        assert_eq!(result_call, Ok(Val::Number(10)));
 
         let result_x = env.eval(&get_a);
-        assert_eq!(result_x, Ok(Cow::Borrowed(&Val::Number(10))));
+        assert_eq!(result_x, Ok(Val::Number(10)));
 
         let result_a = env.eval(&get_x);
-        assert_eq!(result_a, Ok(Cow::Borrowed(&Val::Number(10))));
+        assert_eq!(result_a, Ok(Val::Number(10)));
     }
 
     #[test]
@@ -230,6 +212,6 @@ mod tests {
         env.eval(&def_class).unwrap();
         let result = env.eval(&eval_log2_10);
 
-        assert_eq!(result, Ok(Cow::Owned(Val::Number(4))));
+        assert_eq!(result, Ok(Val::Number(4)));
     }
 }

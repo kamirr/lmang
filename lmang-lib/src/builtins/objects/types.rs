@@ -13,8 +13,23 @@ fn to_char(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Run
     Ok(Val::Char(res_char))
 }
 
+#[cfg(feature = "web")]
+fn jv_to_val(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (val, tail) = view1::<view::Js, _, _>(args, |jv| Ok(Val::convert_from_jv(jv.clone())))?;
+    test_consumed(tail)?;
+
+    Ok(val)
+}
+
 pub(crate) fn make_types_builtin() -> Box<RustObj> {
-    RustObj::boxed("types", vec![RustFn::new("char", to_char)])
+    RustObj::boxed(
+        "types",
+        vec![
+            RustFn::new("char", to_char),
+            #[cfg(feature = "web")]
+            RustFn::new("from_js", jv_to_val),
+        ],
+    )
 }
 
 #[cfg(test)]

@@ -5,10 +5,12 @@ mod rustobj;
 mod sys;
 mod types;
 
+#[cfg(feature = "web")]
+mod web;
+
 use crate::env::{Env, Eval};
 use crate::error::RuntimeError;
 use crate::val::{DynObject, Val};
-use std::borrow::Cow;
 use std::cell::RefCell;
 
 use deque::make_deque_builtin;
@@ -16,6 +18,9 @@ use file::make_file_builtin;
 use rng::make_rng_builtin;
 use sys::make_sys_builtin;
 use types::make_types_builtin;
+
+#[cfg(feature = "web")]
+pub use web::make_web_builtin;
 
 pub(crate) struct BuiltinObjects {
     args: RefCell<Option<Box<dyn Iterator<Item = String>>>>,
@@ -30,7 +35,7 @@ impl BuiltinObjects {
 }
 
 impl Eval for BuiltinObjects {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
         env.store_binding(
             "file".to_string(),
             Val::Object(DynObject(make_file_builtin())),
@@ -54,6 +59,10 @@ impl Eval for BuiltinObjects {
             Val::Object(DynObject(make_types_builtin())),
         );
 
-        Ok(Cow::Owned(Val::Unit))
+        #[cfg(feature = "web")]
+        #[cfg(target_arch = "wasm32")]
+        env.store_binding("js".to_string(), Val::Object(DynObject(make_web_builtin())));
+
+        Ok(Val::Unit)
     }
 }

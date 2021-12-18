@@ -7,14 +7,17 @@ license = "MIT"
 
 [dependencies]
 ahash = "0.7"
+js-sys = { version = "0.3", optional = true }
 mimalloc = { version = "0.1.17", default-features = false, optional = true }
 rand = { version = "0.8", default-features = false, features = ["small_rng"] }
 thiserror = "1"
 wasm-bindgen = { version = "0.2", optional = true }
+web-sys = { version = "*", features = ["console"], optional = true }
 
 [features]
-web = ["wasm-bindgen"]
-default = ["mimalloc"]
+web = ["wasm-bindgen", "js-sys", "web-sys"]
+native = ["mimalloc"]
+default = []
 
 [lib]
 name = "lmang_lib"

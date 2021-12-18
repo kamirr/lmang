@@ -3,7 +3,6 @@ use crate::error::{ParseError, RuntimeError};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Call {
@@ -33,20 +32,13 @@ impl Call {
 }
 
 impl Eval for Call {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
-        let args: Result<Vec<Val>, _> = self
-            .args
-            .iter()
-            .map(|arg| env.eval(arg).map(|cow| cow.as_ref().to_owned()))
-            .collect();
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+        let args: Result<Vec<Val>, _> = self.args.iter().map(|arg| env.eval(arg)).collect();
         let mut args = args?;
 
-        let func_owned = env.eval(&self.func)?.as_ref().clone();
+        let func_owned = env.eval(&self.func)?;
         func_owned.apply_to_root(|v| -> Result<_, RuntimeError> {
-            v.as_func()?
-                .0
-                .call(args.as_mut_slice(), env)
-                .map(Cow::Owned)
+            v.as_func()?.0.call(args.as_mut_slice(), env)
         })?
     }
 }
@@ -99,7 +91,7 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&call_e);
 
-        assert_eq!(result, Ok(Cow::Owned(Val::Number(5))));
+        assert_eq!(result, Ok(Val::Number(5)));
     }
 
     #[test]
@@ -113,7 +105,7 @@ mod tests {
         dq.push_back(Val::Number(3));
         dq.push_back(Val::Number(10));
         let dq_val = Val::Deque(Box::new(dq));
-        assert_eq!(result, Ok(Cow::Owned(dq_val)));
+        assert_eq!(result, Ok(dq_val));
     }
 
     #[test]
@@ -150,7 +142,7 @@ mod tests {
         for (arg, fib) in cases.iter() {
             env.store_binding("💾".to_string(), Val::Number(*arg));
             let result = env.eval(&expr_e);
-            assert_eq!(result, Ok(Cow::Owned(Val::Number(*fib))));
+            assert_eq!(result, Ok(Val::Number(*fib)));
         }
     }
 }

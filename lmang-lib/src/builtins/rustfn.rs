@@ -110,7 +110,6 @@ mod tests {
     use super::*;
     use crate::expr::Expr;
     use crate::val::DynFunc;
-    use std::borrow::Cow;
 
     #[test]
     fn test_rustfn_store_get() {
@@ -120,7 +119,7 @@ mod tests {
         env.store_binding("f".to_string(), builtin_val.clone());
         let result = env.get_binding("f").unwrap();
 
-        assert_eq!(result, Cow::Owned(builtin_val));
+        assert_eq!(result, builtin_val);
     }
 
     #[test]
@@ -137,10 +136,10 @@ mod tests {
         let (_, id_e) = Expr::new("📞 id x").unwrap();
 
         let result_nop = env.eval(&nop_e);
-        assert_eq!(result_nop, Ok(Cow::Owned(Val::Unit)));
+        assert_eq!(result_nop, Ok(Val::Unit));
 
         let result_id = env.eval(&id_e);
-        assert_eq!(result_id, Ok(Cow::Owned(Val::Number(42))));
+        assert_eq!(result_id, Ok(Val::Number(42)));
     }
 
     #[test]
@@ -154,7 +153,7 @@ mod tests {
             let (_, call_e) = Expr::new("📞 cnt").unwrap();
             let result = env.eval(&call_e);
 
-            assert_eq!(result, Ok(Cow::Owned(Val::Number(k))));
+            assert_eq!(result, Ok(Val::Number(k)));
         }
     }
 }

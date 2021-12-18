@@ -2,7 +2,6 @@ use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
 use crate::utils;
 use crate::val::Val;
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BindingUsage {
@@ -23,7 +22,7 @@ impl BindingUsage {
 }
 
 impl Eval for BindingUsage {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
         env.get_binding(&self.name)
     }
 }

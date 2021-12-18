@@ -4,7 +4,6 @@ use crate::expr::Block;
 use crate::utils::{self, kwords};
 use crate::val::{Callee, DynFunc, Val};
 use std::any::Any;
-use std::borrow::Cow;
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
 
@@ -71,13 +70,13 @@ impl Func {
 }
 
 impl Eval for Func {
-    fn eval<'a, 'b>(&'a self, _env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
+    fn eval(&self, _env: &mut Env) -> Result<Val, RuntimeError> {
         let funcval = FuncVal {
             args: self.args.clone(),
             body: self.body.clone(),
             parent: None,
         };
-        Ok(Cow::Owned(Val::Func(DynFunc(Box::new(funcval)))))
+        Ok(Val::Func(DynFunc(Box::new(funcval))))
     }
 }
 
@@ -119,7 +118,7 @@ impl Callee for FuncVal {
         }
 
         let result = if idx == args.len() {
-            env.eval(&self.body).map(|cow| cow.as_ref().to_owned())
+            env.eval(&self.body)
         } else {
             Err(RuntimeError::WrongArgsN)
         };
@@ -253,10 +252,7 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&func_e);
 
-        assert_eq!(
-            result,
-            Ok(Cow::Owned(Val::Func(DynFunc(Box::new(expected)))))
-        );
+        assert_eq!(result, Ok(Val::Func(DynFunc(Box::new(expected)))));
     }
 
     #[test]
@@ -275,10 +271,7 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&func_e);
 
-        assert_eq!(
-            result,
-            Ok(Cow::Owned(Val::Func(DynFunc(Box::new(expected)))))
-        );
+        assert_eq!(result, Ok(Val::Func(DynFunc(Box::new(expected)))));
     }
 
     #[test]
@@ -304,9 +297,9 @@ mod tests {
         env.store_binding("x".to_string(), Val::Number(8));
         let res = env.eval(&func_call);
 
-        assert_eq!(res, Ok(Cow::Owned(Val::Number(1))));
-        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(1))));
-        assert_eq!(env.get_binding("x"), Ok(Cow::Borrowed(&Val::Number(1))));
+        assert_eq!(res, Ok(Val::Number(1)));
+        assert_eq!(env.get_binding("c"), Ok(Val::Number(1)));
+        assert_eq!(env.get_binding("x"), Ok(Val::Number(1)));
         assert_eq!(
             env.get_binding("a"),
             Err(RuntimeError::NoBinding("a".into()))

@@ -14,7 +14,7 @@ fn main() {
     env.eval(&Builtins::new(system::Native::new(2))).unwrap();
     let val = env.eval(&expr).unwrap();
 
-    if *val.as_ref() != Val::Unit {
-        println!("{}", val.as_ref());
+    if val != Val::Unit {
+        println!("{}", val);
     }
 }

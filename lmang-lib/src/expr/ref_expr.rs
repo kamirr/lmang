@@ -2,7 +2,6 @@ use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
 use crate::utils;
 use crate::val::Val;
-use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Ref {
@@ -27,7 +26,7 @@ impl Ref {
 }
 
 impl Eval for Ref {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
         env.take_ref(&self.ident)
     }
 }

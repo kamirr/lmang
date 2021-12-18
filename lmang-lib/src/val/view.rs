@@ -132,6 +132,30 @@ impl<V: View> View for Ref<V> {
     }
 }
 
+#[cfg(feature = "web")]
+#[derive(Default)]
+pub struct Js;
+
+#[cfg(feature = "web")]
+impl View for Js {
+    type Output = wasm_bindgen::JsValue;
+
+    fn view<T>(
+        val: &mut Val,
+        mut f: impl FnMut(&mut Self::Output) -> Result<T, RuntimeError>,
+    ) -> Result<T, RuntimeError> {
+        match val {
+            Val::JsValue(jv) => f(jv),
+            _ => Err(RuntimeError::CastError {
+                from: val.variant_name().to_owned(),
+                to: Val::JsValue(wasm_bindgen::JsValue::NULL)
+                    .variant_name()
+                    .to_owned(),
+            }),
+        }
+    }
+}
+
 pub fn view1<V1, F, T>(vals: &mut [Val], mut f: F) -> Result<(T, &mut [Val]), RuntimeError>
 where
     V1: View,

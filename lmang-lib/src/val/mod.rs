@@ -2,8 +2,14 @@ mod dynfunc;
 mod dynobject;
 pub mod view;
 
+#[cfg(feature = "web")]
+mod web;
+
 pub use dynfunc::{placeholder_func, Callee, DynFunc};
 pub use dynobject::{placeholder_object, DynObject, Object};
+
+#[cfg(feature = "web")]
+pub use web::{JsFunc, JsObj};
 
 use crate::error::RuntimeError;
 use crate::utils::kwords;
@@ -49,6 +55,9 @@ pub enum Val {
     Ref(Rc<RefCell<Val>>),
     Weak(WeakWrapper),
     Named((String, Box<Val>)),
+    // wasm
+    #[cfg(feature = "web")]
+    JsValue(wasm_bindgen::JsValue),
 }
 
 fn pretty_print_deque(dq: &VecDeque<Val>, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -74,7 +83,7 @@ impl fmt::Display for Val {
         match self {
             Self::Number(n) => write!(f, "{}", n),
             Self::Char(c) => write!(f, "{}", c),
-            Self::Bool(b) => write!(f, "{}", b),
+            Self::Bool(b) => write!(f, "{}", if *b { kwords::TRUE } else { kwords::FALSE }),
             Self::Unit => write!(f, "📦🧑‍🦲"),
             Self::Break(val) => write!(f, "💔{}", val.as_ref()),
             Self::Deque(vals) => pretty_print_deque(vals, f),
@@ -89,6 +98,11 @@ impl fmt::Display for Val {
                 }
             }
             Self::Named((name, val)) => write!(f, "{}{}{}", name, kwords::NAMED, &val),
+            #[cfg(feature = "web")]
+            Self::JsValue(jv) => {
+                let js_str = js_sys::JsString::from(jv.clone());
+                write!(f, "{}", js_str.to_string())
+            }
         }
     }
 }
@@ -109,6 +123,8 @@ impl Val {
             Ref(_) => "🔖",
             Weak(_) => "🦽",
             Named(_) => ":",
+            #[cfg(feature = "web")]
+            JsValue(_) => "🖍️",
         }
     }
 
@@ -372,6 +388,24 @@ impl Val {
                 rhs: other.variant_name().into(),
                 op: kwords::LE.into(),
             })
+        }
+    }
+
+    #[cfg(feature = "web")]
+    pub fn convert_from_jv(jv: wasm_bindgen::JsValue) -> Self {
+        if let Some(b) = jv.as_bool() {
+            Val::Bool(b)
+        } else if let Some(s) = jv.as_string() {
+            let dq = s.chars().map(|c| Val::Char(c)).collect();
+            Val::Deque(Box::new(dq))
+        } else if jv.is_function() {
+            Val::Func(DynFunc(Box::new(JsFunc::new("anon", jv.into()))))
+        } else if jv.is_null() || jv.is_undefined() {
+            Val::Unit
+        } else if jv.is_object() {
+            Val::Object(DynObject(JsObj::boxed_jv("anon", jv)))
+        } else {
+            Val::JsValue(jv.clone())
         }
     }
 }

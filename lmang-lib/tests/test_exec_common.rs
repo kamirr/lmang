@@ -22,6 +22,6 @@ pub fn test_exec(path: String, args: &[String], stdin: &[String]) -> ExecResult 
     let borrow = system_out.stdout.borrow();
     ExecResult {
         stdout: borrow.to_string(),
-        return_val: val.map(|v| v.as_ref().clone()),
+        return_val: val.map(|v| v),
     }
 }

@@ -3,7 +3,6 @@ use crate::error::{ParseError, RuntimeError};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
-use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BindingUpdate {
@@ -51,10 +50,10 @@ impl BindingUpdate {
 }
 
 impl Eval for BindingUpdate {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
-        let value = env.eval(&self.val)?.as_ref().to_owned();
+    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Val, RuntimeError> {
+        let value = env.eval(&self.val)?;
         match value {
-            Val::Break(_) => Ok(Cow::Owned(value)),
+            Val::Break(_) => Ok(value),
             _ => {
                 if self.set {
                     env.set_binding(&self.name, value)?;
@@ -62,7 +61,7 @@ impl Eval for BindingUpdate {
                     env.store_binding(self.name.clone(), value);
                 }
 
-                Ok(Cow::Owned(Val::Unit))
+                Ok(Val::Unit)
             }
         }
     }
@@ -130,6 +129,6 @@ mod tests {
 
         env.eval(&bd).unwrap();
 
-        assert_eq!(env.get_binding("🍆💦"), Ok(Cow::Borrowed(&Val::Number(6))));
+        assert_eq!(env.get_binding("🍆💦"), Ok(Val::Number(6)));
     }
 }

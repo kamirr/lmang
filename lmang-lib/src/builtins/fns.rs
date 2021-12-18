@@ -2,7 +2,6 @@ use super::{FnState, RustFn};
 use crate::env::{Env, Eval};
 use crate::error::RuntimeError;
 use crate::val::Val;
-use std::borrow::Cow;
 use std::cell::RefCell;
 use std::fmt::Write as _;
 use std::rc::Rc;
@@ -89,7 +88,7 @@ impl BuiltinFns {
 }
 
 impl Eval for BuiltinFns {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
         env.store_binding(
             "🗣️".to_string(),
             RustFn::stateful("print", print, &self.print_impl).into_val(),
@@ -99,6 +98,6 @@ impl Eval for BuiltinFns {
             RustFn::stateful("read", read, &self.read_impl).into_val(),
         );
 
-        Ok(Cow::Owned(Val::Unit))
+        Ok(Val::Unit)
     }
 }

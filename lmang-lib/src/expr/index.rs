@@ -3,7 +3,6 @@ use crate::error::{ParseError, RuntimeError};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
-use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Index {
@@ -50,14 +49,29 @@ impl Index {
 }
 
 impl Eval for Index {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError> {
-        let mut val = env.eval(&self.root)?.as_ref().to_owned();
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+        let mut val = env.eval(&self.root)?;
         for ident in &self.idents {
-            let obj = val.as_object()?;
-            val = obj.0.member(ident.as_ref())?;
+            #[cfg(feature = "web")]
+            if let Val::JsValue(ref jv) = val {
+                if jv.is_object() {
+                    val = Val::convert_from_jv(jv.clone())
+                        .as_object()?
+                        .0
+                        .member(ident.as_ref())?;
+                }
+            } else {
+                let obj = val.as_object()?;
+                val = obj.0.member(ident.as_ref())?;
+            }
+            #[cfg(not(feature = "web"))]
+            {
+                let obj = val.as_object()?;
+                val = obj.0.member(ident.as_ref())?;
+            }
         }
 
-        Ok(Cow::Owned(val))
+        Ok(val)
     }
 }
 
@@ -133,6 +147,6 @@ mod tests {
         let _ = env.eval(&crate::builtins::Builtins::new(test_sys)).unwrap();
         let result = env.eval(&call_e);
 
-        assert!(matches!(result, Ok(Cow::Owned(Val::Number(_)))))
+        assert!(matches!(result, Ok(Val::Number(_))))
     }
 }

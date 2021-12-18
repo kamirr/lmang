@@ -1,33 +1,50 @@
 use crate::error::RuntimeError;
 use crate::val::Val;
-use std::borrow::Cow;
+use std::cell::RefCell;
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::time::{Duration, Instant};
 
 use ahash::RandomState;
 
+type StackFrame = HashMap<String, Val, RandomState>;
+
 #[derive(Debug, PartialEq, Default)]
 pub struct Env {
-    stack: Vec<HashMap<String, Val, RandomState>>,
-    timeout: Option<Instant>,
     last_popped: Option<HashMap<String, Val, RandomState>>,
+    root: Rc<RefCell<StackFrame>>,
+    stack: Vec<StackFrame>,
+    timeout: Option<Instant>,
 }
 
 impl Env {
     pub fn new() -> Self {
         Env {
-            stack: vec![HashMap::default()],
-            timeout: None,
             last_popped: None,
+            root: Rc::new(RefCell::new(HashMap::default())),
+            stack: Vec::new(),
+            timeout: None,
         }
     }
 
     #[cfg(test)]
     pub fn test() -> Self {
+        let timeout = Instant::now() + Duration::from_secs_f32(0.1);
+
         Env {
-            stack: vec![HashMap::default()],
-            timeout: Some(Instant::now() + Duration::from_secs_f32(0.1)),
             last_popped: None,
+            root: Rc::new(RefCell::new(HashMap::default())),
+            stack: Vec::new(),
+            timeout: Some(timeout),
+        }
+    }
+
+    pub fn shared(&self) -> Self {
+        Env {
+            last_popped: None,
+            root: self.root.clone(),
+            stack: Vec::new(),
+            timeout: self.timeout.clone(),
         }
     }
 
@@ -36,7 +53,7 @@ impl Env {
     }
 
     pub fn pop(&mut self) {
-        self.last_popped = Some(self.stack.pop().expect("can't pop last stack frame"));
+        self.last_popped = Some(self.stack.pop().expect("stack empty"));
     }
 
     pub fn take_last_popped(&mut self) -> Option<HashMap<String, Val, RandomState>> {
@@ -44,7 +61,15 @@ impl Env {
     }
 
     pub fn store_binding(&mut self, name: String, val: Val) {
-        self.stack.last_mut().map(|frame| frame.insert(name, val));
+        match self.stack.last_mut() {
+            Some(frame) => {
+                frame.insert(name, val);
+            }
+            None => {
+                let mut borrow = self.root.borrow_mut();
+                borrow.insert(name, val);
+            }
+        };
     }
 
     pub fn set_binding(&mut self, name: &str, new_val: Val) -> Result<(), RuntimeError> {
@@ -59,25 +84,46 @@ impl Env {
             }
         }
 
-        Err(RuntimeError::NoBinding(name.into()))
-    }
-
-    pub fn get_binding<'a, 'b>(&'a self, name: &'b str) -> Result<Cow<'a, Val>, RuntimeError> {
-        for frame in self.stack.iter().rev() {
-            if let Some(val) = frame.get(name) {
-                return Ok(Cow::Borrowed(val));
+        let mut borrow = self.root.borrow_mut();
+        if let Some(val) = borrow.get_mut(name) {
+            match val {
+                Val::Ref(rc) => *rc.borrow_mut() = new_val,
+                _ => *val = new_val,
             }
+
+            return Ok(());
         }
 
         Err(RuntimeError::NoBinding(name.into()))
     }
 
-    pub fn take_ref<'a, 'b>(&'a mut self, name: &'b str) -> Result<Cow<'a, Val>, RuntimeError> {
+    pub fn get_binding<'a, 'b>(&'a self, name: &'b str) -> Result<Val, RuntimeError> {
+        for frame in self.stack.iter().rev() {
+            if let Some(val) = frame.get(name) {
+                return Ok(val.clone());
+            }
+        }
+
+        let borrow = self.root.borrow();
+        if let Some(val) = borrow.get(name) {
+            return Ok(val.clone());
+        }
+
+        Err(RuntimeError::NoBinding(name.into()))
+    }
+
+    pub fn take_ref<'a, 'b>(&'a mut self, name: &'b str) -> Result<Val, RuntimeError> {
         for frame in self.stack.iter_mut().rev() {
             if let Some(val) = frame.get_mut(name) {
                 let val_ref = val.make_ref();
-                return Ok(Cow::Owned(val_ref));
+                return Ok(val_ref);
             }
+        }
+
+        let mut borrow = self.root.borrow_mut();
+        if let Some(val) = borrow.get_mut(name) {
+            let val_ref = val.make_ref();
+            return Ok(val_ref);
         }
 
         Err(RuntimeError::NoBinding(name.into()))
@@ -87,7 +133,7 @@ impl Env {
         self.timeout = Some(Instant::now() + dur);
     }
 
-    pub fn eval<'a, 'b>(&'a mut self, expr: &'b impl Eval) -> Result<Cow<'a, Val>, RuntimeError> {
+    pub fn eval<'a, 'b>(&'a mut self, expr: &'b impl Eval) -> Result<Val, RuntimeError> {
         if self.timeout.map(|t| Instant::now() > t).unwrap_or(false) {
             Err(RuntimeError::Timeout)
         } else {
@@ -97,7 +143,7 @@ impl Env {
 }
 
 pub trait Eval {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Cow<'b, Val>, RuntimeError>;
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError>;
 }
 
 #[cfg(test)]
@@ -112,7 +158,7 @@ mod tests {
 
         let mut env = Env::test();
         env.store_binding("a".to_string(), val.clone());
-        assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&val)));
+        assert_eq!(env.get_binding("a"), Ok(val));
     }
 
     #[test]
@@ -121,32 +167,32 @@ mod tests {
         env.store_binding("a".to_string(), Val::Number(3));
         env.store_binding("c".to_string(), Val::Number(9));
 
-        assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&Val::Number(3))));
+        assert_eq!(env.get_binding("a"), Ok(Val::Number(3)));
         assert_eq!(
             env.get_binding("b"),
             Err(RuntimeError::NoBinding("b".into()))
         );
-        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(9))));
+        assert_eq!(env.get_binding("c"), Ok(Val::Number(9)));
 
         env.push();
         env.store_binding("a".to_string(), Val::Bool(false));
         env.store_binding("b".to_string(), Val::Unit);
 
-        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(9))));
+        assert_eq!(env.get_binding("c"), Ok(Val::Number(9)));
 
         env.set_binding("c", Val::Number(7)).unwrap();
 
-        assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&Val::Bool(false))));
-        assert_eq!(env.get_binding("b"), Ok(Cow::Borrowed(&Val::Unit)));
-        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(7))));
+        assert_eq!(env.get_binding("a"), Ok(Val::Bool(false)));
+        assert_eq!(env.get_binding("b"), Ok(Val::Unit));
+        assert_eq!(env.get_binding("c"), Ok(Val::Number(7)));
         env.pop();
 
-        assert_eq!(env.get_binding("a"), Ok(Cow::Borrowed(&Val::Number(3))));
+        assert_eq!(env.get_binding("a"), Ok(Val::Number(3)));
         assert_eq!(
             env.get_binding("b"),
             Err(RuntimeError::NoBinding("b".into()))
         );
-        assert_eq!(env.get_binding("c"), Ok(Cow::Borrowed(&Val::Number(7))));
+        assert_eq!(env.get_binding("c"), Ok(Val::Number(7)));
     }
 
     #[test]
@@ -156,10 +202,7 @@ mod tests {
         let _ = env.take_ref("a").unwrap();
         let val_ref = env.take_ref("a");
 
-        assert_eq!(
-            val_ref,
-            Ok(Cow::Borrowed(&Val::Ref(Rc::new(RefCell::new(Val::Unit)))))
-        );
+        assert_eq!(val_ref, Ok(Val::Ref(Rc::new(RefCell::new(Val::Unit)))));
     }
 
     #[test]
@@ -168,20 +211,20 @@ mod tests {
         env.store_binding("a".to_string(), Val::Number(0));
 
         let val_ref = env.take_ref("a").unwrap();
-        if let Val::Ref(rc) = val_ref.as_ref() {
+        if let Val::Ref(rc) = val_ref {
             assert_eq!(*rc.borrow(), Val::Number(0));
             *rc.borrow_mut() = Val::Number(4);
         } else {
             panic!("val not ref");
         }
 
-        if let Val::Ref(rc) = env.get_binding("a").unwrap().as_ref() {
+        if let Val::Ref(rc) = env.get_binding("a").unwrap() {
             assert_eq!(*rc.borrow(), Val::Number(4));
         } else {
             panic!("val not ref");
         }
 
-        let expected = vec![{
+        let expected = {
             let mut tmp = HashMap::default();
             tmp.insert(
                 "a".to_string(),
@@ -189,9 +232,9 @@ mod tests {
             );
 
             tmp
-        }];
+        };
 
-        assert_eq!(env.stack, expected);
+        assert_eq!(env.root, Rc::new(RefCell::new(expected)));
     }
 
     #[test]
@@ -220,5 +263,34 @@ mod tests {
             .borrow()
             .clone();
         assert_eq!(result, Val::Number(2));
+    }
+
+    #[test]
+    fn env_shared_root_only() {
+        let mut env = Env::test();
+
+        env.store_binding("x".to_string(), Val::Unit);
+        env.push();
+        env.store_binding("y".to_string(), Val::Unit);
+
+        let env_other = env.shared();
+
+        assert_eq!(env_other.get_binding("x"), Ok(Val::Unit));
+        assert_eq!(
+            env_other.get_binding("y"),
+            Err(RuntimeError::NoBinding("y".to_string()))
+        );
+    }
+
+    #[test]
+    fn test_timeout() {
+        let mut env = Env::test();
+
+        std::thread::sleep(std::time::Duration::from_secs_f32(0.2));
+
+        let (_, unit_e) = crate::expr::Expr::new("📦🧑‍🦲").unwrap();
+        let res = env.eval(&unit_e);
+
+        assert_eq!(res, Err(RuntimeError::Timeout));
     }
 }

@@ -94,7 +94,6 @@ mod tests {
     use super::*;
     use crate::expr::Expr;
     use crate::val::DynObject;
-    use std::borrow::Cow;
     use std::cell::RefCell;
     use std::collections::VecDeque;
     use std::rc::Rc;
@@ -134,7 +133,7 @@ mod tests {
         let mut env = deque_test_env();
         let (_, call_val_e) = Expr::new("📞 d_test🪆len d").unwrap();
         let (_, call_ref_e) = Expr::new("📞 d_test🪆len 🔖d").unwrap();
-        let expected = Ok(Cow::Owned(Val::Number(3)));
+        let expected = Ok(Val::Number(3));
 
         let result_val = env.eval(&call_val_e);
         assert_eq!(result_val, expected);
@@ -158,14 +157,12 @@ mod tests {
         );
 
         let (_, call_ref_e) = Expr::new("📞 d_test🪆append 🔖d 4").unwrap();
-        assert_eq!(env.eval(&call_ref_e), Ok(Cow::Owned(Val::Unit)));
+        assert_eq!(env.eval(&call_ref_e), Ok(Val::Unit));
 
         let result_ref = env.get_binding("d");
         assert_eq!(
             result_ref,
-            Ok(Cow::Owned(Val::Ref(Rc::new(
-                RefCell::new(deque_1234_val())
-            ))))
+            Ok(Val::Ref(Rc::new(RefCell::new(deque_1234_val()))))
         );
     }
 
@@ -176,10 +173,10 @@ mod tests {
         let (_, call_ref_e) = Expr::new("📞 d_test🪆at 🔖d 2").unwrap();
 
         let result_val = env.eval(&call_val_e);
-        assert_eq!(result_val, Ok(Cow::Owned(Val::Number(3))));
+        assert_eq!(result_val, Ok(Val::Number(3)));
 
         let result_val = env.eval(&call_ref_e);
-        assert_eq!(result_val, Ok(Cow::Owned(Val::Number(3))));
+        assert_eq!(result_val, Ok(Val::Number(3)));
     }
 
     #[test]
@@ -190,7 +187,7 @@ mod tests {
         let result_val = env.eval(&call_e);
         assert_eq!(
             result_val,
-            Ok(Cow::Owned(Val::Ref(Rc::new(RefCell::new(Val::Number(3))))))
+            Ok(Val::Ref(Rc::new(RefCell::new(Val::Number(3)))))
         );
 
         let dq = env.get_binding("d").unwrap();
@@ -202,8 +199,7 @@ mod tests {
 
             tmp
         };
-        let expected_dq_val = Val::Ref(Rc::new(RefCell::new(Val::Deque(Box::new(expected_dq)))));
-        let expected = Cow::Borrowed(&expected_dq_val);
+        let expected = Val::Ref(Rc::new(RefCell::new(Val::Deque(Box::new(expected_dq)))));
         assert_eq!(dq, expected);
     }
 
@@ -226,7 +222,7 @@ mod tests {
         let (_, remove_20_e) = Expr::new("📞 d_test🪆remove 🔖d 20").unwrap();
 
         let result = env.eval(&remove_2_e);
-        assert_eq!(result, Ok(Cow::Owned(Val::Number(3))));
+        assert_eq!(result, Ok(Val::Number(3)));
 
         let result = env.eval(&remove_20_e);
         assert_eq!(result, Err(RuntimeError::OutOfBounds { idx: 20, len: 2 }));
@@ -239,8 +235,7 @@ mod tests {
 
             tmp
         };
-        let expected_dq_val = Val::Ref(Rc::new(RefCell::new(Val::Deque(Box::new(expected_dq)))));
-        let expected = Cow::Borrowed(&expected_dq_val);
+        let expected = Val::Ref(Rc::new(RefCell::new(Val::Deque(Box::new(expected_dq)))));
         assert_eq!(dq, expected);
     }
 
@@ -269,7 +264,7 @@ mod tests {
         env.eval(&flatten_e).unwrap();
 
         let val = env.get_binding("d");
-        assert_eq!(val, Ok(Cow::Owned(Val::Deque(Box::new(expected)))));
+        assert_eq!(val, Ok(Val::Deque(Box::new(expected))));
     }
 
     #[test]
@@ -299,6 +294,6 @@ mod tests {
         };
         let expected_dq_val = Val::Deque(Box::new(expected_dq));
         let expected_val = Val::Ref(Rc::new(RefCell::new(expected_dq_val)));
-        assert_eq!(env.get_binding("d"), Ok(Cow::Borrowed(&expected_val)));
+        assert_eq!(env.get_binding("d"), Ok(expected_val));
     }
 }
