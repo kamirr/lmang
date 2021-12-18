@@ -2,9 +2,10 @@ use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
 use crate::error::RuntimeError;
+use crate::val::view::{self, test_consumed, view1};
 use crate::val::Val;
 use std::cell::RefCell;
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::Read;
 use std::rc::Rc;
@@ -15,14 +16,16 @@ pub struct FileState {
     cnt: i32,
 }
 
-fn open(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
-    let fname_dq: VecDeque<_> =
-        args[0].apply_to_root(|v| -> Result<_, RuntimeError> { Ok(v.as_deque()?.clone()) })??;
-    let fname_res: Result<String, _> = fname_dq
-        .into_iter()
-        .map(|v| v.as_char().map(|c| *c))
-        .collect();
-    let fname = fname_res?;
+fn open(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+    let (fname, tail) = view1::<view::AnyRef<view::Deque>, _, _>(args, |dq| {
+        let string = dq
+            .iter()
+            .map(|v| v.as_char().map(|c| *c))
+            .collect::<Result<String, _>>()?;
+        Ok(string)
+    })?;
+    test_consumed(tail)?;
+
     let file = File::open(&fname).map_err(|e| RuntimeError::IoError {
         file: fname.clone(),
         reason: e.to_string(),
@@ -40,11 +43,13 @@ fn open(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeErro
     Ok(Val::Number(id))
 }
 
-fn read(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn read(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+    let (id, tail) = view1::<view::Number, _, _>(args, |n| Ok(*n))?;
+    test_consumed(tail)?;
+
     let mut borrow = state.0.borrow_mut();
     let fstate: &mut FileState = borrow.downcast_mut::<FileState>().unwrap();
 
-    let id = args[0].apply_to_root(|v| v.as_number().map(|n| *n))??;
     let files = fstate.files.borrow_mut();
     let mut file = files.get(&id).ok_or_else(|| RuntimeError::NoHandle(id))?;
 

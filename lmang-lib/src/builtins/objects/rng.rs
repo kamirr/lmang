@@ -2,24 +2,28 @@ use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
 use crate::error::RuntimeError;
+use crate::val::view::{self, test_consumed, view1};
 use crate::val::Val;
 use rand::rngs::SmallRng;
 use rand::{RngCore as _, SeedableRng};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-fn next(_: &[Val], _: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn next(tail: &mut [Val], _: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+    test_consumed(tail)?;
+
     let mut borrow = state.0.borrow_mut();
     let rng: &mut SmallRng = borrow.downcast_mut::<SmallRng>().unwrap();
 
     Ok(Val::Number(rng.next_u32() as i32))
 }
 
-fn seed(vals: &[Val], _: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn seed(args: &mut [Val], _: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+    let (new_seed, tail) = view1::<view::Number, _, _>(args, |n| Ok(*n))?;
+    test_consumed(tail)?;
+
     let mut borrow = state.0.borrow_mut();
     let rng: &mut SmallRng = borrow.downcast_mut::<SmallRng>().unwrap();
-
-    let new_seed = vals[0].apply_to_root(|v| v.as_number().map(|n| *n))??;
     *rng = SmallRng::seed_from_u64(new_seed as u64);
 
     Ok(Val::Unit)

@@ -1,5 +1,6 @@
 mod dynfunc;
 mod dynobject;
+pub mod view;
 
 pub use dynfunc::{placeholder_func, Callee, DynFunc};
 pub use dynobject::{placeholder_object, DynObject, Object};

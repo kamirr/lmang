@@ -10,7 +10,7 @@ use std::rc::Rc;
 pub(crate) type PrintImpl = Box<dyn FnMut(String) -> Result<(), RuntimeError>>;
 pub(crate) type ReadImpl = Box<dyn FnMut() -> Result<String, RuntimeError>>;
 
-fn print(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn print(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let mut borrow = state.0.borrow_mut();
     let print_impl: &mut PrintImpl = borrow.downcast_mut().unwrap();
 
@@ -60,7 +60,7 @@ fn print(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeErr
     Ok(Val::Unit)
 }
 
-fn read(_args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn read(_args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let mut borrow = state.0.borrow_mut();
     let read_impl: &mut ReadImpl = borrow.downcast_mut().unwrap();
 

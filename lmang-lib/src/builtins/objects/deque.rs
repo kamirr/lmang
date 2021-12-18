@@ -2,117 +2,76 @@ use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
 use crate::error::RuntimeError;
+use crate::val::view::{self, foreach, take_n, test_consumed, view1, view2, DequeExt as _};
 use crate::val::Val;
-use std::borrow::Borrow;
 use std::collections::VecDeque;
 
-fn len(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    let len =
-        args[0].apply_to_root(|v| -> Result<_, RuntimeError> { Ok(v.as_deque()?.len()) })??;
+fn len(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (val, tail) =
+        view1::<view::AnyRef<view::Deque>, _, _>(args, |dq| Ok(Val::Number(dq.len() as i32)))?;
+    test_consumed(tail)?;
 
-    Ok(Val::Number(len as i32))
+    Ok(val)
 }
 
-fn append(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    if args.len() != 2 {
-        return Err(RuntimeError::WrongArgsN);
-    }
+fn append(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (res, tail) = view2::<view::Ref<view::Deque>, view::Bottom, _, _>(args, |dq, new_val| {
+        dq.push_back(new_val.clone());
+        Ok(Val::Unit)
+    })?;
+    test_consumed(tail)?;
 
-    let val = args[1].clone();
-    args[0]
-        .as_val_ref()
-        .borrow()
-        .as_ref()?
-        .borrow_mut()
-        .apply_to_root_mut(|v| -> Result<_, RuntimeError> {
-            v.as_deque_mut()?.push_back(val);
-            Ok(())
-        })??;
-
-    Ok(Val::Unit)
+    Ok(res)
 }
 
-fn at(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    if args.len() != 2 {
-        return Err(RuntimeError::WrongArgsN);
-    }
+fn at(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (res, tail) = view2::<view::AnyRef<view::Deque>, view::Number, _, _>(args, |dq, idx| {
+        Ok(dq.try_get(*idx)?.clone())
+    })?;
+    test_consumed(tail)?;
 
-    let idx = args[1].apply_to_root(|v| v.as_number().map(|n| *n))??;
-    let result = args[0].apply_to_root(|v| -> Result<_, RuntimeError> {
-        Ok(v.as_deque()?[idx as usize].clone())
-    })??;
-
-    Ok(result)
+    Ok(res)
 }
 
-fn at_mut(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    if args.len() != 2 {
-        return Err(RuntimeError::WrongArgsN);
-    }
+fn at_mut(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (res, tail) = view2::<view::Ref<view::Deque>, view::Number, _, _>(args, |dq, idx| {
+        Ok(dq.try_get(*idx)?.make_ref())
+    })?;
+    test_consumed(tail)?;
 
-    let idx = args[1].apply_to_root(|v| v.as_number().map(|n| *n))??;
-    let result = match args[0].as_val_ref().borrow().as_ref() {
-        Ok(vr) => vr
-            .borrow_mut()
-            .apply_to_root_mut(|v| -> Result<_, RuntimeError> {
-                let val_ref = v.as_deque_mut()?[idx as usize].make_ref();
-
-                Ok(val_ref)
-            })??,
-        _ => args[0].as_deque()?[idx as usize].clone(),
-    };
-
-    Ok(result)
+    Ok(res)
 }
 
-fn remove(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    use std::ops::Sub;
+fn remove(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (res, tail) = view2::<view::Ref<view::Deque>, view::Number, _, _>(args, |dq, &mut idx| {
+        dq.try_remove(idx)
+    })?;
+    test_consumed(tail)?;
 
-    if args.len() != 2 {
-        return Err(RuntimeError::WrongArgsN);
-    }
-
-    let idx = args[1].apply_to_root(|v| v.as_number().map(|n| *n))??;
-    let result = match args[0].as_val_ref().borrow().as_ref() {
-        Ok(vr) => vr
-            .borrow_mut()
-            .apply_to_root_mut(|v| -> Result<_, RuntimeError> {
-                let dq_len = v.as_deque()?.len();
-                let idx_rel = if idx >= 0 {
-                    idx as usize
-                } else {
-                    dq_len.sub((-idx) as usize)
-                };
-
-                v.as_deque_mut()?
-                    .remove(idx_rel)
-                    .ok_or_else(|| RuntimeError::OutOfBounds { idx, len: dq_len })
-            })??,
-        _ => args[0].as_deque()?[idx as usize].clone(),
-    };
-
-    Ok(result)
+    Ok(res)
 }
 
-fn flatten(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    if args.len() != 1 {
-        return Err(RuntimeError::WrongArgsN);
-    }
-
+fn flatten(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
     let mut res = VecDeque::new();
-    fn flatten_impl(v: &Val, dq: &mut VecDeque<Val>) {
-        v.apply_to_root(move |v| match v.as_deque() {
-            Ok(inner_dq) => {
-                for v_inner in inner_dq.iter() {
-                    flatten_impl(v_inner, dq)
-                }
-            }
-            Err(_) => dq.push_back(v.clone()),
-        })
-        .unwrap()
+    fn flatten_impl(v: &mut Val, res: &mut VecDeque<Val>) {
+        let mut wrapped = [v.clone()];
+
+        let recurrence_res =
+            foreach::<view::AnyRef<view::Deque>, view::Bottom, _, _>(&mut wrapped, |v| {
+                flatten_impl(v, res);
+                Ok(())
+            });
+
+        if recurrence_res.is_err() {
+            let [v] = wrapped;
+            res.push_back(v);
+        }
     }
 
-    flatten_impl(&args[0], &mut res);
+    let ([val], tail) = take_n::<1>(args)?;
+    flatten_impl(val, &mut res);
+    test_consumed(tail)?;
+
     Ok(Val::Deque(Box::new(res)))
 }
 
@@ -213,7 +172,7 @@ mod tests {
     #[test]
     fn test_at() {
         let mut env = deque_test_env();
-        let (_, call_val_e) = Expr::new("📞 d_test🪆at d 2").unwrap();
+        let (_, call_val_e) = Expr::new("📞 d_test🪆at d 📦0-1🧑‍🦲").unwrap();
         let (_, call_ref_e) = Expr::new("📞 d_test🪆at 🔖d 2").unwrap();
 
         let result_val = env.eval(&call_val_e);
@@ -226,7 +185,7 @@ mod tests {
     #[test]
     fn test_at_mut() {
         let mut env = deque_test_env();
-        let (_, call_e) = Expr::new("📞 d_test🪆mut 🔖d 2").unwrap();
+        let (_, call_e) = Expr::new("📞 d_test🪆mut 🔖d 📦0-1🧑‍🦲").unwrap();
 
         let result_val = env.eval(&call_e);
         assert_eq!(
@@ -246,6 +205,18 @@ mod tests {
         let expected_dq_val = Val::Ref(Rc::new(RefCell::new(Val::Deque(Box::new(expected_dq)))));
         let expected = Cow::Borrowed(&expected_dq_val);
         assert_eq!(dq, expected);
+    }
+
+    #[test]
+    fn test_at_at_mut_oob() {
+        let mut env = deque_test_env();
+        let (_, at_e) = Expr::new("📞 d_test🪆at 🔖d 10").unwrap();
+        let (_, at_mut_e) = Expr::new("📞 d_test🪆mut 🔖d 10").unwrap();
+
+        let expected = RuntimeError::OutOfBounds { len: 3, idx: 10 };
+
+        assert_eq!(env.eval(&at_e), Err(expected.clone()));
+        assert_eq!(env.eval(&at_mut_e), Err(expected));
     }
 
     #[test]
@@ -299,5 +270,35 @@ mod tests {
 
         let val = env.get_binding("d");
         assert_eq!(val, Ok(Cow::Owned(Val::Deque(Box::new(expected)))));
+    }
+
+    #[test]
+    fn test_too_many_args() {
+        let mut env = deque_test_env();
+        let (_, len_e) = Expr::new("📞 d_test🪆len d 🧵extra_arg🧵").unwrap();
+        let (_, append_e) = Expr::new("📞 d_test🪆append 🔖d 24 🧵extra_arg🧵").unwrap();
+        let (_, at_e) = Expr::new("📞 d_test🪆at 🔖d 0 🧵extra_arg🧵").unwrap();
+        let (_, at_mut_e) = Expr::new("📞 d_test🪆mut 🔖d 0 🧵extra_arg🧵").unwrap();
+        let (_, remove_e) = Expr::new("📞 d_test🪆remove 🔖d 0 🧵extra_arg🧵").unwrap();
+        let (_, flatten_e) = Expr::new("📞 d_test🪆flatten d 🧵extra_arg🧵").unwrap();
+
+        assert_eq!(env.eval(&len_e), Err(RuntimeError::WrongArgsN));
+        assert_eq!(env.eval(&append_e), Err(RuntimeError::WrongArgsN));
+        assert_eq!(env.eval(&at_e), Err(RuntimeError::WrongArgsN));
+        assert_eq!(env.eval(&at_mut_e), Err(RuntimeError::WrongArgsN));
+        assert_eq!(env.eval(&remove_e), Err(RuntimeError::WrongArgsN));
+        assert_eq!(env.eval(&flatten_e), Err(RuntimeError::WrongArgsN));
+
+        let expected_dq = {
+            let mut dq = VecDeque::new();
+            dq.push_back(Val::Number(2));
+            dq.push_back(Val::Number(3));
+            dq.push_back(Val::Number(24));
+
+            dq
+        };
+        let expected_dq_val = Val::Deque(Box::new(expected_dq));
+        let expected_val = Val::Ref(Rc::new(RefCell::new(expected_dq_val)));
+        assert_eq!(env.get_binding("d"), Ok(Cow::Borrowed(&expected_val)));
     }
 }

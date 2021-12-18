@@ -39,11 +39,14 @@ impl Eval for Call {
             .iter()
             .map(|arg| env.eval(arg).map(|cow| cow.as_ref().to_owned()))
             .collect();
-        let args = args?;
+        let mut args = args?;
 
         let func_owned = env.eval(&self.func)?.as_ref().clone();
         func_owned.apply_to_root(|v| -> Result<_, RuntimeError> {
-            v.as_func()?.0.call(args.as_slice(), env).map(Cow::Owned)
+            v.as_func()?
+                .0
+                .call(args.as_mut_slice(), env)
+                .map(Cow::Owned)
         })?
     }
 }

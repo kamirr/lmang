@@ -89,7 +89,7 @@ pub struct FuncVal {
 }
 
 impl Callee for FuncVal {
-    fn call(&self, args: &[Val], env: &mut Env) -> Result<Val, RuntimeError> {
+    fn call(&self, args: &mut [Val], env: &mut Env) -> Result<Val, RuntimeError> {
         env.push();
 
         let mut idx = 0;
