@@ -37,8 +37,20 @@ impl Eval for Call {
         let mut args = args?;
 
         let func_owned = env.eval(&self.func)?;
-        func_owned.apply_to_root(|v| -> Result<_, RuntimeError> {
-            v.as_func()?.0.call(args.as_mut_slice(), env)
+        func_owned.apply_to_root(|val| -> Result<_, RuntimeError> {
+            #[cfg(feature = "web")]
+            if let Val::JsValue(ref jv) = val {
+                Val::convert_from_jv(jv.clone())
+                    .as_func()?
+                    .0
+                    .call(args.as_mut_slice(), env)
+            } else {
+                val.as_func()?.0.call(args.as_mut_slice(), env)
+            }
+            #[cfg(not(feature = "web"))]
+            {
+                val.as_func()?.0.call(args.as_mut_slice(), env)
+            }
         })?
     }
 }
