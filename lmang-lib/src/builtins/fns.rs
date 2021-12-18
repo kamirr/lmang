@@ -1,7 +1,10 @@
 use super::{FnState, RustFn};
 use crate::env::{Env, Eval};
 use crate::error::RuntimeError;
-use crate::val::Val;
+use crate::val::{
+    view::{self, test_consumed, view1},
+    Val,
+};
 use std::cell::RefCell;
 use std::fmt::Write as _;
 use std::rc::Rc;
@@ -73,6 +76,18 @@ fn read(_args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Runtim
     Ok(Val::Deque(Box::new(deque)))
 }
 
+fn eval(args: &mut [Val], env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (code, tail) = view1::<view::String, _, _>(args, |s| Ok(s.clone()))?;
+    test_consumed(tail)?;
+
+    let (_, expr) = crate::expr::Expr::new(&code).map_err(|_e| RuntimeError::CastError {
+        from: "string".to_string(),
+        to: "code".to_string(),
+    })?;
+
+    env.eval(&expr)
+}
+
 pub(crate) struct BuiltinFns {
     print_impl: Rc<RefCell<PrintImpl>>,
     read_impl: Rc<RefCell<ReadImpl>>,
@@ -97,6 +112,7 @@ impl Eval for BuiltinFns {
             "👂".to_string(),
             RustFn::stateful("read", read, &self.read_impl).into_val(),
         );
+        env.store_binding("🪞".to_string(), RustFn::new("eval", eval).into_val());
 
         Ok(Val::Unit)
     }

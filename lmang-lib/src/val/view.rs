@@ -102,6 +102,33 @@ impl View for Deque {
 }
 
 #[derive(Default)]
+pub struct String;
+
+impl View for String {
+    type Output = std::string::String;
+
+    fn view<T>(
+        val: &mut Val,
+        mut f: impl FnMut(&mut Self::Output) -> Result<T, RuntimeError>,
+    ) -> Result<T, RuntimeError> {
+        Deque::view(val, move |dq| {
+            let all_chars = dq.iter().all(|v| v.as_char().is_ok());
+            if all_chars {
+                let mut s = dq.iter().map(|v| *v.as_char().unwrap()).collect();
+                f(&mut s)
+            } else {
+                Err(RuntimeError::CastError {
+                    from: Val::Deque(Box::new(VecDeque::new()))
+                        .variant_name()
+                        .to_string(),
+                    to: "string".to_string(),
+                })
+            }
+        })
+    }
+}
+
+#[derive(Default)]
 pub struct AnyRef<V: View>(PhantomData<V>);
 
 impl<V: View> View for AnyRef<V> {
