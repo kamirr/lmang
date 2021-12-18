@@ -395,6 +395,8 @@ impl Val {
     pub fn convert_from_jv(jv: wasm_bindgen::JsValue) -> Self {
         if let Some(b) = jv.as_bool() {
             Val::Bool(b)
+        } else if let Some(f) = jv.as_f64() {
+            Val::Number(f as i32)
         } else if let Some(s) = jv.as_string() {
             let dq = s.chars().map(|c| Val::Char(c)).collect();
             Val::Deque(Box::new(dq))
