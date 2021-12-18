@@ -106,18 +106,17 @@ fn flatten(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, Runtime
                 for v_inner in inner_dq.iter() {
                     flatten_impl(v_inner, dq)
                 }
-            },
-            Err(_) => {
-                dq.push_back(v.clone())
             }
-        }).unwrap()
+            Err(_) => dq.push_back(v.clone()),
+        })
+        .unwrap()
     }
 
     flatten_impl(&args[0], &mut res);
     Ok(Val::Deque(Box::new(res)))
 }
 
-pub(crate) fn make_deque_builtin() -> Box<RustObj<()>> {
+pub(crate) fn make_deque_builtin() -> Box<RustObj> {
     RustObj::boxed(
         "deque",
         vec![
@@ -128,7 +127,6 @@ pub(crate) fn make_deque_builtin() -> Box<RustObj<()>> {
             RustFn::new("remove", remove),
             RustFn::new("flatten", flatten),
         ],
-        None,
     )
 }
 
@@ -290,7 +288,9 @@ mod tests {
             Val::Char('b'),
             Val::Char('a'),
             Val::Char('b'),
-        ].into_iter().collect();
+        ]
+        .into_iter()
+        .collect();
 
         for _ in 0..3 {
             env.eval(&append_ab_e).unwrap();

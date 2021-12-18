@@ -26,13 +26,9 @@ fn get_args(_args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, Runtim
     Ok(Val::Deque(Box::new(res_deque)))
 }
 
-pub(crate) fn make_sys_builtin(args: impl Iterator<Item = String>) -> Box<RustObj<SysState>> {
+pub(crate) fn make_sys_builtin(args: impl Iterator<Item = String>) -> Box<RustObj> {
     let args = args.map(|s| s.chars().map(Val::Char).collect()).collect();
     let state = Rc::new(RefCell::new(SysState { args }));
 
-    RustObj::boxed(
-        "sys",
-        vec![RustFn::stateful("args", get_args, &state)],
-        Some(state),
-    )
+    RustObj::boxed("sys", vec![RustFn::stateful("args", get_args, &state)])
 }

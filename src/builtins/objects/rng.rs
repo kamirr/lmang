@@ -25,7 +25,7 @@ fn seed(vals: &[Val], _: &mut Env, state: FnState) -> Result<Val, RuntimeError> 
     Ok(Val::Unit)
 }
 
-pub(crate) fn make_rng_builtin() -> Box<RustObj<SmallRng>> {
+pub(crate) fn make_rng_builtin() -> Box<RustObj> {
     let state = Rc::new(RefCell::new(SmallRng::seed_from_u64(0)));
 
     RustObj::boxed(
@@ -34,7 +34,6 @@ pub(crate) fn make_rng_builtin() -> Box<RustObj<SmallRng>> {
             RustFn::stateful("next", next, &state),
             RustFn::stateful("seed", seed, &state),
         ],
-        Some(state),
     )
 }
 

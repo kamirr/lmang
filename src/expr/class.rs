@@ -10,7 +10,7 @@ use std::fmt;
 use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Class(pub (crate) Block);
+pub struct Class(pub(crate) Block);
 
 impl Class {
     pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {

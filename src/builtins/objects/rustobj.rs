@@ -1,38 +1,22 @@
 use crate::builtins::rustfn::RustFn;
 use crate::error::RuntimeError;
 use crate::val::{Object, Val};
-use std::cell::RefCell;
 use std::fmt;
-use std::rc::Rc;
 
 #[derive(Clone, Debug)]
-pub struct RustObj<T>
-where
-    T: std::clone::Clone + std::fmt::Debug,
-{
+pub struct RustObj {
     name: String,
     funcs: Vec<RustFn>,
-    state: Option<Rc<RefCell<T>>>,
 }
 
-impl<T> RustObj<T>
-where
-    T: 'static + std::clone::Clone + std::fmt::Debug,
-{
-    pub fn boxed(
-        name: impl Into<String>,
-        funcs: Vec<RustFn>,
-        state: Option<Rc<RefCell<T>>>,
-    ) -> Box<Self> {
+impl RustObj {
+    pub fn boxed(name: impl Into<String>, funcs: Vec<RustFn>) -> Box<Self> {
         let name = name.into();
-        Box::new(RustObj { name, funcs, state })
+        Box::new(RustObj { name, funcs })
     }
 }
 
-impl<T> Object for RustObj<T>
-where
-    T: 'static + std::clone::Clone + std::fmt::Debug,
-{
+impl Object for RustObj {
     fn member_names(&self) -> Vec<String> {
         self.funcs.iter().map(|f| f.name.clone()).collect()
     }

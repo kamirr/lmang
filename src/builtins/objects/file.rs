@@ -60,7 +60,7 @@ fn read(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeErro
     Ok(Val::Deque(Box::new(deque)))
 }
 
-pub(crate) fn make_file_builtin() -> Box<RustObj<FileState>> {
+pub(crate) fn make_file_builtin() -> Box<RustObj> {
     let files = Rc::new(RefCell::new(Default::default()));
     let state = Rc::new(RefCell::new(FileState { files, cnt: 0 }));
 
@@ -70,6 +70,5 @@ pub(crate) fn make_file_builtin() -> Box<RustObj<FileState>> {
             RustFn::stateful("open", open, &state),
             RustFn::stateful("read", read, &state),
         ],
-        Some(state),
     )
 }
