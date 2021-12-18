@@ -4,6 +4,7 @@ use crate::env::Env;
 use crate::error::RuntimeError;
 use crate::val::Val;
 use std::borrow::Borrow;
+use std::collections::VecDeque;
 
 fn len(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
     let len =
@@ -93,6 +94,29 @@ fn remove(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeE
     Ok(result)
 }
 
+fn flatten(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    if args.len() != 1 {
+        return Err(RuntimeError::WrongArgsN);
+    }
+
+    let mut res = VecDeque::new();
+    fn flatten_impl(v: &Val, dq: &mut VecDeque<Val>) {
+        v.apply_to_root(move |v| match v.as_deque() {
+            Ok(inner_dq) => {
+                for v_inner in inner_dq.iter() {
+                    flatten_impl(v_inner, dq)
+                }
+            },
+            Err(_) => {
+                dq.push_back(v.clone())
+            }
+        }).unwrap()
+    }
+
+    flatten_impl(&args[0], &mut res);
+    Ok(Val::Deque(Box::new(res)))
+}
+
 pub(crate) fn make_deque_builtin() -> Box<RustObj<()>> {
     RustObj::boxed(
         "deque",
@@ -102,6 +126,7 @@ pub(crate) fn make_deque_builtin() -> Box<RustObj<()>> {
             RustFn::new("at", at),
             RustFn::new("mut", at_mut),
             RustFn::new("remove", remove),
+            RustFn::new("flatten", flatten),
         ],
         None,
     )
@@ -248,5 +273,31 @@ mod tests {
         let expected_dq_val = Val::Ref(Rc::new(RefCell::new(Val::Deque(Box::new(expected_dq)))));
         let expected = Cow::Borrowed(&expected_dq_val);
         assert_eq!(dq, expected);
+    }
+
+    #[test]
+    fn test_flatten() {
+        let mut env = deque_test_env();
+        let (_, append_ab_e) = Expr::new("📞 d_test🪆append 🔖d 🧵ab🧵").unwrap();
+        let (_, flatten_e) = Expr::new("👶 d = 📞 d_test🪆flatten 🔖d").unwrap();
+        let expected = vec![
+            Val::Number(1),
+            Val::Number(2),
+            Val::Number(3),
+            Val::Char('a'),
+            Val::Char('b'),
+            Val::Char('a'),
+            Val::Char('b'),
+            Val::Char('a'),
+            Val::Char('b'),
+        ].into_iter().collect();
+
+        for _ in 0..3 {
+            env.eval(&append_ab_e).unwrap();
+        }
+        env.eval(&flatten_e).unwrap();
+
+        let val = env.get_binding("d");
+        assert_eq!(val, Ok(Cow::Owned(Val::Deque(Box::new(expected)))));
     }
 }
