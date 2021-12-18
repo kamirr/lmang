@@ -67,7 +67,7 @@ fn read(_args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeErr
     let line = read_impl()?;
     let deque = line
         .strip_suffix('\n')
-        .unwrap()
+        .unwrap_or(&line[..])
         .chars()
         .map(Val::Char)
         .collect();

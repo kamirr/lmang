@@ -1,5 +1,6 @@
 use lmang_lib::{builtins::Builtins, env::Env, expr::Expr, system, val::Val};
 
+#[cfg(feature = "mimalloc")]
 #[global_allocator]
 static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 

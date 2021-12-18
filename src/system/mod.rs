@@ -6,6 +6,9 @@ use std::io::BufRead as _;
 use std::io::Write as _;
 use std::rc::Rc;
 
+#[cfg(feature = "web")]
+mod web;
+
 pub trait System {
     fn args(&self) -> Box<dyn Iterator<Item = String>>;
     fn print(&self) -> Box<dyn FnMut(String) -> Result<(), RuntimeError>>;
@@ -116,3 +119,6 @@ impl System for Test {
         })
     }
 }
+
+#[cfg(feature = "web")]
+pub use web::Web;
