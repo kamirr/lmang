@@ -5,6 +5,19 @@ edition = "2021"
 authors = ["Kamil Koczurek <koczurekk@gmail.com>"]
 license = "MIT"
 
+[dependencies]
+ahash = "0.7"
+mimalloc = { version = "0.1.17", default-features = false, optional = true }
+rand = {version = "0.8", default-features = false, features = ["small_rng"]}
+thiserror = "1"
+
+[features]
+default = ["mimalloc"]
+
+[lib]
+name = "lmang_lib"
+path = "src/lib.rs"
+
 [[bin]]
 name = "lmang-repl"
 path = "src/bin/repl.rs"
@@ -12,16 +25,6 @@ path = "src/bin/repl.rs"
 [[bin]]
 name = "lmang-exec"
 path = "src/bin/exec.rs"
-
-[lib]
-name = "lmang_lib"
-path = "src/lib.rs"
-
-[dependencies]
-ahash = "0.7"
-mimalloc = { version = "0.1.17", default-features = false }
-rand = {version = "0.8", default-features = false, features = ["small_rng"]}
-thiserror = "1"
 
 [profile.release]
 lto = "fat"
