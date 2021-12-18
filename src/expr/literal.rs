@@ -66,10 +66,10 @@ impl Bool {
 }
 
 #[derive(Debug, PartialEq, Clone)]
-pub struct Literal(pub Val);
+pub struct Literal(pub(crate) Val);
 
 impl Literal {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         Number::new(s)
             .map(|(s, number)| (s, Self(Val::Number(number.0))))
             .or_else(|_| Char::new(s).map(|(s, char_lit)| (s, Self(Val::Char(char_lit.0)))))

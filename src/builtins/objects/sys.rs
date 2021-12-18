@@ -8,7 +8,7 @@ use std::collections::VecDeque;
 use std::rc::Rc;
 
 #[derive(Clone, Debug)]
-pub struct SysState {
+pub(crate) struct SysState {
     args: Vec<VecDeque<Val>>,
 }
 
@@ -26,7 +26,7 @@ fn get_args(_args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, Runtim
     Ok(Val::Deque(Box::new(res_deque)))
 }
 
-pub fn make_sys_builtin(args: impl Iterator<Item = String>) -> Box<RustObj<SysState>> {
+pub(crate) fn make_sys_builtin(args: impl Iterator<Item = String>) -> Box<RustObj<SysState>> {
     let args = args.map(|s| s.chars().map(Val::Char).collect()).collect();
     let state = Rc::new(RefCell::new(SysState { args }));
 

@@ -17,12 +17,12 @@ use rng::make_rng_builtin;
 use sys::make_sys_builtin;
 use types::make_types_builtin;
 
-pub struct BuiltinObjects {
+pub(crate) struct BuiltinObjects {
     args: RefCell<Option<Box<dyn Iterator<Item = String>>>>,
 }
 
 impl BuiltinObjects {
-    pub fn new(args: Box<dyn Iterator<Item = String>>) -> Self {
+    pub(crate) fn new(args: Box<dyn Iterator<Item = String>>) -> Self {
         Self {
             args: RefCell::new(Some(Box::new(args))),
         }

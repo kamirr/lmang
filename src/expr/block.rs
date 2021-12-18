@@ -7,18 +7,18 @@ use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Block {
-    pub exprs: Vec<Expr>,
+    pub(crate) exprs: Vec<Expr>,
 }
 
 impl Block {
-    pub fn explicit(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn explicit(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::BLOCK_OPEN, s)?;
 
         Self::strong_implicit(s)
     }
 
-    pub fn implicit(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn implicit(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = match utils::tag(kwords::BLOCK_OPEN, s) {
             Ok(sub) => sub,

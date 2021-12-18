@@ -7,11 +7,11 @@ use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Break {
-    pub body: Block,
+    pub(crate) body: Block,
 }
 
 impl Break {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::BREAK, s)?;
 

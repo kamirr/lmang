@@ -10,10 +10,10 @@ use std::fmt;
 use std::rc::Rc;
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Class(Block);
+pub struct Class(pub (crate) Block);
 
 impl Class {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::CLASS, s)?;
 
@@ -59,7 +59,7 @@ impl Eval for Class {
 }
 
 #[derive(Clone, Debug)]
-pub struct ClassObject {
+pub(crate) struct ClassObject {
     members: HashMap<String, Val, ahash::RandomState>,
 }
 

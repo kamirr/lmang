@@ -7,12 +7,12 @@ use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Named {
-    name: String,
-    expr: Expr,
+    pub(crate) name: String,
+    pub(crate) expr: Expr,
 }
 
 impl Named {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let (s, name) = utils::extract_ident(s)?;
         let s = utils::tag(kwords::NAMED, s)?;

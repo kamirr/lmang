@@ -93,7 +93,7 @@ fn remove(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeE
     Ok(result)
 }
 
-pub fn make_deque_builtin() -> Box<RustObj<()>> {
+pub(crate) fn make_deque_builtin() -> Box<RustObj<()>> {
     RustObj::boxed(
         "deque",
         vec![

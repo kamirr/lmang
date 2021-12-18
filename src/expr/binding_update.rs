@@ -7,13 +7,13 @@ use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BindingUpdate {
-    pub name: String,
-    pub val: Expr,
-    pub set: bool,
+    pub(crate) name: String,
+    pub(crate) val: Expr,
+    pub(crate) set: bool,
 }
 
 impl BindingUpdate {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
 
         let (s, set) = if let Ok(s) = utils::tag(kwords::LET, s) {

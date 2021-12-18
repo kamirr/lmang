@@ -7,12 +7,12 @@ use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Index {
-    root: Expr,
-    idents: Vec<String>,
+    pub(crate) root: Expr,
+    pub(crate) idents: Vec<String>,
 }
 
 impl Index {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
 
         let idx = s.find(kwords::INDEX).ok_or(ParseError::ExpectedIndex)?;

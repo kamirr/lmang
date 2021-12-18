@@ -7,8 +7,8 @@ use std::cell::RefCell;
 use std::fmt::Write as _;
 use std::rc::Rc;
 
-pub type PrintImpl = Box<dyn FnMut(String) -> Result<(), RuntimeError>>;
-pub type ReadImpl = Box<dyn FnMut() -> Result<String, RuntimeError>>;
+pub(crate) type PrintImpl = Box<dyn FnMut(String) -> Result<(), RuntimeError>>;
+pub(crate) type ReadImpl = Box<dyn FnMut() -> Result<String, RuntimeError>>;
 
 fn print(args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
     let mut borrow = state.0.borrow_mut();
@@ -74,13 +74,13 @@ fn read(_args: &[Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeErr
     Ok(Val::Deque(Box::new(deque)))
 }
 
-pub struct BuiltinFns {
+pub(crate) struct BuiltinFns {
     print_impl: Rc<RefCell<PrintImpl>>,
     read_impl: Rc<RefCell<ReadImpl>>,
 }
 
 impl BuiltinFns {
-    pub fn new(print_impl: PrintImpl, read_impl: ReadImpl) -> Self {
+    pub(crate) fn new(print_impl: PrintImpl, read_impl: ReadImpl) -> Self {
         BuiltinFns {
             print_impl: Rc::new(RefCell::new(print_impl)),
             read_impl: Rc::new(RefCell::new(read_impl)),

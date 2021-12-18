@@ -10,6 +10,6 @@ fn to_char(args: &[Val], _env: &mut Env, _state: FnState) -> Result<Val, Runtime
     })?
 }
 
-pub fn make_types_builtin() -> Box<RustObj<()>> {
+pub(crate) fn make_types_builtin() -> Box<RustObj<()>> {
     RustObj::boxed("types", vec![RustFn::new("char", to_char)], None)
 }

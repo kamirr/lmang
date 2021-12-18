@@ -7,12 +7,12 @@ use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Call {
-    pub func: Expr,
-    pub args: Vec<Expr>,
+    pub(crate) func: Expr,
+    pub(crate) args: Vec<Expr>,
 }
 
 impl Call {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::CALL, s)?;
 

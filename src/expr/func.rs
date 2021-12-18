@@ -35,12 +35,12 @@ impl Arg {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Func {
-    pub args: Vec<Arg>,
-    pub body: Block,
+    pub(crate) args: Vec<Arg>,
+    pub(crate) body: Block,
 }
 
 impl Func {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::FUNC, s)?;
 
@@ -83,9 +83,9 @@ impl Eval for Func {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct FuncVal {
-    pub args: Vec<Arg>,
-    pub body: Block,
-    pub parent: Option<HashMap<String, Val, ahash::RandomState>>,
+    pub(crate) args: Vec<Arg>,
+    pub(crate) body: Block,
+    pub(crate) parent: Option<HashMap<String, Val, ahash::RandomState>>,
 }
 
 impl Callee for FuncVal {

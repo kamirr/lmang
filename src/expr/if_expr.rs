@@ -7,14 +7,14 @@ use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct If {
-    pub cond: Expr,
-    pub body: Block,
-    pub elifs: Vec<(Expr, Block)>,
-    pub body_else: Option<Block>,
+    pub(crate) cond: Expr,
+    pub(crate) body: Block,
+    pub(crate) elifs: Vec<(Expr, Block)>,
+    pub(crate) body_else: Option<Block>,
 }
 
 impl If {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(kwords::IF, s)?;
 

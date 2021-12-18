@@ -6,11 +6,11 @@ use std::borrow::Cow;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct BindingUsage {
-    pub name: String,
+    pub(crate) name: String,
 }
 
 impl BindingUsage {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, name) = utils::extract_ident(s)?;
 
         Ok((

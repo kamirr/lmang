@@ -6,11 +6,11 @@ use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Ref {
-    ident: String,
+    pub(crate) ident: String,
 }
 
 impl Ref {
-    pub fn new(s: &str) -> Result<(&str, Self), ParseError> {
+    pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag("🔖", s)?;
 
