@@ -36,7 +36,7 @@ pub(crate) fn make_types_builtin() -> Box<RustObj> {
             RustFn::new("char", to_char),
             RustFn::new("string", to_string),
             #[cfg(feature = "web")]
-            RustFn::new("from_js", jv_to_val),
+            RustFn::new("fromJs", jv_to_val),
         ],
     )
 }
