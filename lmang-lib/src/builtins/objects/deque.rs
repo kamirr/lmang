@@ -2,7 +2,7 @@ use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
 use crate::error::RuntimeError;
-use crate::val::view::{self, foreach, take_n, test_consumed, view1, view2, DequeExt as _};
+use crate::val::view::{self, foreach, take_n, test_consumed, view1, view2, view3, DequeExt as _};
 use crate::val::Val;
 use std::collections::VecDeque;
 
@@ -86,6 +86,20 @@ fn flatten(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Run
     Ok(Val::Deque(Box::new(res)))
 }
 
+fn replace(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (res, tail) =
+        view3::<view::Ref<view::Deque>, view::Bottom, view::Bottom, _, _>(args, |dq, pat, new| {
+            dq.iter_mut()
+                .filter(|v| *v == pat)
+                .for_each(|v| *v = new.clone());
+
+            Ok(Val::Unit)
+        })?;
+    test_consumed(tail)?;
+
+    Ok(res)
+}
+
 pub(crate) fn make_deque_builtin() -> Box<RustObj> {
     RustObj::boxed(
         "deque",
@@ -97,6 +111,7 @@ pub(crate) fn make_deque_builtin() -> Box<RustObj> {
             RustFn::new("mut", at_mut),
             RustFn::new("remove", remove),
             RustFn::new("flatten", flatten),
+            RustFn::new("replace", replace),
         ],
     )
 }
@@ -301,6 +316,26 @@ mod tests {
             dq.push_back(Val::Number(2));
             dq.push_back(Val::Number(3));
             dq.push_back(Val::Number(24));
+
+            dq
+        };
+        let expected_dq_val = Val::Deque(Box::new(expected_dq));
+        let expected_val = Val::Ref(Rc::new(RefCell::new(expected_dq_val)));
+        assert_eq!(env.get_binding("d"), Ok(expected_val));
+    }
+
+    #[test]
+    fn replace() {
+        let mut env = deque_test_env();
+        let (_, replace_e) = Expr::new("📞 d_test🪆replace 🔖d 1 20").unwrap();
+
+        env.eval(&replace_e).unwrap();
+
+        let expected_dq = {
+            let mut dq = VecDeque::new();
+            dq.push_back(Val::Number(20));
+            dq.push_back(Val::Number(2));
+            dq.push_back(Val::Number(3));
 
             dq
         };

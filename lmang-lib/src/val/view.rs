@@ -206,6 +206,21 @@ where
     Ok((res, tail))
 }
 
+pub fn view3<V1, V2, V3, F, T>(vals: &mut [Val], mut f: F) -> Result<(T, &mut [Val]), RuntimeError>
+where
+    V1: View,
+    V2: View,
+    V3: View,
+    F: FnMut(&mut V1::Output, &mut V2::Output, &mut V3::Output) -> Result<T, RuntimeError>,
+{
+    let ([val1, val2, val3], tail) = take_n::<3>(vals)?;
+    let res = V1::view(val1, |v1| {
+        V2::view(val2, |v2| V3::view(val3, |v3| f(v1, v2, v3)))
+    })?;
+
+    Ok((res, tail))
+}
+
 pub fn foreach<ViewIter, ViewInner, F, T>(
     vals: &mut [Val],
     mut f: F,
