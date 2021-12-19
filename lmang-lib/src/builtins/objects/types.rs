@@ -13,6 +13,14 @@ fn to_char(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Run
     Ok(Val::Char(res_char))
 }
 
+fn to_string(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (res, tail) =
+        view1::<view::AnyRef<view::Bottom>, _, _>(args, |v| Ok(format!("{}", v)))?;
+    test_consumed(tail)?;
+
+    Ok(Val::Deque(Box::new(res.chars().map(Val::Char).collect())))
+}
+
 #[cfg(feature = "web")]
 fn jv_to_val(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
     let (val, tail) = view1::<view::Js, _, _>(args, |jv| Ok(Val::convert_from_jv(jv.clone())))?;
@@ -26,6 +34,7 @@ pub(crate) fn make_types_builtin() -> Box<RustObj> {
         "types",
         vec![
             RustFn::new("char", to_char),
+            RustFn::new("string", to_string),
             #[cfg(feature = "web")]
             RustFn::new("from_js", jv_to_val),
         ],
