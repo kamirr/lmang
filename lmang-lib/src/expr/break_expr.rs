@@ -1,6 +1,6 @@
 use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
-use crate::expr::block::Block;
+use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
 use crate::val::Val;
 
@@ -23,6 +23,15 @@ impl Break {
 impl Eval for Break {
     fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
         Ok(Val::Break(Box::new(env.eval(&self.body)?)))
+    }
+}
+
+impl crate::expr::Format for Break {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        writeln!(w, "{}", kwords::BREAK)?;
+        FormatImplicit(&self.body).format(w, depth)?;
+
+        Ok(())
     }
 }
 
@@ -116,5 +125,14 @@ mod tests {
 
         let result = env.eval(&expr);
         assert_eq!(result, Ok(Val::Unit));
+    }
+
+    #[test]
+    fn format() {
+        let (_, break_e) = Break::new("💔📦a/2🧑‍🦲").unwrap();
+        assert_eq!(
+            format!("{}", crate::expr::Display(&break_e)),
+            "💔\n    a / 2\n🧑‍🦲"
+        );
     }
 }

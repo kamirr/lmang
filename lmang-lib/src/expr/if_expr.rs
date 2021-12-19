@@ -1,6 +1,7 @@
 use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
-use crate::expr::{block::Block, Expr};
+use crate::expr::block::{Block, FormatImplicit};
+use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
 
@@ -87,6 +88,29 @@ impl Eval for If {
                 None => Ok(Val::Unit),
             }
         }
+    }
+}
+
+impl crate::expr::Format for If {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        write!(w, "{} ", kwords::IF)?;
+        self.cond.format(w, depth)?;
+        writeln!(w, "")?;
+        FormatImplicit(&self.body).format(w, depth)?;
+
+        for elif in &self.elifs {
+            write!(w, " {} ", kwords::ELIF)?;
+            elif.0.format(w, depth)?;
+            writeln!(w, "")?;
+            FormatImplicit(&elif.1).format(w, depth)?;
+        }
+
+        if let Some(body_else) = &self.body_else {
+            writeln!(w, " {}", kwords::ELSE)?;
+            FormatImplicit(body_else).format(w, depth)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -339,5 +363,13 @@ mod tests {
                 assert_eq!(res, Ok(Val::Number(if_out)));
             }
         }
+    }
+
+    #[test]
+    fn format() {
+        let (_, if_e) = If::new("❓ a > 0 a 🧑‍🦲 😠 a > 0-1 0 🧑‍🦲 😡 0-999 🧑‍🦲").unwrap();
+        let expected = "❓ a > 0\n    a\n🧑‍🦲 😠 a > 0 - 1\n    0\n🧑‍🦲 😡\n    0 - 999\n🧑‍🦲";
+
+        assert_eq!(format!("{}", crate::expr::Display(&if_e)), expected);
     }
 }

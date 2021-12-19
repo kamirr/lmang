@@ -1,6 +1,7 @@
 use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
-use crate::expr::{func::FuncVal, Block};
+use crate::expr::block::{Block, FormatImplicit};
+use crate::expr::func::FuncVal;
 use crate::utils::{self, kwords};
 use crate::val::{DynFunc, DynObject, Object, Val, WeakWrapper};
 use std::cell::RefCell;
@@ -52,6 +53,15 @@ impl Eval for Class {
         }
 
         Ok(Val::Object(DynObject(Box::new(ClassObject { members }))))
+    }
+}
+
+impl crate::expr::Format for Class {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        write!(w, "{}\n", kwords::CLASS)?;
+        FormatImplicit(&self.0).format(w, depth)?;
+
+        Ok(())
     }
 }
 
@@ -213,5 +223,14 @@ mod tests {
         let result = env.eval(&eval_log2_10);
 
         assert_eq!(result, Ok(Val::Number(4)));
+    }
+
+    #[test]
+    fn format() {
+        let (_, class_e) = Class::new("🧑‍🏫👶x=0🧑‍🦲").unwrap();
+        assert_eq!(
+            format!("{}", crate::expr::Display(&class_e)),
+            "🧑‍🏫\n    👶 x = 0\n🧑‍🦲"
+        )
     }
 }

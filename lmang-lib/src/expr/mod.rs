@@ -19,7 +19,7 @@ use crate::utils::{self, kwords};
 use crate::val::Val;
 use binding_update::BindingUpdate;
 use binding_usage::BindingUsage;
-use block::Block;
+use block::{Block, FormatExplicit};
 use break_expr::Break;
 use call::Call;
 use class::Class;
@@ -31,6 +31,24 @@ use loop_expr::Loop;
 use named::Named;
 use ref_expr::Ref;
 use try_expr::Try;
+
+pub trait Format {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result;
+    fn indent(w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        for _ in 0..depth * 4 {
+            write!(w, " ")?;
+        }
+
+        Ok(())
+    }
+}
+
+pub struct Display<'a, T: Format>(pub &'a T);
+impl<'a, T: Format> std::fmt::Display for Display<'a, T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.format(f, 0)
+    }
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Op {
@@ -59,6 +77,31 @@ impl Op {
             .or_else(|_| utils::tag(kwords::LT, s).map(|s| (s, Self::Less)))
             .or_else(|_| utils::tag(kwords::EQ, s).map(|s| (s, Self::Eq)))
             .or_else(|_| utils::tag(kwords::FE, s).map(|s| (s, Self::FuzzyEq)))
+    }
+}
+
+impl crate::expr::Format for Op {
+    fn format(&self, w: &mut dyn std::fmt::Write, _depth: usize) -> std::fmt::Result {
+        use Op::*;
+
+        write!(
+            w,
+            "{}",
+            match self {
+                Add => kwords::ADD,
+                Sub => kwords::SUB,
+                Mul => kwords::MUL,
+                Div => kwords::DIV,
+                GreaterEq => kwords::GE,
+                Greater => kwords::GT,
+                LessEq => kwords::LE,
+                Less => kwords::LT,
+                Eq => kwords::EQ,
+                FuzzyEq => kwords::FE,
+            }
+        )?;
+
+        Ok(())
     }
 }
 
@@ -195,6 +238,36 @@ impl Eval for Expr {
             Ok(Val::Weak(ref wk)) => Ok(Val::Ref(wk.upgrade().ok_or(weak_err)?)),
             other => other,
         }
+    }
+}
+
+impl crate::expr::Format for Expr {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        match self {
+            Self::Operation { lhs, op, rhs } => {
+                lhs.as_ref().format(w, depth)?;
+                write!(w, " ")?;
+                op.format(w, depth)?;
+                write!(w, " ")?;
+                rhs.as_ref().format(w, depth)?;
+            }
+            Self::BindingUpdate(bu) => bu.as_ref().format(w, depth)?,
+            Self::BindingUsage(bu) => bu.format(w, depth)?,
+            Self::Block(block) => FormatExplicit(block).format(w, depth)?,
+            Self::Class(class) => class.as_ref().format(w, depth)?,
+            Self::If(if_e) => if_e.as_ref().format(w, depth)?,
+            Self::Index(index_e) => index_e.as_ref().format(w, depth)?,
+            Self::Break(break_e) => break_e.as_ref().format(w, depth)?,
+            Self::Loop(loop_e) => loop_e.as_ref().format(w, depth)?,
+            Self::Func(func_e) => func_e.as_ref().format(w, depth)?,
+            Self::Call(call_e) => call_e.as_ref().format(w, depth)?,
+            Self::Literal(v) => write!(w, "{}", v.0)?,
+            Self::Ref(ref_expr) => ref_expr.format(w, depth)?,
+            Self::Try(try_expr) => try_expr.as_ref().format(w, depth)?,
+            Self::Named(named_expr) => named_expr.as_ref().format(w, depth)?,
+        };
+
+        Ok(())
     }
 }
 
@@ -392,5 +465,15 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn format() {
+        let input = "📦🔁📞🗣️📞👂🧑‍🦲🧑‍🦲";
+        let expected = "📦\n    🔁\n        📞 🗣️ 📞 👂\n    🧑‍🦲\n🧑‍🦲";
+
+        let (_, expr) = Expr::new(input).unwrap();
+
+        assert_eq!(format!("{}", Display(&expr)), expected);
     }
 }

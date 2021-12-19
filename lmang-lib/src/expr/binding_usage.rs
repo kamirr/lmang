@@ -27,6 +27,14 @@ impl Eval for BindingUsage {
     }
 }
 
+impl crate::expr::Format for BindingUsage {
+    fn format(&self, w: &mut dyn std::fmt::Write, _depth: usize) -> std::fmt::Result {
+        write!(w, "{}", self.name)?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -54,5 +62,12 @@ mod tests {
             }),
             Err(RuntimeError::NoBinding("i_dont_exist".into()))
         );
+    }
+
+    #[test]
+    fn format() {
+        let (_, bu_e) = BindingUsage::new("abc").unwrap();
+
+        assert_eq!(format!("{}", crate::expr::Display(&bu_e)), "abc");
     }
 }

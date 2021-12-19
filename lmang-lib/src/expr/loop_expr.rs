@@ -1,6 +1,6 @@
 use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
-use crate::expr::block::Block;
+use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
 use crate::val::Val;
 
@@ -29,6 +29,15 @@ impl Eval for Loop {
                 _ => continue,
             }
         })
+    }
+}
+
+impl crate::expr::Format for Loop {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        writeln!(w, "{}", kwords::LOOP)?;
+        FormatImplicit(&self.body).format(w, depth)?;
+
+        Ok(())
     }
 }
 
@@ -264,5 +273,14 @@ mod tests {
         let mut env = Env::test();
 
         assert_eq!(env.eval(&loop_e), Err(RuntimeError::Timeout))
+    }
+
+    #[test]
+    fn format() {
+        let (_, loop_e) = Loop::new("🔁📦a/2🧑‍🦲").unwrap();
+        assert_eq!(
+            format!("{}", crate::expr::Display(&loop_e)),
+            "🔁\n    a / 2\n🧑‍🦲"
+        );
     }
 }

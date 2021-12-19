@@ -75,6 +75,17 @@ impl Eval for Index {
     }
 }
 
+impl crate::expr::Format for Index {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        self.root.format(w, depth)?;
+        for ident in &self.idents {
+            write!(w, "{}{}", kwords::INDEX, ident)?;
+        }
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -148,5 +159,11 @@ mod tests {
         let result = env.eval(&call_e);
 
         assert!(matches!(result, Ok(Val::Number(_))))
+    }
+
+    #[test]
+    fn format() {
+        let (_, index_e) = Index::new("a 🪆b").unwrap();
+        assert_eq!(format!("{}", crate::expr::Display(&index_e)), "a🪆b");
     }
 }

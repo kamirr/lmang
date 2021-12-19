@@ -31,6 +31,14 @@ impl Eval for Ref {
     }
 }
 
+impl crate::expr::Format for Ref {
+    fn format(&self, w: &mut dyn std::fmt::Write, _depth: usize) -> std::fmt::Result {
+        write!(w, "🔖{}", self.ident)?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -74,5 +82,13 @@ mod tests {
             var_val.as_val_ref(),
             Ok(&Rc::new(RefCell::new(Val::Number(42))))
         );
+    }
+
+    #[test]
+    fn format() {
+        let (_, ref_e) = Ref::new("🔖  var").unwrap();
+        let d = crate::expr::Display(&ref_e);
+
+        assert_eq!(format!("{}", d), "🔖var");
     }
 }

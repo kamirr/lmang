@@ -34,6 +34,15 @@ impl Eval for Named {
     }
 }
 
+impl crate::expr::Format for Named {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        write!(w, "{}{}", self.name, kwords::NAMED)?;
+        self.expr.format(w, depth)?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -92,5 +101,11 @@ mod tests {
             result,
             Ok(Val::Named(("arg".to_string(), Box::new(Val::Number(9))))),
         );
+    }
+
+    #[test]
+    fn format() {
+        let (_, named_e) = Named::new("arg:3*3").unwrap();
+        assert_eq!(format!("{}", crate::expr::Display(&named_e)), "arg:3 * 3");
     }
 }

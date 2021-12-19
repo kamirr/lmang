@@ -96,6 +96,47 @@ impl Eval for Block {
     }
 }
 
+pub struct FormatImplicit<'a>(pub &'a Block);
+
+impl<'a> crate::expr::Format for FormatImplicit<'a> {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        let (exprs, trailing_sep) = if let Some(e) = self.0.exprs.last() {
+            if e == &Expr::Literal(Literal(Val::Unit)) {
+                (&self.0.exprs[0..self.0.exprs.len() - 1], true)
+            } else {
+                (&self.0.exprs[..], false)
+            }
+        } else {
+            (&self.0.exprs[..], false)
+        };
+
+        for (i, e) in exprs.iter().enumerate() {
+            Self::indent(w, depth + 1)?;
+            e.format(w, depth + 1)?;
+            if i != exprs.len() - 1 || trailing_sep {
+                writeln!(w, " {}", kwords::EXPR_SEP)?;
+            } else {
+                writeln!(w, "")?;
+            }
+        }
+        Self::indent(w, depth)?;
+        write!(w, "{}", kwords::BLOCK_CLOSE)?;
+
+        Ok(())
+    }
+}
+
+pub struct FormatExplicit<'a>(pub &'a Block);
+
+impl<'a> crate::expr::Format for FormatExplicit<'a> {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        writeln!(w, "{}", kwords::BLOCK_OPEN)?;
+        FormatImplicit(self.0).format(w, depth)?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -303,5 +344,49 @@ mod tests {
         let value = env.eval(&block);
 
         assert_eq!(value, Ok(Val::Number(12)));
+    }
+
+    #[test]
+    fn format_implicit() {
+        let (_, block) = Block::implicit("👶a=2*2💪👶b=a*2💪b+a🧑‍🦲").unwrap();
+        let expected = "    👶 a = 2 * 2 💪\n    👶 b = a * 2 💪\n    b + a\n🧑‍🦲";
+
+        assert_eq!(
+            format!("{}", crate::expr::Display(&FormatImplicit(&block))),
+            expected
+        );
+    }
+
+    #[test]
+    fn format_implicit_trailing_sep() {
+        let (_, block) = Block::implicit("👶a=2*2💪👶b=a*2💪b+a💪🧑‍🦲").unwrap();
+        let expected = "    👶 a = 2 * 2 💪\n    👶 b = a * 2 💪\n    b + a 💪\n🧑‍🦲";
+
+        assert_eq!(
+            format!("{}", crate::expr::Display(&FormatImplicit(&block))),
+            expected
+        );
+    }
+
+    #[test]
+    fn format_explicit() {
+        let (_, block) = Block::implicit("👶a=2*2💪👶b=a*2💪b+a🧑‍🦲").unwrap();
+        let expected = "📦\n    👶 a = 2 * 2 💪\n    👶 b = a * 2 💪\n    b + a\n🧑‍🦲";
+
+        assert_eq!(
+            format!("{}", crate::expr::Display(&FormatExplicit(&block))),
+            expected
+        );
+    }
+
+    #[test]
+    fn format_explicit_trailing_sep() {
+        let (_, block) = Block::implicit("👶a=2*2💪👶b=a*2💪b+a💪🧑‍🦲").unwrap();
+        let expected = "📦\n    👶 a = 2 * 2 💪\n    👶 b = a * 2 💪\n    b + a 💪\n🧑‍🦲";
+
+        assert_eq!(
+            format!("{}", crate::expr::Display(&FormatExplicit(&block))),
+            expected
+        );
     }
 }

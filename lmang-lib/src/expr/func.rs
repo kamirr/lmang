@@ -1,6 +1,6 @@
 use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
-use crate::expr::Block;
+use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
 use crate::val::{Callee, DynFunc, Val};
 use std::any::Any;
@@ -29,6 +29,21 @@ impl Arg {
         };
 
         Ok((s, arg))
+    }
+}
+
+impl crate::expr::Format for Arg {
+    fn format(&self, w: &mut dyn std::fmt::Write, _depth: usize) -> std::fmt::Result {
+        let name = match self {
+            Self::Single(s) => s,
+            Self::Variadic(s) => {
+                write!(w, "{}", kwords::VARIADIC)?;
+                s
+            }
+        };
+        write!(w, "{}", name)?;
+
+        Ok(())
     }
 }
 
@@ -77,6 +92,22 @@ impl Eval for Func {
             parent: None,
         };
         Ok(Val::Func(DynFunc(Box::new(funcval))))
+    }
+}
+
+impl crate::expr::Format for Func {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        write!(w, "{} ", kwords::FUNC)?;
+
+        for arg in &self.args {
+            arg.format(w, depth)?;
+            write!(w, " ")?;
+        }
+        writeln!(w, "{}", kwords::FUNC_SEP)?;
+
+        FormatImplicit(&self.body).format(w, depth)?;
+
+        Ok(())
     }
 }
 
@@ -307,6 +338,15 @@ mod tests {
         assert_eq!(
             env.get_binding("b"),
             Err(RuntimeError::NoBinding("b".into()))
+        );
+    }
+
+    #[test]
+    fn format() {
+        let (_, func_e) = Func::new("🧰x👨‍👨‍👦v➡️v🧑‍🦲").unwrap();
+        assert_eq!(
+            format!("{}", crate::expr::Display(&func_e)),
+            "🧰 x 👨‍👨‍👦v ➡️\n    v\n🧑‍🦲"
         );
     }
 }

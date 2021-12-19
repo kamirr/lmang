@@ -55,6 +55,26 @@ impl Eval for Call {
     }
 }
 
+impl crate::expr::Format for Call {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        write!(w, "{} ", kwords::CALL)?;
+        self.func.format(w, depth)?;
+
+        if !self.args.is_empty() {
+            write!(w, " ")?;
+        }
+
+        for (k, e) in self.args.iter().enumerate() {
+            e.format(w, depth)?;
+            if k != self.args.len() - 1 {
+                write!(w, " ")?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -156,5 +176,11 @@ mod tests {
             let result = env.eval(&expr_e);
             assert_eq!(result, Ok(Val::Number(*fib)));
         }
+    }
+
+    #[test]
+    fn format() {
+        let (_, call_e) = Call::new("📞add a    1").unwrap();
+        assert_eq!(format!("{}", crate::expr::Display(&call_e)), "📞 add a 1");
     }
 }

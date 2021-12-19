@@ -88,6 +88,21 @@ fn eval(args: &mut [Val], env: &mut Env, _state: FnState) -> Result<Val, Runtime
     env.eval(&expr)
 }
 
+fn fmt(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (code, tail) = view1::<view::AnyRef<view::String>, _, _>(args, |s| Ok(s.clone()))?;
+    test_consumed(tail)?;
+
+    let (_, expr) = crate::expr::Expr::new(&code).map_err(|_e| RuntimeError::CastError {
+        from: "string".to_string(),
+        to: "code".to_string(),
+    })?;
+
+    let formatted = format!("{}", crate::expr::Display(&expr));
+    let dq = formatted.chars().map(|c| Val::Char(c)).collect();
+
+    Ok(Val::Deque(Box::new(dq)))
+}
+
 pub(crate) struct BuiltinFns {
     print_impl: Rc<RefCell<PrintImpl>>,
     read_impl: Rc<RefCell<ReadImpl>>,
@@ -113,6 +128,7 @@ impl Eval for BuiltinFns {
             RustFn::stateful("read", read, &self.read_impl).into_val(),
         );
         env.store_binding("🪞".to_string(), RustFn::new("eval", eval).into_val());
+        env.store_binding("🔏".to_string(), RustFn::new("fmt", fmt).into_val());
 
         Ok(Val::Unit)
     }

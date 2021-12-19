@@ -1,6 +1,6 @@
 use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError, RuntimeErrorVariants};
-use crate::expr::block::Block;
+use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
 use crate::val::Val;
 use strum::IntoEnumIterator;
@@ -91,6 +91,25 @@ impl Eval for Try {
                 Err(err)
             }
         }
+    }
+}
+
+impl crate::expr::Format for Try {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        writeln!(w, "{}", kwords::TRY)?;
+        FormatImplicit(&self.try_block).format(w, depth)?;
+
+        for (exception, body) in &self.except_blocks {
+            writeln!(w, " {} {}", kwords::EXCEPT, exception)?;
+            FormatImplicit(body).format(w, depth)?;
+        }
+
+        if let Some(body_else) = &self.except_any_block {
+            writeln!(w, " {}", kwords::EXCEPT)?;
+            FormatImplicit(body_else).format(w, depth)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -196,5 +215,13 @@ mod tests {
         let (_, parse) = Try::new("👩‍🚒 x 🧑‍🦲 🤡 NoBinding 12 🧑‍🦲").unwrap();
 
         assert_eq!(env.eval(&parse), Ok(Val::Number(12)));
+    }
+
+    #[test]
+    fn format() {
+        let (_, parse) = Try::new("👩‍🚒 x 🧑‍🦲 🤡 NoBinding 12 🧑‍🦲").unwrap();
+        let expected = "👩‍🚒\n    x\n🧑‍🦲 🤡 NoBinding\n    12\n🧑‍🦲";
+
+        assert_eq!(format!("{}", crate::expr::Display(&parse)), expected);
     }
 }

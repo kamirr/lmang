@@ -76,6 +76,24 @@ impl Eval for BindingUpdate {
     }
 }
 
+impl crate::expr::Format for BindingUpdate {
+    fn format(&self, w: &mut dyn std::fmt::Write, depth: usize) -> std::fmt::Result {
+        write!(
+            w,
+            "{} {} = ",
+            match self.mode {
+                Mode::CreateGlobal => kwords::GLOB,
+                Mode::CreateLocal => kwords::LET,
+                Mode::Set => kwords::SET,
+            },
+            self.name,
+        )?;
+        self.val.format(w, depth)?;
+
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,5 +157,14 @@ mod tests {
         env.eval(&bd).unwrap();
 
         assert_eq!(env.get_binding("🍆💦"), Ok(Val::Number(6)));
+    }
+
+    #[test]
+    fn format() {
+        let (_, bd_e) = BindingUpdate::new("👶 🍆💦 = 420/69").unwrap();
+        assert_eq!(
+            format!("{}", crate::expr::Display(&bd_e)),
+            "👶 🍆💦 = 420 / 69"
+        );
     }
 }
