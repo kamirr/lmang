@@ -99,7 +99,7 @@ impl Eval for Block {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{BindingUpdate, BindingUsage, Op};
+    use crate::expr::{BindingUpdate, binding_update::Mode, BindingUsage, Op};
 
     #[test]
     fn parse_empty_block() {
@@ -211,14 +211,14 @@ mod tests {
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Literal(Literal(Val::Number(10))),
-                    set: false,
+                    mode: Mode::CreateLocal,
                 })),
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "b".to_string(),
                     val: Expr::BindingUsage(BindingUsage {
                         name: "a".to_string(),
                     }),
-                    set: false,
+                    mode: Mode::CreateLocal,
                 })),
                 Expr::BindingUsage(BindingUsage {
                     name: "b".to_string(),

@@ -149,7 +149,7 @@ impl Callee for FuncVal {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{binding_update::BindingUpdate, binding_usage::BindingUsage, Expr, Op};
+    use crate::expr::{BindingUpdate, binding_update::Mode, binding_usage::BindingUsage, Expr, Op};
 
     #[test]
     fn func_parse_id() {
@@ -225,7 +225,7 @@ mod tests {
                             })],
                         },
                     })),
-                    set: false,
+                    mode: Mode::CreateLocal,
                 })),
                 Expr::BindingUsage(BindingUsage {
                     name: "id".to_string(),

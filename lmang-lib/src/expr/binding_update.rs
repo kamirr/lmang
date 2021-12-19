@@ -4,21 +4,30 @@ use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Mode {
+    CreateLocal,
+    CreateGlobal,
+    Set,
+}
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct BindingUpdate {
     pub(crate) name: String,
     pub(crate) val: Expr,
-    pub(crate) set: bool,
+    pub(crate) mode: Mode,
 }
 
 impl BindingUpdate {
     pub(crate) fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
 
-        let (s, set) = if let Ok(s) = utils::tag(kwords::LET, s) {
-            (s, false)
+        let (s, mode) = if let Ok(s) = utils::tag(kwords::LET, s) {
+            (s, Mode::CreateLocal)
+        } else if let Ok(s) = utils::tag(kwords::GLOB, s) {
+            (s, Mode::CreateGlobal)
         } else if let Ok(s) = utils::tag(kwords::SET, s) {
-            (s, true)
+            (s, Mode::Set)
         } else {
             return Err(ParseError::ExpectedBindingUpdate);
         };
@@ -43,7 +52,7 @@ impl BindingUpdate {
             Self {
                 name: name.to_string(),
                 val,
-                set,
+                mode,
             },
         ))
     }
@@ -55,10 +64,10 @@ impl Eval for BindingUpdate {
         match value {
             Val::Break(_) => Ok(value),
             _ => {
-                if self.set {
-                    env.set_binding(&self.name, value)?;
-                } else {
-                    env.store_binding(self.name.clone(), value);
+                match self.mode {
+                    Mode::Set => env.set_binding(&self.name, value)?,
+                    Mode::CreateLocal => env.store_binding(self.name.clone(), value),
+                    Mode::CreateGlobal => env.store_global(self.name.clone(), value),
                 }
 
                 Ok(Val::Unit)
@@ -82,7 +91,7 @@ mod tests {
                 BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Literal(Literal(Val::Number(10))),
-                    set: true,
+                    mode: Mode::Set,
                 },
             )),
         );
@@ -101,7 +110,7 @@ mod tests {
                         rhs: Box::new(Expr::Literal(Literal(Val::Number(2)))),
                         op: Op::Div,
                     },
-                    set: false,
+                    mode: Mode::CreateLocal
                 },
             )),
         );
@@ -116,7 +125,7 @@ mod tests {
                 BindingUpdate {
                     name: "aaa".to_string(),
                     val: Expr::Literal(Literal(Val::Number(1))),
-                    set: false,
+                    mode: Mode::CreateLocal,
                 }
             )),
         );

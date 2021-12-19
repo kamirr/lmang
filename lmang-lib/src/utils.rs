@@ -14,6 +14,7 @@ pub mod kwords {
 
     pub const LET: &str = "👶";
     pub const SET: &str = "♻️";
+    pub const GLOB: &str = "🌍";
     pub const UPDATE_SEP: &str = "=";
 
     pub const TRUE: &str = "🙆‍♀️";
@@ -47,7 +48,7 @@ pub mod kwords {
     pub const NE: &str = "!=";
     pub const FE: &str = "~=";
 
-    pub const ALL: [&str; 34] = [
+    pub const ALL: [&str; 35] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
         EXPR_SEP,
@@ -58,6 +59,7 @@ pub mod kwords {
         LOOP,
         LET,
         SET,
+        GLOB,
         UPDATE_SEP,
         TRUE,
         FALSE,

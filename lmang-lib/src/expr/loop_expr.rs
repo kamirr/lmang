@@ -35,7 +35,7 @@ impl Eval for Loop {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{BindingUpdate, BindingUsage, Break, Expr, If, Literal, Op};
+    use crate::expr::{BindingUpdate, binding_update::Mode, BindingUsage, Break, Expr, If, Literal, Op};
 
     #[test]
     fn parse_loop_empty() {
@@ -108,7 +108,7 @@ mod tests {
                             })),
                             op: Op::Mul,
                         },
-                        set: false,
+                        mode: Mode::CreateLocal,
                     })),
                     Expr::BindingUpdate(Box::new(BindingUpdate {
                         name: "a".to_string(),
@@ -119,7 +119,7 @@ mod tests {
                             rhs: Box::new(Expr::Literal(Literal(Val::Number(1)))),
                             op: Op::Sub,
                         },
-                        set: false,
+                        mode: Mode::CreateLocal,
                     })),
                 ],
             },
@@ -151,12 +151,12 @@ mod tests {
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "fact".to_string(),
                     val: Expr::Literal(Literal(Val::Number(1))),
-                    set: false,
+                    mode: Mode::CreateLocal,
                 })),
                 Expr::BindingUpdate(Box::new(BindingUpdate {
                     name: "a".to_string(),
                     val: Expr::Literal(Literal(Val::Number(5))),
-                    set: false,
+                    mode: Mode::CreateLocal,
                 })),
                 Expr::Loop(Box::new(Loop {
                     body: Block {
@@ -192,7 +192,7 @@ mod tests {
                                     })),
                                     op: Op::Mul,
                                 },
-                                set: true,
+                                mode: Mode::Set,
                             })),
                             Expr::BindingUpdate(Box::new(BindingUpdate {
                                 name: "a".to_string(),
@@ -203,7 +203,7 @@ mod tests {
                                     rhs: Box::new(Expr::Literal(Literal(Val::Number(1)))),
                                     op: Op::Sub,
                                 },
-                                set: true,
+                                mode: Mode::Set,
                             })),
                         ],
                     },

@@ -72,6 +72,11 @@ impl Env {
         };
     }
 
+    pub fn store_global(&mut self, name: String, val: Val) {
+        let mut borrow = self.root.borrow_mut();
+        borrow.insert(name, val);
+    }
+
     pub fn set_binding(&mut self, name: &str, new_val: Val) -> Result<(), RuntimeError> {
         for frame in self.stack.iter_mut().rev() {
             if let Some(val) = frame.get_mut(name) {

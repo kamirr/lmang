@@ -88,7 +88,7 @@ impl Object for ClassObject {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{BindingUpdate, Expr, Literal};
+    use crate::expr::{BindingUpdate, binding_update::Mode, Expr, Literal};
 
     #[test]
     fn parse_class_empty() {
@@ -104,7 +104,7 @@ mod tests {
             exprs: vec![Expr::BindingUpdate(Box::new(BindingUpdate {
                 name: "x".to_string(),
                 val: Expr::Literal(Literal(Val::Number(0))),
-                set: false,
+                mode: Mode::CreateLocal,
             }))],
         });
 
