@@ -18,7 +18,6 @@ web-sys = { version = "*", features = ["console"], optional = true }
 [features]
 web = ["wasm-bindgen", "js-sys", "web-sys"]
 native = ["mimalloc"]
-default = []
 
 [lib]
 name = "lmang_lib"
