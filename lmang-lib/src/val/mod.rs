@@ -407,7 +407,7 @@ impl Val {
         } else if jv.is_object() {
             Val::Object(DynObject(JsObj::boxed_jv("anon", jv)))
         } else {
-            Val::JsValue(jv.clone())
+            Val::JsValue(jv)
         }
     }
 }
