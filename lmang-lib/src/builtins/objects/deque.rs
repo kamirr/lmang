@@ -24,6 +24,16 @@ fn append(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Runt
     Ok(res)
 }
 
+fn concat(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+    let (res, tail) = view2::<view::Ref<view::Deque>, view::AnyRef<view::Deque>, _, _>(args, |dq1, dq2| {
+        dq1.extend(dq2.iter().cloned());
+        Ok(Val::Unit)
+    })?;
+    test_consumed(tail)?;
+
+    Ok(res)
+}
+
 fn at(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
     let (res, tail) = view2::<view::AnyRef<view::Deque>, view::Number, _, _>(args, |dq, idx| {
         Ok(dq.try_get(*idx)?.clone())
@@ -81,6 +91,7 @@ pub(crate) fn make_deque_builtin() -> Box<RustObj> {
         vec![
             RustFn::new("len", len),
             RustFn::new("append", append),
+            RustFn::new("concat", concat),
             RustFn::new("at", at),
             RustFn::new("mut", at_mut),
             RustFn::new("remove", remove),
