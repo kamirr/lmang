@@ -11,6 +11,7 @@ pub mod literal;
 pub mod loop_expr;
 pub mod named;
 pub mod ref_expr;
+pub mod try_expr;
 
 use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
@@ -29,6 +30,7 @@ use literal::Literal;
 use loop_expr::Loop;
 use named::Named;
 use ref_expr::Ref;
+use try_expr::Try;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Op {
@@ -79,6 +81,7 @@ pub enum Expr {
     Func(Box<Func>),
     Call(Box<Call>),
     Ref(Ref),
+    Try(Box<Try>),
     Named(Box<Named>),
 }
 
@@ -99,6 +102,7 @@ impl Expr {
             .or_else(|_| Index::new(s).map(|(s, index_e)| (s, Self::Index(Box::new(index_e)))))
             .or_else(|_| Break::new(s).map(|(s, break_e)| (s, Self::Break(Box::new(break_e)))))
             .or_else(|_| Loop::new(s).map(|(s, loop_e)| (s, Self::Loop(Box::new(loop_e)))))
+            .or_else(|_| Try::new(s).map(|(s, try_e)| (s, Self::Try(Box::new(try_e)))))
             .or_else(|_| Func::new(s).map(|(s, func_e)| (s, Self::Func(Box::new(func_e)))))
             .or_else(|_| Literal::new(s).map(|(s, literal)| (s, Self::Literal(literal))))
             .or_else(|_| BindingUsage::new(s).map(|(s, usage)| (s, Self::BindingUsage(usage))))
@@ -185,6 +189,7 @@ impl Eval for Expr {
             Self::Call(call_e) => env.eval(call_e.as_ref()),
             Self::Literal(val) => Ok(val.0.clone()),
             Self::Ref(ref_expr) => env.eval(ref_expr),
+            Self::Try(try_expr) => env.eval(try_expr.as_ref()),
             Self::Named(named_expr) => env.eval(named_expr.as_ref()),
         };
 

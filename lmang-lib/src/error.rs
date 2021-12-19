@@ -1,4 +1,5 @@
 use crate::utils::kwords;
+use strum::{EnumDiscriminants, EnumIter};
 use thiserror::Error;
 
 #[cfg(feature = "web")]
@@ -14,23 +15,27 @@ pub enum ParseError {
     ExpectedIdent,
     #[error("Expected tag {0}")]
     ExpectedTag(&'static str),
-    #[error("Unexpected end of file")]
-    UnexpectedEof,
     #[error("Expected boolean")]
     ExpectedBool,
-    #[error("Unexpected consequtive equality")]
-    UnexpectedEquals,
     #[error("Expected {} or {}", kwords::LET, kwords::SET)]
     ExpectedBindingUpdate,
     #[error("Expected {}", kwords::INDEX)]
     ExpectedIndex,
     #[error("Expected expression")]
     ExpectedExpr,
+    #[error("Not a valid error variant {0}")]
+    InvalidExceptErrorName(String),
     #[error("Variadic must be the last argument")]
     PrematureVariadic,
+    #[error("Unexpected end of file")]
+    UnexpectedEof,
+    #[error("Unexpected consequtive equality")]
+    UnexpectedEquals,
 }
 
-#[derive(Error, Clone, Debug, PartialEq)]
+#[derive(Error, Clone, Debug, PartialEq, EnumDiscriminants)]
+#[strum_discriminants(derive(EnumIter))]
+#[strum_discriminants(name(RuntimeErrorVariants))]
 pub enum RuntimeError {
     #[error("Binding {0} doesn't exist")]
     NoBinding(String),

@@ -35,6 +35,9 @@ pub mod kwords {
 
     pub const NAMED: &str = ":";
 
+    pub const TRY: &str = "👩‍🚒";
+    pub const EXCEPT: &str = "🤡";
+
     pub const ADD: &str = "+";
     pub const SUB: &str = "-";
     pub const MUL: &str = "*";
@@ -48,7 +51,7 @@ pub mod kwords {
     pub const NE: &str = "!=";
     pub const FE: &str = "~=";
 
-    pub const ALL: [&str; 35] = [
+    pub const ALL: [&str; 37] = [
         BLOCK_OPEN,
         BLOCK_CLOSE,
         EXPR_SEP,
@@ -73,6 +76,8 @@ pub mod kwords {
         REF,
         CLASS,
         NAMED,
+        TRY,
+        EXCEPT,
         ADD,
         SUB,
         MUL,
