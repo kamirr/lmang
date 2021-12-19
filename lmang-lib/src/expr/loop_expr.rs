@@ -35,7 +35,9 @@ impl Eval for Loop {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{BindingUpdate, binding_update::Mode, BindingUsage, Break, Expr, If, Literal, Op};
+    use crate::expr::{
+        binding_update::Mode, BindingUpdate, BindingUsage, Break, Expr, If, Literal, Op,
+    };
 
     #[test]
     fn parse_loop_empty() {

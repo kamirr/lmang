@@ -84,7 +84,7 @@ impl Literal {
 mod tests {
     use super::*;
     use crate::env::Env;
-    use crate::expr::{BindingUpdate, binding_update::Mode, BindingUsage, Block, Call, Expr, Func};
+    use crate::expr::{binding_update::Mode, BindingUpdate, BindingUsage, Block, Call, Expr, Func};
 
     #[test]
     fn parse_number() {

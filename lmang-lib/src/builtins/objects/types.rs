@@ -14,8 +14,7 @@ fn to_char(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Run
 }
 
 fn to_string(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    let (res, tail) =
-        view1::<view::AnyRef<view::Bottom>, _, _>(args, |v| Ok(format!("{}", v)))?;
+    let (res, tail) = view1::<view::AnyRef<view::Bottom>, _, _>(args, |v| Ok(format!("{}", v)))?;
     test_consumed(tail)?;
 
     Ok(Val::Deque(Box::new(res.chars().map(Val::Char).collect())))

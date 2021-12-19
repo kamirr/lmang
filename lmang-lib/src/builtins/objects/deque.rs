@@ -25,10 +25,11 @@ fn append(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Runt
 }
 
 fn concat(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    let (res, tail) = view2::<view::Ref<view::Deque>, view::AnyRef<view::Deque>, _, _>(args, |dq1, dq2| {
-        dq1.extend(dq2.iter().cloned());
-        Ok(Val::Unit)
-    })?;
+    let (res, tail) =
+        view2::<view::Ref<view::Deque>, view::AnyRef<view::Deque>, _, _>(args, |dq1, dq2| {
+            dq1.extend(dq2.iter().cloned());
+            Ok(Val::Unit)
+        })?;
     test_consumed(tail)?;
 
     Ok(res)

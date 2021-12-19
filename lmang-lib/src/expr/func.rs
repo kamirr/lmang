@@ -149,7 +149,7 @@ impl Callee for FuncVal {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{BindingUpdate, binding_update::Mode, binding_usage::BindingUsage, Expr, Op};
+    use crate::expr::{binding_update::Mode, binding_usage::BindingUsage, BindingUpdate, Expr, Op};
 
     #[test]
     fn func_parse_id() {

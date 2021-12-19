@@ -88,7 +88,7 @@ impl Object for ClassObject {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{BindingUpdate, binding_update::Mode, Expr, Literal};
+    use crate::expr::{binding_update::Mode, BindingUpdate, Expr, Literal};
 
     #[test]
     fn parse_class_empty() {

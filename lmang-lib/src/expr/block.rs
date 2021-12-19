@@ -99,7 +99,7 @@ impl Eval for Block {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::expr::{BindingUpdate, binding_update::Mode, BindingUsage, Op};
+    use crate::expr::{binding_update::Mode, BindingUpdate, BindingUsage, Op};
 
     #[test]
     fn parse_empty_block() {

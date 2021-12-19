@@ -29,7 +29,7 @@ impl Try {
                 new_s
             } else {
                 s = new_s;
-                break
+                break;
             };
 
             let (new_s, _) = utils::extract_whitespace(new_s);
@@ -39,7 +39,7 @@ impl Try {
                     let (new_s, except_block) = Block::implicit(new_s)?;
                     except_any_block = Some(except_block);
                     s = new_s;
-                    break
+                    break;
                 }
             };
 
@@ -49,7 +49,7 @@ impl Try {
                         return true;
                     }
                 }
-                
+
                 false
             })();
             if !ok {
@@ -63,7 +63,11 @@ impl Try {
             except_blocks.push((error_type.into(), except_block));
         }
 
-        let try_e = Try { try_block: body, except_blocks, except_any_block };
+        let try_e = Try {
+            try_block: body,
+            except_blocks,
+            except_any_block,
+        };
 
         Ok((s, try_e))
     }
@@ -85,7 +89,7 @@ impl Eval for Try {
                 }
 
                 Err(err)
-            },
+            }
         }
     }
 }
@@ -173,14 +177,15 @@ mod tests {
     #[test]
     fn reject_default_in_middle() {
         let parse = Try::new("👩‍🚒 🧑‍🦲 🤡 NoKey 🧑‍🦲 🤡 🧑‍🦲 🤡 CastError 🧑‍🦲");
-        
+
         assert!(!matches!(parse, Err(_)));
     }
 
     #[test]
     fn test_ok() {
         let mut env = Env::test();
-        let (_, parse) = Try::new("👩‍🚒 10 🧑‍🦲 🤡 WrongArgsN 🧑‍🦲 🤡 IoError 🧑‍🦲 🤡 🧑‍🦲").unwrap();
+        let (_, parse) =
+            Try::new("👩‍🚒 10 🧑‍🦲 🤡 WrongArgsN 🧑‍🦲 🤡 IoError 🧑‍🦲 🤡 🧑‍🦲").unwrap();
 
         assert_eq!(env.eval(&parse), Ok(Val::Number(10)));
     }
