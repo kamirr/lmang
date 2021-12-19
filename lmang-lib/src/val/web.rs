@@ -41,6 +41,7 @@ fn val_to_jv(val: &Val, env: &Env) -> JsValue {
             let cl = wasm_bindgen::closure::Closure::wrap(cl);
             cl.into_js_value()
         }
+        Val::JsValue(jv) => jv.clone(),
         _ => JsValue::UNDEFINED,
     }
 }
