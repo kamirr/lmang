@@ -77,7 +77,7 @@ fn read(_args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Runtim
 }
 
 fn eval(args: &mut [Val], env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
-    let (code, tail) = view1::<view::String, _, _>(args, |s| Ok(s.clone()))?;
+    let (code, tail) = view1::<view::AnyRef<view::String>, _, _>(args, |s| Ok(s.clone()))?;
     test_consumed(tail)?;
 
     let (_, expr) = crate::expr::Expr::new(&code).map_err(|_e| RuntimeError::CastError {
