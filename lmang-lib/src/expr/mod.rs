@@ -119,10 +119,7 @@ impl Expr {
                 break;
             }
 
-            let c = s
-                .chars()
-                .nth(op_c_idx)
-                .ok_or_else(|| ParseError::UnexpectedEof)?;
+            let c = s.chars().nth(op_c_idx).ok_or(ParseError::UnexpectedEof)?;
 
             op_b_idx += c.len_utf8();
             op_c_idx += 1;
@@ -167,7 +164,7 @@ impl Eval for Expr {
                     Op::Div => (&lhs / &rhs)?,
                     Op::Greater => lhs.try_gt(&rhs)?,
                     Op::GreaterEq => lhs.try_ge(&rhs)?,
-                    Op::Eq => Val::Bool(&lhs == &rhs),
+                    Op::Eq => Val::Bool(lhs == rhs),
                     Op::FuzzyEq => {
                         let b = lhs.apply_to_root(|v1| rhs.apply_to_root(|v2| v1 == v2))??;
 

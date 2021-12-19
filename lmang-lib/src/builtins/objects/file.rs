@@ -51,7 +51,7 @@ fn read(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Runtime
     let fstate: &mut FileState = borrow.downcast_mut::<FileState>().unwrap();
 
     let files = fstate.files.borrow_mut();
-    let mut file = files.get(&id).ok_or_else(|| RuntimeError::NoHandle(id))?;
+    let mut file = files.get(&id).ok_or(RuntimeError::NoHandle(id))?;
 
     let mut buf = String::new();
     file.read_to_string(&mut buf)

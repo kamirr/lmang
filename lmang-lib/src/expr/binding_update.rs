@@ -59,7 +59,7 @@ impl BindingUpdate {
 }
 
 impl Eval for BindingUpdate {
-    fn eval<'a, 'b>(&'a self, env: &'b mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
         let value = env.eval(&self.val)?;
         match value {
             Val::Break(_) => Ok(value),

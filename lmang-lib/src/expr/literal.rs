@@ -21,7 +21,7 @@ impl Char {
     fn new(s: &str) -> Result<(&str, Self), ParseError> {
         let (s, _) = utils::extract_whitespace(s);
         let s = utils::tag(utils::kwords::CHAR_LIT, s)?;
-        let c = s.chars().next().ok_or_else(|| ParseError::UnexpectedEof)?;
+        let c = s.chars().next().ok_or(ParseError::UnexpectedEof)?;
         let s = &s[c.len_utf8()..];
         let s = utils::tag(utils::kwords::CHAR_LIT, s)?;
 

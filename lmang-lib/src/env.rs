@@ -44,7 +44,7 @@ impl Env {
             last_popped: None,
             root: self.root.clone(),
             stack: Vec::new(),
-            timeout: self.timeout.clone(),
+            timeout: self.timeout,
         }
     }
 
@@ -102,7 +102,7 @@ impl Env {
         Err(RuntimeError::NoBinding(name.into()))
     }
 
-    pub fn get_binding<'a, 'b>(&'a self, name: &'b str) -> Result<Val, RuntimeError> {
+    pub fn get_binding(&self, name: &str) -> Result<Val, RuntimeError> {
         for frame in self.stack.iter().rev() {
             if let Some(val) = frame.get(name) {
                 return Ok(val.clone());
@@ -117,7 +117,7 @@ impl Env {
         Err(RuntimeError::NoBinding(name.into()))
     }
 
-    pub fn take_ref<'a, 'b>(&'a mut self, name: &'b str) -> Result<Val, RuntimeError> {
+    pub fn take_ref(&mut self, name: &str) -> Result<Val, RuntimeError> {
         for frame in self.stack.iter_mut().rev() {
             if let Some(val) = frame.get_mut(name) {
                 let val_ref = val.make_ref();
@@ -138,7 +138,7 @@ impl Env {
         self.timeout = Some(Instant::now() + dur);
     }
 
-    pub fn eval<'a, 'b>(&'a mut self, expr: &'b impl Eval) -> Result<Val, RuntimeError> {
+    pub fn eval(&mut self, expr: &impl Eval) -> Result<Val, RuntimeError> {
         if self.timeout.map(|t| Instant::now() > t).unwrap_or(false) {
             Err(RuntimeError::Timeout)
         } else {

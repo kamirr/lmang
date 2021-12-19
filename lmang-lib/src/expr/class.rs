@@ -43,7 +43,7 @@ impl Eval for Class {
                         let mut subenv = frozen.clone();
                         let self_val = subenv.remove(key).unwrap();
                         let self_rc = self_val.as_val_ref()?;
-                        let weak_val = Val::Weak(WeakWrapper(Rc::downgrade(&self_rc)));
+                        let weak_val = Val::Weak(WeakWrapper(Rc::downgrade(self_rc)));
                         subenv.insert(key.clone(), weak_val);
                         func_val.parent = Some(subenv);
                     }
