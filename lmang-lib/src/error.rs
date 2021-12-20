@@ -1,11 +1,13 @@
 use crate::utils::kwords;
-use strum::{EnumDiscriminants, EnumIter};
+use crate::val::{Object, Val};
+use std::fmt;
+use strum::AsRefStr;
 use thiserror::Error;
 
 #[cfg(feature = "web")]
 use wasm_bindgen::JsValue;
 
-#[derive(Error, Clone, Debug, PartialEq)]
+#[derive(Error, Clone, Debug, PartialEq, AsRefStr)]
 pub enum ParseError {
     #[error("Expected digits")]
     ExpectedDigits,
@@ -23,8 +25,6 @@ pub enum ParseError {
     ExpectedIndex,
     #[error("Expected expression")]
     ExpectedExpr,
-    #[error("Not a valid error variant {0}")]
-    InvalidExceptErrorName(String),
     #[error("Variadic must be the last argument")]
     PrematureVariadic,
     #[error("Unexpected end of file")]
@@ -33,9 +33,52 @@ pub enum ParseError {
     UnexpectedEquals,
 }
 
-#[derive(Error, Clone, Debug, PartialEq, EnumDiscriminants)]
-#[strum_discriminants(derive(EnumIter))]
-#[strum_discriminants(name(RuntimeErrorVariants))]
+impl Object for ParseError {
+    fn member_names(&self) -> Vec<String> {
+        ["type"]
+            .into_iter()
+            .chain({
+                use ParseError::*;
+                match self {
+                    ExpectedTag(_) => vec!["expectedTag"],
+                    _ => vec![],
+                }
+                .into_iter()
+            })
+            .map(|s| s.to_string())
+            .collect()
+    }
+
+    fn member(&self, name: &str) -> Result<Val, RuntimeError> {
+        if name == "type" {
+            Ok(Val::from_str(self.as_ref()))
+        } else {
+            use ParseError::*;
+            match (name, self) {
+                ("expectedTag", ExpectedTag(s)) => Ok(Val::from_str(s)),
+                _ => Err(RuntimeError::NoKey(name.into())),
+            }
+        }
+    }
+
+    fn clone_box(&self) -> Box<dyn Object> {
+        Box::new(self.clone())
+    }
+
+    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#?}", self)
+        } else {
+            write!(f, "{:?}", self)
+        }
+    }
+
+    fn name(&self) -> &str {
+        "ParseError"
+    }
+}
+
+#[derive(Error, Clone, Debug, PartialEq, AsRefStr)]
 pub enum RuntimeError {
     #[error("Binding {0} doesn't exist")]
     NoBinding(String),
@@ -66,6 +109,72 @@ pub enum RuntimeError {
     JsError(JsValue),
 }
 
+impl Object for RuntimeError {
+    fn member_names(&self) -> Vec<String> {
+        ["type"]
+            .into_iter()
+            .chain({
+                use RuntimeError::*;
+                match self {
+                    NoBinding(_) => vec!["binding"],
+                    OutOfBounds { .. } => vec!["idx", "len"],
+                    CastError { .. } => vec!["from", "to"],
+                    InvalidOp { .. } => vec!["lhs", "op", "rhs"],
+                    IoError { .. } => vec!["file", "reason"],
+                    NoHandle(_) => vec!["handle"],
+                    NoKey(_) => vec!["key"],
+                    #[cfg(feature = "web")]
+                    JsError(_) => vec!["jsError"],
+                    _ => vec![],
+                }
+                .into_iter()
+            })
+            .map(|s| s.to_string())
+            .collect()
+    }
+
+    fn member(&self, name: &str) -> Result<Val, RuntimeError> {
+        if name == "type" {
+            Ok(Val::from_str(self.as_ref()))
+        } else {
+            use RuntimeError::*;
+            match (name, self) {
+                ("binding", NoBinding(s)) => Ok(Val::from_str(&*s)),
+                ("idx", OutOfBounds { idx, .. }) => Ok(Val::Number(*idx)),
+                ("len", OutOfBounds { len, .. }) => Ok(Val::Number(*len as i32)),
+                ("from", CastError { from, .. }) => Ok(Val::from_str(&*from)),
+                ("to", CastError { to, .. }) => Ok(Val::from_str(&*to)),
+                ("lhs", InvalidOp { lhs, .. }) => Ok(Val::from_str(&*lhs)),
+                ("op", InvalidOp { op, .. }) => Ok(Val::from_str(&*op)),
+                ("rhs", InvalidOp { rhs, .. }) => Ok(Val::from_str(&*rhs)),
+                ("file", IoError { file, .. }) => Ok(Val::from_str(&*file)),
+                ("reason", IoError { reason, .. }) => Ok(Val::from_str(&*reason)),
+                ("handle", NoHandle(handle)) => Ok(Val::Number(*handle)),
+                ("key", NoKey(key)) => Ok(Val::from_str(&*key)),
+                #[cfg(feature = "web")]
+                ("jsError", JsError(jv)) => Ok(Val::JsValue(jv.clone())),
+                _ => Err(RuntimeError::NoKey(name.into())),
+            }
+        }
+    }
+
+    fn clone_box(&self) -> Box<dyn Object> {
+        Box::new(self.clone())
+    }
+
+    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#?}", self)
+        } else {
+            write!(f, "{:?}", self)
+        }
+    }
+
+    fn name(&self) -> &str {
+        "RuntimeError"
+    }
+}
+
 impl<'a> From<&'a RuntimeError> for RuntimeError {
     fn from(re: &'a RuntimeError) -> Self {
         re.clone()
@@ -91,6 +200,45 @@ pub enum Error {
     Parse(ParseError),
     #[error("Runtime error: {0}")]
     Runtime(RuntimeError),
+}
+
+impl Object for Error {
+    fn member_names(&self) -> Vec<String> {
+        match self {
+            Error::Parse(pe) => pe.member_names(),
+            Error::Runtime(re) => re.member_names(),
+        }
+    }
+
+    fn member(&self, name: &str) -> Result<Val, RuntimeError> {
+        if name == "type" {
+            match self {
+                Error::Parse(_) => Ok(Val::from_str("Parse")),
+                Error::Runtime(_) => Ok(Val::from_str("Runtime")),
+            }
+        } else {
+            match self {
+                Error::Parse(pe) => pe.member(name),
+                Error::Runtime(re) => re.member(name),
+            }
+        }
+    }
+
+    fn clone_box(&self) -> Box<dyn Object> {
+        Box::new(self.clone())
+    }
+
+    fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if f.alternate() {
+            write!(f, "{:#?}", self)
+        } else {
+            write!(f, "{:?}", self)
+        }
+    }
+
+    fn name(&self) -> &str {
+        "Error"
+    }
 }
 
 impl From<ParseError> for Error {

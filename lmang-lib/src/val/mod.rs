@@ -410,6 +410,10 @@ impl Val {
             Val::JsValue(jv)
         }
     }
+
+    pub fn from_str(s: &str) -> Self {
+        Self::Deque(Box::new(s.chars().map(|c| Self::Char(c)).collect()))
+    }
 }
 
 impl<'a, 'b> Add<&'b Val> for &'a Val {

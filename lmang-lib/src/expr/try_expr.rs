@@ -1,9 +1,8 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError, RuntimeErrorVariants};
+use crate::error::{ParseError, RuntimeError};
 use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
-use crate::val::Val;
-use strum::IntoEnumIterator;
+use crate::val::{Object, Val};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Try {
@@ -43,19 +42,6 @@ impl Try {
                 }
             };
 
-            let ok = (|| {
-                for e in RuntimeErrorVariants::iter() {
-                    if error_type == format!("{:?}", e) {
-                        return true;
-                    }
-                }
-
-                false
-            })();
-            if !ok {
-                return Err(ParseError::InvalidExceptErrorName(error_type.into()));
-            }
-
             let (new_s, except_block) = Block::implicit(new_s)?;
 
             s = new_s;
@@ -79,8 +65,7 @@ impl Eval for Try {
             Ok(val) => Ok(val),
             Err(err) => {
                 for excepts in self.except_blocks.iter() {
-                    let discriminant = format!("{:?}", RuntimeErrorVariants::from(err.clone()));
-                    if excepts.0 == discriminant {
+                    if excepts.0 == err.member("type")?.to_string() {
                         return env.eval(&excepts.1);
                     }
                 }
@@ -183,14 +168,6 @@ mod tests {
         };
 
         assert_eq!(parse, Ok(("", expected)));
-    }
-
-    #[test]
-    fn reject_invalid_idents() {
-        let parse = Try::new("👩‍🚒 🧑‍🦲 🤡 sigmagrind 🧑‍🦲");
-        let expected = ParseError::InvalidExceptErrorName("sigmagrind".into());
-
-        assert_eq!(parse, Err(expected));
     }
 
     #[test]
