@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -21,7 +21,7 @@ impl Break {
 }
 
 impl Eval for Break {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         Ok(Val::Break(Box::new(env.eval(&self.body)?)))
     }
 }

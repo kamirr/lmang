@@ -16,7 +16,7 @@ pub struct FileState {
     cnt: i32,
 }
 
-fn open(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn open(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Val> {
     let (fname, tail) = view1::<view::AnyRef<view::Deque>, _, _>(args, |dq| {
         let string = dq
             .iter()
@@ -43,7 +43,7 @@ fn open(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Runtime
     Ok(Val::Number(id))
 }
 
-fn read(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn read(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Val> {
     let (id, tail) = view1::<view::Number, _, _>(args, |n| Ok(*n))?;
     test_consumed(tail)?;
 

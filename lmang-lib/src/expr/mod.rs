@@ -194,7 +194,7 @@ impl Expr {
 }
 
 impl Eval for Expr {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         let result = match self {
             Self::Operation { lhs, rhs, op } => {
                 let lhs = env.eval(lhs.as_ref())?;

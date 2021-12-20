@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -59,7 +59,7 @@ impl BindingUpdate {
 }
 
 impl Eval for BindingUpdate {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         let value = env.eval(&self.val)?;
         match value {
             Val::Break(_) => Ok(value),

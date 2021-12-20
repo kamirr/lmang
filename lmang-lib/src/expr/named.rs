@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -28,7 +28,7 @@ impl Named {
 }
 
 impl Eval for Named {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         let val = Val::Named((self.name.clone(), Box::new(self.expr.eval(env)?)));
         Ok(val)
     }

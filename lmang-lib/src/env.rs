@@ -138,9 +138,9 @@ impl Env {
         self.timeout = Some(Instant::now() + dur);
     }
 
-    pub fn eval(&mut self, expr: &impl Eval) -> Result<Val, RuntimeError> {
+    pub fn eval(&mut self, expr: &impl Eval) -> Result<Val, Val> {
         if self.timeout.map(|t| Instant::now() > t).unwrap_or(false) {
-            Err(RuntimeError::Timeout)
+            Err(RuntimeError::Timeout.into())
         } else {
             expr.eval(self)
         }
@@ -148,7 +148,7 @@ impl Env {
 }
 
 pub trait Eval {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError>;
+    fn eval(&self, env: &mut Env) -> Result<Val, Val>;
 }
 
 #[cfg(test)]
@@ -296,6 +296,6 @@ mod tests {
         let (_, unit_e) = crate::expr::Expr::new("📦🧑‍🦲").unwrap();
         let res = env.eval(&unit_e);
 
-        assert_eq!(res, Err(RuntimeError::Timeout));
+        assert_eq!(res, Err(RuntimeError::Timeout.into()));
     }
 }

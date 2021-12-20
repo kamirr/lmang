@@ -85,7 +85,7 @@ impl Func {
 }
 
 impl Eval for Func {
-    fn eval(&self, _env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, _env: &mut Env) -> Result<Val, Val> {
         let funcval = FuncVal {
             args: self.args.clone(),
             body: self.body.clone(),
@@ -119,7 +119,7 @@ pub struct FuncVal {
 }
 
 impl Callee for FuncVal {
-    fn call(&self, args: &mut [Val], env: &mut Env) -> Result<Val, RuntimeError> {
+    fn call(&self, args: &mut [Val], env: &mut Env) -> Result<Val, Val> {
         env.push();
 
         let mut idx = 0;
@@ -151,7 +151,7 @@ impl Callee for FuncVal {
         let result = if idx == args.len() {
             env.eval(&self.body)
         } else {
-            Err(RuntimeError::WrongArgsN)
+            Err(RuntimeError::WrongArgsN.into())
         };
 
         env.pop();

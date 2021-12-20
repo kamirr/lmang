@@ -71,14 +71,20 @@ impl fmt::Debug for JsFunc {
 }
 
 impl Callee for JsFunc {
-    fn call(&self, args: &mut [Val], env: &mut Env) -> Result<Val, RuntimeError> {
+    fn call(&self, args: &mut [Val], env: &mut Env) -> Result<Val, Val> {
         let arr = js_sys::Array::new();
 
         for arg in args {
             arr.push(&val_to_jv(arg, env));
         }
 
-        let jv = self.val.apply(&js_sys::eval("globalThis")?, &arr)?;
+        let jv = self
+            .val
+            .apply(
+                &js_sys::eval("globalThis").map_err(|jv| RuntimeError::JsError(jv))?,
+                &arr,
+            )
+            .map_err(|jv| RuntimeError::JsError(jv))?;
 
         Ok(if jv.is_function() {
             Val::convert_from_jv(jv)

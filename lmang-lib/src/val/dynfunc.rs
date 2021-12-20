@@ -1,10 +1,9 @@
-use crate::error::RuntimeError;
 use crate::val::Val;
 use std::any::Any;
 use std::fmt;
 
 pub trait Callee {
-    fn call(&self, args: &mut [Val], env: &mut crate::env::Env) -> Result<Val, RuntimeError>;
+    fn call(&self, args: &mut [Val], env: &mut crate::env::Env) -> Result<Val, Val>;
     fn clone_box(&self) -> Box<dyn Callee>;
     fn dyn_debug(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
     fn dyn_display(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result;
@@ -45,7 +44,7 @@ pub fn placeholder_func() -> DynFunc {
     struct ImplDetail;
 
     impl Callee for ImplDetail {
-        fn call(&self, _args: &mut [Val], _env: &mut crate::env::Env) -> Result<Val, RuntimeError> {
+        fn call(&self, _args: &mut [Val], _env: &mut crate::env::Env) -> Result<Val, Val> {
             unreachable!()
         }
         fn clone_box(&self) -> Box<dyn Callee> {

@@ -252,3 +252,21 @@ impl From<RuntimeError> for Error {
         Self::Runtime(err)
     }
 }
+
+impl From<Error> for Val {
+    fn from(e: Error) -> Val {
+        Val::from_obj(e)
+    }
+}
+
+impl From<ParseError> for Val {
+    fn from(e: ParseError) -> Val {
+        Val::from_obj(e)
+    }
+}
+
+impl From<RuntimeError> for Val {
+    fn from(e: RuntimeError) -> Val {
+        Val::from_obj(e)
+    }
+}

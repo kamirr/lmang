@@ -3,7 +3,6 @@ mod objects;
 mod rustfn;
 
 use crate::env::{Env, Eval};
-use crate::error::RuntimeError;
 use crate::system::System;
 use crate::val::Val;
 use rustfn::{FnState, RustFn};
@@ -19,7 +18,7 @@ impl<S: System> Builtins<S> {
 }
 
 impl<S: System> Eval for Builtins<S> {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         env.eval(&fns::BuiltinFns::new(
             self.system.print(),
             self.system.read(),

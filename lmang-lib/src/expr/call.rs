@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -32,20 +32,20 @@ impl Call {
 }
 
 impl Eval for Call {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         let args: Result<Vec<Val>, _> = self.args.iter().map(|arg| env.eval(arg)).collect();
         let mut args = args?;
 
         let func_owned = env.eval(&self.func)?;
-        func_owned.apply_to_root(|val| -> Result<_, RuntimeError> {
+        func_owned.apply_to_root(|val| -> Result<_, Val> {
             #[cfg(feature = "web")]
             if let Val::JsValue(ref jv) = val {
-                Val::convert_from_jv(jv.clone())
+                Ok(Val::convert_from_jv(jv.clone())
                     .as_func()?
                     .0
-                    .call(args.as_mut_slice(), env)
+                    .call(args.as_mut_slice(), env)?)
             } else {
-                val.as_func()?.0.call(args.as_mut_slice(), env)
+                Ok(val.as_func()?.0.call(args.as_mut_slice(), env)?)
             }
             #[cfg(not(feature = "web"))]
             {

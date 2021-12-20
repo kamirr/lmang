@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::utils;
 use crate::val::Val;
 
@@ -22,8 +22,8 @@ impl BindingUsage {
 }
 
 impl Eval for BindingUsage {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
-        env.get_binding(&self.name)
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
+        Ok(env.get_binding(&self.name)?)
     }
 }
 
@@ -38,6 +38,7 @@ impl crate::expr::Format for BindingUsage {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::RuntimeError;
 
     #[test]
     fn parse_binding_usage() {
@@ -60,7 +61,7 @@ mod tests {
             empty_env.eval(&BindingUsage {
                 name: "i_dont_exist".to_string(),
             }),
-            Err(RuntimeError::NoBinding("i_dont_exist".into()))
+            Err(RuntimeError::NoBinding("i_dont_exist".into()).into())
         );
     }
 

@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::expr::{Expr, Literal};
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -66,7 +66,7 @@ impl Block {
     }
 }
 impl Eval for Block {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         let len = self.exprs.len();
 
         if len == 0 {

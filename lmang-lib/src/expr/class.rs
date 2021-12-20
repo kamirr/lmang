@@ -24,7 +24,7 @@ impl Class {
 }
 
 impl Eval for Class {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         env.eval(&self.0)?;
 
         let mut members = env.take_last_popped().unwrap();

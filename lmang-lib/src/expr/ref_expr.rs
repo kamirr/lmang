@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::utils;
 use crate::val::Val;
 
@@ -26,8 +26,8 @@ impl Ref {
 }
 
 impl Eval for Ref {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
-        env.take_ref(&self.ident)
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
+        Ok(env.take_ref(&self.ident)?)
     }
 }
 

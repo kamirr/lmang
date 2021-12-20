@@ -12,7 +12,7 @@ use std::rc::Rc;
 pub(crate) type PrintImpl = Box<dyn FnMut(String) -> Result<(), RuntimeError>>;
 pub(crate) type ReadImpl = Box<dyn FnMut() -> Result<String, RuntimeError>>;
 
-fn print(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn print(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Val> {
     let mut borrow = state.0.borrow_mut();
     let print_impl: &mut PrintImpl = borrow.downcast_mut().unwrap();
 
@@ -62,7 +62,7 @@ fn print(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Runtim
     Ok(Val::Unit)
 }
 
-fn read(_args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, RuntimeError> {
+fn read(_args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Val> {
     let mut borrow = state.0.borrow_mut();
     let read_impl: &mut ReadImpl = borrow.downcast_mut().unwrap();
 
@@ -76,7 +76,7 @@ fn read(_args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Runtim
     Ok(Val::Deque(Box::new(deque)))
 }
 
-fn eval(args: &mut [Val], env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn eval(args: &mut [Val], env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (code, tail) = view1::<view::AnyRef<view::String>, _, _>(args, |s| Ok(s.clone()))?;
     test_consumed(tail)?;
 
@@ -88,7 +88,7 @@ fn eval(args: &mut [Val], env: &mut Env, _state: FnState) -> Result<Val, Runtime
     env.eval(&expr)
 }
 
-fn fmt(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn fmt(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (code, tail) = view1::<view::AnyRef<view::String>, _, _>(args, |s| Ok(s.clone()))?;
     test_consumed(tail)?;
 
@@ -117,7 +117,7 @@ impl BuiltinFns {
 }
 
 impl Eval for BuiltinFns {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         env.store_binding(
             "🗣️".to_string(),
             RustFn::stateful("print", print, &self.print_impl).into_val(),

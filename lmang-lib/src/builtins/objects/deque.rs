@@ -1,12 +1,11 @@
 use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
-use crate::error::RuntimeError;
 use crate::val::view::{self, foreach, take_n, test_consumed, view1, view2, view3, DequeExt as _};
 use crate::val::Val;
 use std::collections::VecDeque;
 
-fn len(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn len(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (val, tail) =
         view1::<view::AnyRef<view::Deque>, _, _>(args, |dq| Ok(Val::Number(dq.len() as i32)))?;
     test_consumed(tail)?;
@@ -14,7 +13,7 @@ fn len(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Runtime
     Ok(val)
 }
 
-fn append(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn append(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (res, tail) = view2::<view::Ref<view::Deque>, view::Bottom, _, _>(args, |dq, new_val| {
         dq.push_back(new_val.clone());
         Ok(Val::Unit)
@@ -24,7 +23,7 @@ fn append(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Runt
     Ok(res)
 }
 
-fn concat(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn concat(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (res, tail) =
         view2::<view::Ref<view::Deque>, view::AnyRef<view::Deque>, _, _>(args, |dq1, dq2| {
             dq1.extend(dq2.iter().cloned());
@@ -35,7 +34,7 @@ fn concat(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Runt
     Ok(res)
 }
 
-fn at(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn at(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (res, tail) = view2::<view::AnyRef<view::Deque>, view::Number, _, _>(args, |dq, idx| {
         Ok(dq.try_get(*idx)?.clone())
     })?;
@@ -44,7 +43,7 @@ fn at(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeE
     Ok(res)
 }
 
-fn at_mut(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn at_mut(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (res, tail) = view2::<view::Ref<view::Deque>, view::Number, _, _>(args, |dq, idx| {
         Ok(dq.try_get(*idx)?.make_ref())
     })?;
@@ -53,7 +52,7 @@ fn at_mut(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Runt
     Ok(res)
 }
 
-fn remove(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn remove(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (res, tail) = view2::<view::Ref<view::Deque>, view::Number, _, _>(args, |dq, &mut idx| {
         dq.try_remove(idx)
     })?;
@@ -62,7 +61,7 @@ fn remove(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Runt
     Ok(res)
 }
 
-fn flatten(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn flatten(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let mut res = VecDeque::new();
     fn flatten_impl(v: &mut Val, res: &mut VecDeque<Val>) {
         let mut wrapped = [v.clone()];
@@ -86,7 +85,7 @@ fn flatten(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Run
     Ok(Val::Deque(Box::new(res)))
 }
 
-fn replace(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn replace(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (res, tail) =
         view3::<view::Ref<view::Deque>, view::Bottom, view::Bottom, _, _>(args, |dq, pat, new| {
             dq.iter_mut()
@@ -119,6 +118,7 @@ pub(crate) fn make_deque_builtin() -> RustObj {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::RuntimeError;
     use crate::expr::Expr;
     use std::cell::RefCell;
     use std::collections::VecDeque;
@@ -176,7 +176,8 @@ mod tests {
             Err(RuntimeError::CastError {
                 from: "😵‍💫😵‍💫".into(),
                 to: "🔖".into()
-            })
+            }
+            .into())
         );
 
         let (_, call_ref_e) = Expr::new("📞 d_test🪆append 🔖d 4").unwrap();
@@ -234,8 +235,8 @@ mod tests {
 
         let expected = RuntimeError::OutOfBounds { len: 3, idx: 10 };
 
-        assert_eq!(env.eval(&at_e), Err(expected.clone()));
-        assert_eq!(env.eval(&at_mut_e), Err(expected));
+        assert_eq!(env.eval(&at_e), Err(expected.clone().into()));
+        assert_eq!(env.eval(&at_mut_e), Err(expected.into()));
     }
 
     #[test]
@@ -248,7 +249,10 @@ mod tests {
         assert_eq!(result, Ok(Val::Number(3)));
 
         let result = env.eval(&remove_20_e);
-        assert_eq!(result, Err(RuntimeError::OutOfBounds { idx: 20, len: 2 }));
+        assert_eq!(
+            result,
+            Err(RuntimeError::OutOfBounds { idx: 20, len: 2 }.into())
+        );
 
         let dq = env.get_binding("d").unwrap();
         let expected_dq = {
@@ -300,12 +304,12 @@ mod tests {
         let (_, remove_e) = Expr::new("📞 d_test🪆remove 🔖d 0 🧵extra_arg🧵").unwrap();
         let (_, flatten_e) = Expr::new("📞 d_test🪆flatten d 🧵extra_arg🧵").unwrap();
 
-        assert_eq!(env.eval(&len_e), Err(RuntimeError::WrongArgsN));
-        assert_eq!(env.eval(&append_e), Err(RuntimeError::WrongArgsN));
-        assert_eq!(env.eval(&at_e), Err(RuntimeError::WrongArgsN));
-        assert_eq!(env.eval(&at_mut_e), Err(RuntimeError::WrongArgsN));
-        assert_eq!(env.eval(&remove_e), Err(RuntimeError::WrongArgsN));
-        assert_eq!(env.eval(&flatten_e), Err(RuntimeError::WrongArgsN));
+        assert_eq!(env.eval(&len_e), Err(RuntimeError::WrongArgsN.into()));
+        assert_eq!(env.eval(&append_e), Err(RuntimeError::WrongArgsN.into()));
+        assert_eq!(env.eval(&at_e), Err(RuntimeError::WrongArgsN.into()));
+        assert_eq!(env.eval(&at_mut_e), Err(RuntimeError::WrongArgsN.into()));
+        assert_eq!(env.eval(&remove_e), Err(RuntimeError::WrongArgsN.into()));
+        assert_eq!(env.eval(&flatten_e), Err(RuntimeError::WrongArgsN.into()));
 
         let expected_dq = {
             let mut dq = VecDeque::new();

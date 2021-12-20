@@ -9,7 +9,6 @@ mod types;
 mod web;
 
 use crate::env::{Env, Eval};
-use crate::error::RuntimeError;
 use crate::val::Val;
 use std::cell::RefCell;
 
@@ -35,7 +34,7 @@ impl BuiltinObjects {
 }
 
 impl Eval for BuiltinObjects {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         env.store_binding("file".to_string(), Val::from_obj(make_file_builtin()));
         env.store_binding("rng".to_string(), Val::from_obj(make_rng_builtin()));
         env.store_binding("deque".to_string(), Val::from_obj(make_deque_builtin()));

@@ -1,4 +1,4 @@
-use lmang_lib::{builtins::Builtins, env::Env, error::RuntimeError, expr::Expr, system, val::Val};
+use lmang_lib::{builtins::Builtins, env::Env, expr::Expr, system, val::Val};
 
 #[cfg(feature = "mimalloc")]
 #[global_allocator]
@@ -6,7 +6,7 @@ static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 pub struct ExecResult {
     pub stdout: String,
-    pub return_val: Result<Val, RuntimeError>,
+    pub return_val: Result<Val, Val>,
 }
 
 pub fn test_exec(path: String, args: &[String], stdin: &[String]) -> ExecResult {

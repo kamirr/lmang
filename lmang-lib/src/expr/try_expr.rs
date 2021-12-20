@@ -1,8 +1,8 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
-use crate::val::{Object, Val};
+use crate::val::Val;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Try {
@@ -60,12 +60,12 @@ impl Try {
 }
 
 impl Eval for Try {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         match env.eval(&self.try_block) {
             Ok(val) => Ok(val),
             Err(err) => {
                 for excepts in self.except_blocks.iter() {
-                    if excepts.0 == err.member("type")?.to_string() {
+                    if excepts.0 == err.as_object()?.0.member("type")?.to_string() {
                         return env.eval(&excepts.1);
                     }
                 }

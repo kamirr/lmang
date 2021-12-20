@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
 use crate::val::Val;
@@ -22,7 +22,7 @@ impl Loop {
 }
 
 impl Eval for Loop {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         Ok(loop {
             match env.eval(&self.body)? {
                 Val::Break(inner_box) => break *inner_box,
@@ -44,6 +44,7 @@ impl crate::expr::Format for Loop {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::error::RuntimeError;
     use crate::expr::{
         binding_update::Mode, BindingUpdate, BindingUsage, Break, Expr, If, Literal, Op,
     };
@@ -272,7 +273,7 @@ mod tests {
         let (_, loop_e) = Loop::new("🔁🧑‍🦲").unwrap();
         let mut env = Env::test();
 
-        assert_eq!(env.eval(&loop_e), Err(RuntimeError::Timeout))
+        assert_eq!(env.eval(&loop_e), Err(RuntimeError::Timeout.into()))
     }
 
     #[test]

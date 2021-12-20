@@ -1,11 +1,10 @@
 use crate::builtins::objects::rustobj::RustObj;
 use crate::builtins::rustfn::{FnState, RustFn};
 use crate::env::Env;
-use crate::error::RuntimeError;
 use crate::val::view::{self, test_consumed, view1};
 use crate::val::Val;
 
-fn to_char(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn to_char(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (res_char, tail) =
         view1::<view::AnyRef<view::Number>, _, _>(args, |n| Ok(*n as u8 as char))?;
     test_consumed(tail)?;
@@ -13,7 +12,7 @@ fn to_char(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Run
     Ok(Val::Char(res_char))
 }
 
-fn to_string(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn to_string(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (res, tail) = view1::<view::AnyRef<view::Bottom>, _, _>(args, |v| Ok(format!("{}", v)))?;
     test_consumed(tail)?;
 
@@ -21,7 +20,7 @@ fn to_string(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, R
 }
 
 #[cfg(feature = "web")]
-fn jv_to_val(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, RuntimeError> {
+fn jv_to_val(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
     let (val, tail) = view1::<view::Js, _, _>(args, |jv| Ok(Val::convert_from_jv(jv.clone())))?;
     test_consumed(tail)?;
 

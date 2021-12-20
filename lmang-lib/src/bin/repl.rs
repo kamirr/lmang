@@ -1,7 +1,7 @@
 use std::io::BufRead;
 use std::io::Write;
 
-use lmang_lib::{builtins::Builtins, env::Env, error::Error, expr::Expr, system, val::Val};
+use lmang_lib::{builtins::Builtins, env::Env, expr::Expr, system, val::Val};
 
 fn main() -> Result<(), String> {
     let mut env = Env::new();
@@ -22,7 +22,7 @@ fn main() -> Result<(), String> {
             break Ok(());
         }
 
-        let maybe_res: Option<Result<_, Error>> = if !line.trim().is_empty() {
+        let maybe_res: Option<Result<_, Val>> = if !line.trim().is_empty() {
             if !input.is_empty() {
                 input.push_str(&line);
 

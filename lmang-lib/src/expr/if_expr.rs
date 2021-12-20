@@ -1,5 +1,5 @@
 use crate::env::{Env, Eval};
-use crate::error::{ParseError, RuntimeError};
+use crate::error::ParseError;
 use crate::expr::block::{Block, FormatImplicit};
 use crate::expr::Expr;
 use crate::utils::{self, kwords};
@@ -73,7 +73,7 @@ impl If {
 }
 
 impl Eval for If {
-    fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
+    fn eval(&self, env: &mut Env) -> Result<Val, Val> {
         let cond_val = env.eval(&self.cond)?;
         if *cond_val.as_bool()? {
             env.eval(&self.body)
