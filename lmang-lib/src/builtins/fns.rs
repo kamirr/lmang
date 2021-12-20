@@ -98,9 +98,8 @@ fn fmt(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Runtime
     })?;
 
     let formatted = format!("{}", crate::expr::Display(&expr));
-    let dq = formatted.chars().map(|c| Val::Char(c)).collect();
 
-    Ok(Val::Deque(Box::new(dq)))
+    Ok(Val::from_str(formatted.as_ref()))
 }
 
 pub(crate) struct BuiltinFns {

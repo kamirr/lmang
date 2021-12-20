@@ -60,16 +60,14 @@ fn read(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Runtime
             reason: e.to_string(),
         })?;
 
-    let deque = buf.chars().map(Val::Char).collect();
-
-    Ok(Val::Deque(Box::new(deque)))
+    Ok(Val::from_str(buf.as_ref()))
 }
 
-pub(crate) fn make_file_builtin() -> Box<RustObj> {
+pub(crate) fn make_file_builtin() -> RustObj {
     let files = Rc::new(RefCell::new(Default::default()));
     let state = Rc::new(RefCell::new(FileState { files, cnt: 0 }));
 
-    RustObj::boxed(
+    RustObj::new(
         "file",
         vec![
             RustFn::stateful("open", open, &state),

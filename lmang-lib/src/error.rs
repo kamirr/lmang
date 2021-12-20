@@ -55,7 +55,7 @@ impl Object for ParseError {
         } else {
             use ParseError::*;
             match (name, self) {
-                ("expectedTag", ExpectedTag(s)) => Ok(Val::from_str(s)),
+                ("expectedTag", ExpectedTag(s)) => Ok(Val::from_str(s.as_ref())),
                 _ => Err(RuntimeError::NoKey(name.into())),
             }
         }
@@ -139,18 +139,18 @@ impl Object for RuntimeError {
         } else {
             use RuntimeError::*;
             match (name, self) {
-                ("binding", NoBinding(s)) => Ok(Val::from_str(&*s)),
+                ("binding", NoBinding(s)) => Ok(Val::from_str(s.as_ref())),
                 ("idx", OutOfBounds { idx, .. }) => Ok(Val::Number(*idx)),
                 ("len", OutOfBounds { len, .. }) => Ok(Val::Number(*len as i32)),
-                ("from", CastError { from, .. }) => Ok(Val::from_str(&*from)),
-                ("to", CastError { to, .. }) => Ok(Val::from_str(&*to)),
-                ("lhs", InvalidOp { lhs, .. }) => Ok(Val::from_str(&*lhs)),
-                ("op", InvalidOp { op, .. }) => Ok(Val::from_str(&*op)),
-                ("rhs", InvalidOp { rhs, .. }) => Ok(Val::from_str(&*rhs)),
-                ("file", IoError { file, .. }) => Ok(Val::from_str(&*file)),
-                ("reason", IoError { reason, .. }) => Ok(Val::from_str(&*reason)),
+                ("from", CastError { from, .. }) => Ok(Val::from_str(from.as_ref())),
+                ("to", CastError { to, .. }) => Ok(Val::from_str(to.as_ref())),
+                ("lhs", InvalidOp { lhs, .. }) => Ok(Val::from_str(lhs.as_ref())),
+                ("op", InvalidOp { op, .. }) => Ok(Val::from_str(op.as_ref())),
+                ("rhs", InvalidOp { rhs, .. }) => Ok(Val::from_str(rhs.as_ref())),
+                ("file", IoError { file, .. }) => Ok(Val::from_str(file.as_ref())),
+                ("reason", IoError { reason, .. }) => Ok(Val::from_str(reason.as_ref())),
                 ("handle", NoHandle(handle)) => Ok(Val::Number(*handle)),
-                ("key", NoKey(key)) => Ok(Val::from_str(&*key)),
+                ("key", NoKey(key)) => Ok(Val::from_str(key.as_ref())),
                 #[cfg(feature = "web")]
                 ("jsError", JsError(jv)) => Ok(Val::JsValue(jv.clone())),
                 _ => Err(RuntimeError::NoKey(name.into())),

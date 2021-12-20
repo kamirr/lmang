@@ -398,21 +398,28 @@ impl Val {
         } else if let Some(f) = jv.as_f64() {
             Val::Number(f as i32)
         } else if let Some(s) = jv.as_string() {
-            let dq = s.chars().map(|c| Val::Char(c)).collect();
-            Val::Deque(Box::new(dq))
+            Self::from_str(s.as_ref())
         } else if jv.is_function() {
-            Val::Func(DynFunc(Box::new(JsFunc::new("anon", jv.into()))))
+            Val::from_func(JsFunc::new("anon", jv.into()))
         } else if jv.is_null() || jv.is_undefined() {
             Val::Unit
         } else if jv.is_object() {
-            Val::Object(DynObject(JsObj::boxed_jv("anon", jv)))
+            Val::from_obj(JsObj::new_jv("anon", jv))
         } else {
             Val::JsValue(jv)
         }
     }
 
-    pub fn from_str(s: &str) -> Self {
-        Self::Deque(Box::new(s.chars().map(|c| Self::Char(c)).collect()))
+    pub fn from_obj<T: Object + 'static>(obj: T) -> Val {
+        Val::Object(DynObject(Box::new(obj)))
+    }
+
+    pub fn from_func<T: Callee + 'static>(func: T) -> Val {
+        Val::Func(DynFunc(Box::new(func)))
+    }
+
+    pub fn from_str(s: &str) -> Val {
+        Val::Deque(Box::new(s.chars().map(|c| Self::Char(c)).collect()))
     }
 }
 

@@ -29,10 +29,10 @@ fn seed(args: &mut [Val], _: &mut Env, state: FnState) -> Result<Val, RuntimeErr
     Ok(Val::Unit)
 }
 
-pub(crate) fn make_rng_builtin() -> Box<RustObj> {
+pub(crate) fn make_rng_builtin() -> RustObj {
     let state = Rc::new(RefCell::new(SmallRng::seed_from_u64(0)));
 
-    RustObj::boxed(
+    RustObj::new(
         "rng",
         vec![
             RustFn::stateful("next", next, &state),
@@ -45,15 +45,11 @@ pub(crate) fn make_rng_builtin() -> Box<RustObj> {
 mod tests {
     use super::*;
     use crate::expr::Expr;
-    use crate::val::DynObject;
 
     #[test]
     fn rng_builtin_seedable() {
         let mut env = Env::test();
-        env.store_binding(
-            "rng".to_string(),
-            Val::Object(DynObject(make_rng_builtin())),
-        );
+        env.store_binding("rng".to_string(), Val::from_obj(make_rng_builtin()));
 
         let (_, seed_e) = Expr::new("📞 rng🪆seed 21").unwrap();
         let (_, next_e) = Expr::new("📞 rng🪆next").unwrap();

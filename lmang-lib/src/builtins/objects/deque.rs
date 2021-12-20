@@ -100,8 +100,8 @@ fn replace(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Run
     Ok(res)
 }
 
-pub(crate) fn make_deque_builtin() -> Box<RustObj> {
-    RustObj::boxed(
+pub(crate) fn make_deque_builtin() -> RustObj {
+    RustObj::new(
         "deque",
         vec![
             RustFn::new("len", len),
@@ -120,7 +120,6 @@ pub(crate) fn make_deque_builtin() -> Box<RustObj> {
 mod tests {
     use super::*;
     use crate::expr::Expr;
-    use crate::val::DynObject;
     use std::cell::RefCell;
     use std::collections::VecDeque;
     use std::rc::Rc;
@@ -147,10 +146,7 @@ mod tests {
     fn deque_test_env() -> Env {
         let mut env = Env::test();
         env.store_binding("d".to_string(), deque_123_val());
-        env.store_binding(
-            "d_test".to_string(),
-            Val::Object(DynObject(make_deque_builtin())),
-        );
+        env.store_binding("d_test".to_string(), Val::from_obj(make_deque_builtin()));
 
         env
     }

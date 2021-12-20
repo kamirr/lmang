@@ -17,7 +17,7 @@ fn to_string(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, R
     let (res, tail) = view1::<view::AnyRef<view::Bottom>, _, _>(args, |v| Ok(format!("{}", v)))?;
     test_consumed(tail)?;
 
-    Ok(Val::Deque(Box::new(res.chars().map(Val::Char).collect())))
+    Ok(Val::from_str(res.as_ref()))
 }
 
 #[cfg(feature = "web")]
@@ -28,8 +28,8 @@ fn jv_to_val(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, R
     Ok(val)
 }
 
-pub(crate) fn make_types_builtin() -> Box<RustObj> {
-    RustObj::boxed(
+pub(crate) fn make_types_builtin() -> RustObj {
+    RustObj::new(
         "types",
         vec![
             RustFn::new("char", to_char),

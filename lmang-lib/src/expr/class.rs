@@ -3,7 +3,7 @@ use crate::error::{ParseError, RuntimeError};
 use crate::expr::block::{Block, FormatImplicit};
 use crate::expr::func::FuncVal;
 use crate::utils::{self, kwords};
-use crate::val::{DynFunc, DynObject, Object, Val, WeakWrapper};
+use crate::val::{DynFunc, Object, Val, WeakWrapper};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
@@ -52,7 +52,7 @@ impl Eval for Class {
             }
         }
 
-        Ok(Val::Object(DynObject(Box::new(ClassObject { members }))))
+        Ok(Val::from_obj(ClassObject { members }))
     }
 }
 

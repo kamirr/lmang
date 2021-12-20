@@ -1,7 +1,6 @@
 use crate::error::ParseError;
 use crate::utils;
 use crate::val::Val;
-use std::collections::VecDeque;
 
 #[derive(Debug, PartialEq)]
 struct Number(i32);
@@ -30,7 +29,7 @@ impl Char {
 }
 
 #[derive(Debug, PartialEq)]
-struct StringLiteral(VecDeque<Val>);
+struct StringLiteral(Val);
 
 impl StringLiteral {
     fn new(s: &str) -> Result<(&str, Self), ParseError> {
@@ -41,9 +40,7 @@ impl StringLiteral {
         let (s, lit) = utils::take_while(|c| !STR_LIT.starts_with(c), s);
         let s = utils::tag(STR_LIT, s)?;
 
-        let deque = lit.chars().map(Val::Char).collect();
-
-        Ok((s, Self(deque)))
+        Ok((s, Self(Val::from_str(lit.as_ref()))))
     }
 }
 
@@ -74,9 +71,7 @@ impl Literal {
             .map(|(s, number)| (s, Self(Val::Number(number.0))))
             .or_else(|_| Char::new(s).map(|(s, char_lit)| (s, Self(Val::Char(char_lit.0)))))
             .or_else(|_| Bool::new(s).map(|(s, bool_lit)| (s, Self(Val::Bool(bool_lit.0)))))
-            .or_else(|_| {
-                StringLiteral::new(s).map(|(s, str_lit)| (s, Self(Val::Deque(Box::new(str_lit.0)))))
-            })
+            .or_else(|_| StringLiteral::new(s).map(|(s, str_lit)| (s, Self(str_lit.0))))
     }
 }
 
@@ -111,9 +106,9 @@ mod tests {
             ("🧵Hello World🧵", "Hello World"),
         ];
 
-        for (input, expected) in cases {
+        for (input, expected_str) in cases {
             let str_lit = StringLiteral::new(input);
-            let expected = StringLiteral(expected.chars().map(|c| Val::Char(c)).collect());
+            let expected = StringLiteral(Val::from_str(expected_str));
 
             assert_eq!(str_lit, Ok(("", expected)))
         }

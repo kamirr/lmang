@@ -2,7 +2,7 @@ use crate::env::{Env, Eval};
 use crate::error::{ParseError, RuntimeError};
 use crate::expr::block::{Block, FormatImplicit};
 use crate::utils::{self, kwords};
-use crate::val::{Callee, DynFunc, Val};
+use crate::val::{Callee, Val};
 use std::any::Any;
 use std::collections::{HashMap, VecDeque};
 use std::fmt;
@@ -91,7 +91,7 @@ impl Eval for Func {
             body: self.body.clone(),
             parent: None,
         };
-        Ok(Val::Func(DynFunc(Box::new(funcval))))
+        Ok(Val::from_func(funcval))
     }
 }
 
@@ -283,7 +283,7 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&func_e);
 
-        assert_eq!(result, Ok(Val::Func(DynFunc(Box::new(expected)))));
+        assert_eq!(result, Ok(Val::from_func(expected)));
     }
 
     #[test]
@@ -302,7 +302,7 @@ mod tests {
         let mut env = Env::test();
         let result = env.eval(&func_e);
 
-        assert_eq!(result, Ok(Val::Func(DynFunc(Box::new(expected)))));
+        assert_eq!(result, Ok(Val::from_func(expected)));
     }
 
     #[test]

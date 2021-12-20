@@ -227,7 +227,7 @@ impl Eval for Expr {
             Self::Loop(loop_e) => env.eval(loop_e.as_ref()),
             Self::Func(func_e) => env.eval(func_e.as_ref()),
             Self::Call(call_e) => env.eval(call_e.as_ref()),
-            Self::Literal(val) => Ok(val.0.clone()),
+            Self::Literal(lit) => Ok(lit.0.clone()),
             Self::Ref(ref_expr) => env.eval(ref_expr),
             Self::Try(try_expr) => env.eval(try_expr.as_ref()),
             Self::Named(named_expr) => env.eval(named_expr.as_ref()),

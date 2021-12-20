@@ -10,7 +10,7 @@ mod web;
 
 use crate::env::{Env, Eval};
 use crate::error::RuntimeError;
-use crate::val::{DynObject, Val};
+use crate::val::Val;
 use std::cell::RefCell;
 
 use deque::make_deque_builtin;
@@ -36,32 +36,18 @@ impl BuiltinObjects {
 
 impl Eval for BuiltinObjects {
     fn eval(&self, env: &mut Env) -> Result<Val, RuntimeError> {
-        env.store_binding(
-            "file".to_string(),
-            Val::Object(DynObject(make_file_builtin())),
-        );
-        env.store_binding(
-            "rng".to_string(),
-            Val::Object(DynObject(make_rng_builtin())),
-        );
-        env.store_binding(
-            "deque".to_string(),
-            Val::Object(DynObject(make_deque_builtin())),
-        );
+        env.store_binding("file".to_string(), Val::from_obj(make_file_builtin()));
+        env.store_binding("rng".to_string(), Val::from_obj(make_rng_builtin()));
+        env.store_binding("deque".to_string(), Val::from_obj(make_deque_builtin()));
         env.store_binding(
             "sys".to_string(),
-            Val::Object(DynObject(make_sys_builtin(
-                self.args.borrow_mut().take().unwrap(),
-            ))),
+            Val::from_obj(make_sys_builtin(self.args.borrow_mut().take().unwrap())),
         );
-        env.store_binding(
-            "types".to_string(),
-            Val::Object(DynObject(make_types_builtin())),
-        );
+        env.store_binding("types".to_string(), Val::from_obj(make_types_builtin()));
 
         #[cfg(feature = "web")]
         #[cfg(target_arch = "wasm32")]
-        env.store_binding("js".to_string(), Val::Object(DynObject(make_web_builtin())));
+        env.store_binding("js".to_string(), Val::from(make_web_builtin()));
 
         Ok(Val::Unit)
     }

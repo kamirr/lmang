@@ -1,6 +1,6 @@
 use crate::env::Env;
 use crate::error::RuntimeError;
-use crate::val::{Callee, DynFunc, Val};
+use crate::val::{Callee, Val};
 
 use std::any::Any;
 use std::cell::RefCell;
@@ -44,7 +44,7 @@ impl RustFn {
     }
 
     pub fn into_val(self) -> Val {
-        Val::Func(DynFunc(Box::new(self)))
+        Val::from_func(self)
     }
 
     #[cfg(test)]
@@ -109,11 +109,10 @@ impl Callee for RustFn {
 mod tests {
     use super::*;
     use crate::expr::Expr;
-    use crate::val::DynFunc;
 
     #[test]
     fn test_rustfn_store_get() {
-        let builtin_val = Val::Func(DynFunc(RustFn::nop().clone_box()));
+        let builtin_val = Val::from_func(RustFn::nop().clone());
 
         let mut env = Env::test();
         env.store_binding("f".to_string(), builtin_val.clone());
@@ -124,8 +123,8 @@ mod tests {
 
     #[test]
     fn eval_rustfn() {
-        let builtin_nop = Val::Func(DynFunc(RustFn::nop().clone_box()));
-        let builtin_id = Val::Func(DynFunc(RustFn::id().clone_box()));
+        let builtin_nop = Val::from_func(RustFn::nop().clone());
+        let builtin_id = Val::from_func(RustFn::id().clone());
 
         let mut env = Env::test();
         env.store_binding("nop".to_string(), builtin_nop.clone());
@@ -144,7 +143,7 @@ mod tests {
 
     #[test]
     fn eval_stateful_rustfn() {
-        let rustfn_cnt = Val::Func(DynFunc(RustFn::cnt().clone_box()));
+        let rustfn_cnt = Val::from_func(RustFn::cnt().clone());
 
         let mut env = Env::test();
         env.store_binding("cnt".to_string(), rustfn_cnt.clone());

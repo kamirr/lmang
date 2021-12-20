@@ -112,18 +112,18 @@ pub struct JsObj {
 }
 
 impl JsObj {
-    pub fn boxed_eval(name: impl Into<String>, expr: &str) -> Result<Box<Self>, RuntimeError> {
+    pub fn new_eval(name: impl Into<String>, expr: &str) -> Result<Self, RuntimeError> {
         let name = name.into();
         let val = js_sys::eval(expr)?;
 
-        Ok(Box::new(JsObj { name, val }))
+        Ok(JsObj { name, val })
     }
 
-    pub fn boxed_jv(name: impl Into<String>, val: JsValue) -> Box<Self> {
-        Box::new(JsObj {
+    pub fn new_jv(name: impl Into<String>, val: JsValue) -> Self {
+        JsObj {
             name: name.into(),
             val,
-        })
+        }
     }
 
     fn member_ffi(&self, name: &str) -> Result<Val, RuntimeError> {

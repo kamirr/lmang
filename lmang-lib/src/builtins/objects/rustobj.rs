@@ -10,9 +10,9 @@ pub struct RustObj {
 }
 
 impl RustObj {
-    pub fn boxed(name: impl Into<String>, funcs: Vec<RustFn>) -> Box<Self> {
+    pub fn new(name: impl Into<String>, funcs: Vec<RustFn>) -> Self {
         let name = name.into();
-        Box::new(RustObj { name, funcs })
+        RustObj { name, funcs }
     }
 }
 
