@@ -40,7 +40,7 @@ impl StringLiteral {
         let (s, lit) = utils::take_while(|c| !STR_LIT.starts_with(c), s);
         let s = utils::tag(STR_LIT, s)?;
 
-        Ok((s, Self(Val::from_str(lit.as_ref()))))
+        Ok((s, Self(Val::from(lit.as_ref()))))
     }
 }
 
@@ -108,7 +108,7 @@ mod tests {
 
         for (input, expected_str) in cases {
             let str_lit = StringLiteral::new(input);
-            let expected = StringLiteral(Val::from_str(expected_str));
+            let expected = StringLiteral(Val::from(expected_str));
 
             assert_eq!(str_lit, Ok(("", expected)))
         }

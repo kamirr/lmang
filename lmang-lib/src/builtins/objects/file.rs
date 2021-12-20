@@ -60,7 +60,7 @@ fn read(args: &mut [Val], _env: &mut Env, state: FnState) -> Result<Val, Val> {
             reason: e.to_string(),
         })?;
 
-    Ok(Val::from_str(buf.as_ref()))
+    Ok(Val::from(buf.as_ref()))
 }
 
 pub(crate) fn make_file_builtin() -> RustObj {

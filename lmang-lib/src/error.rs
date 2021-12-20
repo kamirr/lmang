@@ -51,11 +51,11 @@ impl Object for ParseError {
 
     fn member(&self, name: &str) -> Result<Val, RuntimeError> {
         if name == "type" {
-            Ok(Val::from_str(self.as_ref()))
+            Ok(Val::from(self.as_ref()))
         } else {
             use ParseError::*;
             match (name, self) {
-                ("expectedTag", ExpectedTag(s)) => Ok(Val::from_str(s.as_ref())),
+                ("expectedTag", ExpectedTag(s)) => Ok(Val::from(s.as_ref())),
                 _ => Err(RuntimeError::NoKey(name.into())),
             }
         }
@@ -135,22 +135,22 @@ impl Object for RuntimeError {
 
     fn member(&self, name: &str) -> Result<Val, RuntimeError> {
         if name == "type" {
-            Ok(Val::from_str(self.as_ref()))
+            Ok(Val::from(self.as_ref()))
         } else {
             use RuntimeError::*;
             match (name, self) {
-                ("binding", NoBinding(s)) => Ok(Val::from_str(s.as_ref())),
+                ("binding", NoBinding(s)) => Ok(Val::from(s.as_ref())),
                 ("idx", OutOfBounds { idx, .. }) => Ok(Val::Number(*idx)),
                 ("len", OutOfBounds { len, .. }) => Ok(Val::Number(*len as i32)),
-                ("from", CastError { from, .. }) => Ok(Val::from_str(from.as_ref())),
-                ("to", CastError { to, .. }) => Ok(Val::from_str(to.as_ref())),
-                ("lhs", InvalidOp { lhs, .. }) => Ok(Val::from_str(lhs.as_ref())),
-                ("op", InvalidOp { op, .. }) => Ok(Val::from_str(op.as_ref())),
-                ("rhs", InvalidOp { rhs, .. }) => Ok(Val::from_str(rhs.as_ref())),
-                ("file", IoError { file, .. }) => Ok(Val::from_str(file.as_ref())),
-                ("reason", IoError { reason, .. }) => Ok(Val::from_str(reason.as_ref())),
+                ("from", CastError { from, .. }) => Ok(Val::from(from.as_ref())),
+                ("to", CastError { to, .. }) => Ok(Val::from(to.as_ref())),
+                ("lhs", InvalidOp { lhs, .. }) => Ok(Val::from(lhs.as_ref())),
+                ("op", InvalidOp { op, .. }) => Ok(Val::from(op.as_ref())),
+                ("rhs", InvalidOp { rhs, .. }) => Ok(Val::from(rhs.as_ref())),
+                ("file", IoError { file, .. }) => Ok(Val::from(file.as_ref())),
+                ("reason", IoError { reason, .. }) => Ok(Val::from(reason.as_ref())),
                 ("handle", NoHandle(handle)) => Ok(Val::Number(*handle)),
-                ("key", NoKey(key)) => Ok(Val::from_str(key.as_ref())),
+                ("key", NoKey(key)) => Ok(Val::from(key.as_ref())),
                 #[cfg(feature = "web")]
                 ("jsError", JsError(jv)) => Ok(Val::JsValue(jv.clone())),
                 _ => Err(RuntimeError::NoKey(name.into())),
@@ -213,8 +213,8 @@ impl Object for Error {
     fn member(&self, name: &str) -> Result<Val, RuntimeError> {
         if name == "type" {
             match self {
-                Error::Parse(_) => Ok(Val::from_str("Parse")),
-                Error::Runtime(_) => Ok(Val::from_str("Runtime")),
+                Error::Parse(_) => Ok(Val::from("Parse")),
+                Error::Runtime(_) => Ok(Val::from("Runtime")),
             }
         } else {
             match self {

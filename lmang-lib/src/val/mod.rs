@@ -398,7 +398,7 @@ impl Val {
         } else if let Some(f) = jv.as_f64() {
             Val::Number(f as i32)
         } else if let Some(s) = jv.as_string() {
-            Self::from_str(s.as_ref())
+            s.as_str().into()
         } else if jv.is_function() {
             Val::from_func(JsFunc::new("anon", jv.into()))
         } else if jv.is_null() || jv.is_undefined() {
@@ -416,10 +416,6 @@ impl Val {
 
     pub fn from_func<T: Callee + 'static>(func: T) -> Val {
         Val::Func(DynFunc(Box::new(func)))
-    }
-
-    pub fn from_str(s: &str) -> Val {
-        Val::Deque(Box::new(s.chars().map(|c| Self::Char(c)).collect()))
     }
 }
 
@@ -516,5 +512,11 @@ impl PartialOrd for Val {
             }
             _ => None,
         }
+    }
+}
+
+impl<'a> From<&'a str> for Val {
+    fn from(s: &str) -> Val {
+        Val::Deque(Box::new(s.chars().map(|c| Self::Char(c)).collect()))
     }
 }

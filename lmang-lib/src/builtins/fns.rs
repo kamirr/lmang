@@ -99,7 +99,7 @@ fn fmt(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, Val> {
 
     let formatted = format!("{}", crate::expr::Display(&expr));
 
-    Ok(Val::from_str(formatted.as_ref()))
+    Ok(Val::from(formatted.as_ref()))
 }
 
 pub(crate) struct BuiltinFns {

@@ -16,7 +16,7 @@ fn to_string(args: &mut [Val], _env: &mut Env, _state: FnState) -> Result<Val, V
     let (res, tail) = view1::<view::AnyRef<view::Bottom>, _, _>(args, |v| Ok(format!("{}", v)))?;
     test_consumed(tail)?;
 
-    Ok(Val::from_str(res.as_ref()))
+    Ok(Val::from(res.as_ref()))
 }
 
 #[cfg(feature = "web")]
